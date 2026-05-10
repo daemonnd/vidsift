@@ -1,6 +1,10 @@
+
 import feedparser
 
+from errorprotocol import logger
 from video_data import Video
+
+log = logger()
 
 YOUTUBE_RSS_URL_BASE: str = "https://www.youtube.com/feeds/videos.xml?channel_id="
 
@@ -36,5 +40,6 @@ for entry in d.entries:
     videos.append(video)
 
 for v in videos:
-    print(v)
+    log.log_info(str(v))
+
 
