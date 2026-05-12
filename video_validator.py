@@ -1,12 +1,16 @@
 from ollama import ChatResponse, chat
 
+from config_parser import ConfigParser
 from errorprotocol import logger
+from video_data import Video
 
 log = logger()
+config_parser: ConfigParser = ConfigParser()
 
 class VideoValidator:
-    def __init__(self) -> None:
-        self.model='qwen3.6:27b'
+    def __init__(self, video: Video, model: str = "qwen3.6:27b") -> None:
+        self.model=model
+        self.video: Video = video
         self.message="""
 # IDENTITY and PURPOSE
 
@@ -19,6 +23,9 @@ Take a deep breath and think step by step about how to perform the following to 
 - Understand the transcript deeply. Think about things like: `Is that a good video?` `Is that one worth the time of the user?`  while reading.
 
 - Rate the content based on the number of ideas in the input (0-40: bad 40-80: good 80-100: excellent) combined with how well it matches this:
+
+# How you should score this video
+
 $CUSTOM_CHANNEL_INSTRUCTIONS
 
 ---
@@ -47,7 +54,7 @@ LITERALLY the number, THAT's it!!!
         response: ChatResponse = chat(model=self.model, messages=[
             {
                 'role': 'user',
-                'content': f"{transcript}{self.message}",
+                'content': self.generate_final_prompt(transcript=transcript),
             },
         ])
         return response.message.content
@@ -77,6 +84,12 @@ LITERALLY the number, THAT's it!!!
         return ai_response_score
 
 
+    def generate_final_prompt(self, transcript: str) -> str:
+        """
+        Method to create a prompt out of the base prompt, the transcript and the custom instructions for that specific channel
+        Returns the filnal prompt for the ai
+        """
+        return f"{self.message.replace("$CUSTOM_CHANNEL_INSTRUCTIONS", config_parser.get_custom_instructions(creator=self.video.author))}{transcript}"
 
 
 
@@ -86,7 +99,15 @@ LITERALLY the number, THAT's it!!!
 if __name__ == "__main__":
     with open(file="/home/user/projects/python/vidsift/fake-transcript.txt", mode="r") as file:
         transcript = file.read()
-    vv = VideoValidator()
+    video: Video = Video(
+            title="sometitle",
+            link="somelink",
+            author="networkchuck",
+            published="20206-345-3-45"
+    )
+    vv = VideoValidator(video=video)
+    print(vv.generate_final_prompt(transcript=transcript))
+    exit(1)
     log.log_info("Testing with response j")
     vv.validate_ai_response("j")
     log.log_info("testing with response 6")
