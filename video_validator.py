@@ -45,7 +45,8 @@ class VideoValidator:
             if ai_response is None:
                 log.log_warning("Because the AI response was empty, this video will be skipped")
                 return
-            ai_response_score: int = int(ai_response)
+            ai_response_without_whitespaces: str = ai_response.replace(" ", "")
+            ai_response_score: int = int(ai_response_without_whitespaces)
         except ValueError:
             log.log_warning("Ai response for validating a video failed, because the ai did not return a number as a score")
             return
@@ -66,7 +67,7 @@ class VideoValidator:
         Method to create a prompt out of the base prompt, the transcript and the custom instructions for that specific channel
         Returns the filnal prompt for the ai
         """
-        return f"{self.validation_system_prompt.replace("$CUSTOM_CHANNEL_INSTRUCTIONS", config_parser.get_custom_instructions(creator=self.video.author))}{transcript}"
+        return f"{transcript}{self.validation_system_prompt.replace("$CUSTOM_CHANNEL_INSTRUCTIONS", config_parser.get_custom_instructions(creator=self.video.author))}"
 
 
 
@@ -83,7 +84,6 @@ if __name__ == "__main__":
             published="20206-345-3-45"
     )
     vv = VideoValidator(video=video)
-    print(vv.generate_final_prompt(transcript=transcript))
     log.log_info("Testing with response j")
     vv.validate_ai_response("j")
     log.log_info("testing with response 6")
@@ -98,3 +98,5 @@ if __name__ == "__main__":
     vv.validate_ai_response("4.4")
     log.log_info("testing with ai response None")
     vv.validate_ai_response(None)
+    print("\n")
+    print(vv.validate_video(transcript))
