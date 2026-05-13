@@ -1,7 +1,6 @@
 """
 File to parse the config and transform the config into variables
 """
-from os import read
 from pathlib import Path
 
 from errorprotocol import logger
