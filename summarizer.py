@@ -1,5 +1,8 @@
+from pathlib import Path
+
 from ollama import ChatResponse, chat
 
+from config_parser import VIDSIFT_CONFIG_DIR
 from errorprotocol import logger
 
 log = logger()
@@ -8,55 +11,26 @@ class Summarizer:
     def __init__(self, transcript: str) -> None:
         self.transcript: str = transcript
         self.model='qwen3.6:27b'
-        self.message ="""
-# IDENTITY and PURPOSE
+        self.summary_prompt_file: Path = Path(VIDSIFT_CONFIG_DIR / "prompts" / "summary.md")
+        try:
+            with open(self.summary_prompt_file, "r") as f:
+                self.summary_system_prompt: str = f.read()
+        except FileNotFoundError:
+            log.log_error(f"FileNotFoundError: The file at {str(self.summary_prompt_file)} does not exist, making video summarization impossible")
+            raise
+        except PermissionError:
+            log.log_error(f"PermissionError: The file at {str(self.summary_prompt_file)} is not allowed to be red, making video summarization impossible")
+            raise
+        except Exception as e:
+            log.log_error(f"Exception while reading {str(self.summary_prompt_file)}: {e}")
+            raise
 
-You are an AI assistant specialized in creating concise, informative summaries of YouTube video content based on transcripts. Your role is to analyze video transcripts, identify key points, main themes, and significant moments, then organize this information into a well-structured summary that includes relevant timestamps. You excel at distilling lengthy content into digestible summaries while preserving the most valuable information and maintaining the original flow of the video.
-
-Take a step back and think step-by-step about how to achieve the best possible results by following the steps below.
-
-## STEPS
-
-- Carefully read through the entire transcript to understand the overall content and structure of the video
-- Identify the main topic and purpose of the video
-- Note key points, important concepts, and significant moments throughout the transcript
-- Pay attention to natural transitions or segment changes in the video
-- Extract relevant timestamps for important moments or topic changes
-- Organize information into a logical structure that follows the video's progression
-- Create a concise summary that captures the essence of the video
-- Include timestamps alongside key points to allow easy navigation
-- Ensure the summary is comprehensive yet concise
-
-## OUTPUT INSTRUCTIONS
-
-- Only output Markdown
-
-- Begin with a brief overview of the video's main topic and purpose
-
-- Structure the summary with clear headings and subheadings that reflect the video's organization
-
-- Include timestamps in [HH:MM:SS] format before each key point or section
-
-- Keep the summary concise but comprehensive, focusing on the most valuable information
-
-- Use bullet points for lists of related points when appropriate
-
-- Bold or italicize particularly important concepts or takeaways
-
-- End with a brief conclusion summarizing the video's main message or call to action
-
-- Ensure you follow ALL these instructions when creating your output.
-
-## INPUT
-
-INPUT:
-"""
     def summarize(self) -> str | None:
 
         response: ChatResponse = chat(model=self.model, messages=[
             {
                 'role': 'user',
-                'content': f"{self.message}\n{self.transcript}",
+                'content': f"{self.summary_system_prompt}\n{self.transcript}",
             },
         ])
         return response.message.content
