@@ -45,8 +45,8 @@ class VideoValidator:
             if ai_response is None:
                 log.log_warning("Because the AI response was empty, this video will be skipped")
                 return
-            ai_response_without_whitespaces: str = ai_response.replace(" ", "")
-            ai_response_score: int = int(ai_response_without_whitespaces)
+            ai_response_clean: str = ai_response.replace(" ", "")
+            ai_response_score: int = int(ai_response_clean)
         except ValueError:
             log.log_warning("Ai response for validating a video failed, because the ai did not return a number as a score")
             return
