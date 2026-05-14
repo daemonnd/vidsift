@@ -29,6 +29,9 @@ class ConfigParser:
         except PermissionError as e:
             log.log_warning(f"PermissionError: It seems that the path {str(Path(custom_instructions_path/f"{creator}.md"))} can't be read, reading permissions are missing: {e}")
             return ""
+        except Exception as e:
+            log.log_warning(f"Exception occured while trying to open {str(custom_instructions_path)}: {e}")
+            return ""
 
 if __name__ == "__main__":
     cp = ConfigParser()
