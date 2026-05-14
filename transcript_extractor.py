@@ -19,14 +19,19 @@ class TranscriptExtractor:
             return
         except InvalidVideoId as e:
             log.log_error(f"InvalidVideoId while extracting the transcript of video id {video_id}: {e}")
+            return
         except VideoUnavailable as e:
             log.log_error(f"VideoUnavailable Error while extracting the transcript of video id {video_id}: {e}")
+            return
         except IpBlocked as e:
             log.log_error(f"IPBlocked Error while extracting the transcript of video id {video_id}: {e}")
+            return
         except RequestBlocked as e:
             log.log_error(f"RequestBlocked Error while extracting the transcript of video id {video_id}: {e}")
+            return
         except Exception as e:
             log.log_error(f"Exception while extracting the transcript of video id {video_id}: {e}")
+            return
         else:
             full_transcript: list = []
             for snippet in fetched_transcript:
@@ -35,5 +40,5 @@ class TranscriptExtractor:
 
 if __name__ == "__main__":
     te = TranscriptExtractor()
-    te.extract_transcript("G3jvn7n-68Y")
+    print(te.extract_transcript("G3jvn7n-68Y"))
 
