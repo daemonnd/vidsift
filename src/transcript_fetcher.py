@@ -1,14 +1,20 @@
+from pathlib import Path
+
+# for the youtube_transcript_api backend
 from youtube_transcript_api import FetchedTranscript, YouTubeTranscriptApi
 from youtube_transcript_api._errors import (CookieError, InvalidVideoId,
                                             IpBlocked, RequestBlocked,
                                             VideoUnavailable)
+# for the yt-dlp backend
+from yt_dlp import YoutubeDL
+from yt_dlp.utils import DownloadCancelled, DownloadError
 
-from errorprotocol import logger
+from .utils.errorprotocol import logger
 
 log = logger()
 
 
-class TranscriptExtractor:
+class TranscriptFetcher:
     def __init__(self) -> None:
         self.transcript_api: YouTubeTranscriptApi = YouTubeTranscriptApi()
     def extract_transcript(self, video_id: str) -> str | None:
@@ -37,8 +43,30 @@ class TranscriptExtractor:
             for snippet in fetched_transcript:
                 full_transcript.append(snippet.text)
             return "\n".join(full_transcript)
+    
+    def extract_transcript_yt_dlp(self, video_url: str) -> None:
+        ydl_opts = {
+            "writesubtitles": True,
+            "writeautomaticsub": True,
+            "subtitlesformat": "vtt",
+            "skip_download": True,
+            "sleep_requests": 3,
+            "outtmpl": "/tmp/%(id)s.%(lang)s.%(ext)s",
+        }
+        with YoutubeDL(ydl_opts) as ydl:
+            try:
+                ydl.extract_info(video_url, download=True)
+            except DownloadError as e:
+                log.log_error(f"DownloadError: The transcript of {video_url} could not be downloaded: {e}")
+                return
+            except DownloadCancelled as e:
+                log.log_warning(f"DownloadCancelled: The transcript of {video_url} could not be downloaded, it got cancelled: {e}")
+
+
+
+
 
 if __name__ == "__main__":
     te = TranscriptExtractor()
-    print(te.extract_transcript("G3jvn7n-68Y"))
+    print(te.extract_transcript_yt_dlp(video_url="https://www.youtube.com/watch?v=CinPOlgq0kQ"))
 
