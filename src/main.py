@@ -8,3 +8,13 @@ Tasks:
 
 """
 import argparse
+
+from .config.parser import ConfigParser
+from .pipeline.vidsift_pipeline import VidsiftOrchestrator
+
+
+class VidsiftCLI:
+    def __init__(self) -> None:
+        self.config_parser: ConfigParser = ConfigParser()
+        self.orchestrator: VidsiftOrchestrator = VidsiftOrchestrator()
+    def start_pipeline(self) -> None:
