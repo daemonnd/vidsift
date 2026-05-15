@@ -1,7 +1,7 @@
 import re
 from pathlib import Path
 
-from ..errorprotocol import logger
+from ...shared.errorprotocol import logger
 
 log = logger()
 

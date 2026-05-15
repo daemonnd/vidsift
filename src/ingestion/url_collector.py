@@ -1,11 +1,13 @@
 import feedparser
 
-from errorprotocol import logger
-from video_data import Video
+from ..models.video import Video
+from ..shared.errorprotocol import logger
+from ..shared.video_id_extractor import VideoIDExtractor
 
 log = logger()
 
 YOUTUBE_BASE_RSS_URL: str = "https://www.youtube.com/feeds/videos.xml?channel_id="
+id_extractor = VideoIDExtractor()
 
 class UrlCollector:
     def __init__(self, channel_id_list: list[Video]) -> None:
@@ -50,8 +52,9 @@ class UrlCollector:
                 }
                 video = Video(
                     title=str(entry.title), author=str(entry.author),
-                    link=str(entry.link),
-                    published=str(entry.published)
+                    url=str(entry.link),
+                    published=str(entry.published),
+                    video_id=id_extractor.extract_id(str(entry.link))
                 )
                 videos.append(video)
         except KeyError as e:

@@ -1,5 +1,3 @@
-from pathlib import Path
-
 # for the youtube_transcript_api backend
 from youtube_transcript_api import FetchedTranscript, YouTubeTranscriptApi
 from youtube_transcript_api._errors import (CookieError, InvalidVideoId,
@@ -9,7 +7,7 @@ from youtube_transcript_api._errors import (CookieError, InvalidVideoId,
 from yt_dlp import YoutubeDL
 from yt_dlp.utils import DownloadCancelled, DownloadError
 
-from .utils.errorprotocol import logger
+from ...shared.errorprotocol import logger
 
 log = logger()
 
@@ -66,7 +64,4 @@ class TranscriptFetcher:
 
 
 
-if __name__ == "__main__":
-    te = TranscriptExtractor()
-    print(te.extract_transcript_yt_dlp(video_url="https://www.youtube.com/watch?v=CinPOlgq0kQ"))
 
