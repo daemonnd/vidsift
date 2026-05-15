@@ -2,9 +2,9 @@ from pathlib import Path
 
 from ollama import ChatResponse, chat
 
-from config_parser import VIDSIFT_CONFIG_DIR, ConfigParser
-from errorprotocol import logger
-from video_data import Video
+from ...config.parser import VIDSIFT_CONFIG_DIR, ConfigParser
+from ...models.video import Video
+from ...shared.errorprotocol import logger
 
 log = logger()
 config_parser: ConfigParser = ConfigParser()
@@ -79,9 +79,10 @@ if __name__ == "__main__":
         transcript = file.read()
     video: Video = Video(
             title="sometitle",
-            link="somelink",
+            url="somelink",
             author="networkchuck",
-            published="20206-345-3-45"
+            published="20206-345-3-45",
+            video_id="some video id"
     )
     vv = VideoValidator(video=video)
     log.log_info("Testing with response j")

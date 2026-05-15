@@ -2,8 +2,8 @@ from pathlib import Path
 
 from ollama import ChatResponse, chat
 
-from config_parser import VIDSIFT_CONFIG_DIR
-from errorprotocol import logger
+from ...config.parser import VIDSIFT_CONFIG_DIR
+from ...shared.errorprotocol import logger
 
 log = logger()
 
