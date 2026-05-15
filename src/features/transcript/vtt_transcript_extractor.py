@@ -1,7 +1,10 @@
 import re
 from pathlib import Path
 
+from src.models import video
+
 from ...shared.errorprotocol import logger
+from .errors import TranscriptNotFoundError, VTTFileReadingError
 
 log = logger()
 
@@ -18,7 +21,7 @@ class VTTranscriptExtractor:
                 if str(Path(tmp_file)).endswith(".vtt"):
                     if str(Path(tmp_file).name).startswith(video_id):
                         return tmp_file
-        raise FileNotFoundError(f"No .vtt transcript file got found under /tmp/ with the video id {video_id}")
+        raise TranscriptNotFoundError(f"No .vtt transcript file got found under /tmp/ with the video id {video_id}")
 
 
     def convert_vtt_to_str(self, vtt_file: Path):
@@ -26,11 +29,11 @@ class VTTranscriptExtractor:
             with open(vtt_file) as file:
                 vtt_content = file.read()
         except FileNotFoundError:
-            log.log_error(f"No file found at {str(vtt_file)}. Check the language.")
-            return
+            log.log_error(f"No file found at {str(vtt_file)}.")
+            raise TranscriptNotFoundError(f"No .vtt transcript found under /tmp/ with the video id {video_id}")
         except PermissionError:
             log.log_error(f"Reading permissions are missing for {str(vtt_file)}.")
-            return
+            raise VTTFileReadingError(f"Reading permissions are missing for {str(vtt_file)}")
         else:
             vtt_content_list: list[str] = vtt_content.splitlines()
             transcipt: list[str] = []
