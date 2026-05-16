@@ -3,7 +3,7 @@ File to parse the config and transform the config into variables
 """
 from pathlib import Path
 
-from ..shared.errorprotocol import logger
+from vidsift.shared.errorprotocol import logger
 
 log = logger()
 

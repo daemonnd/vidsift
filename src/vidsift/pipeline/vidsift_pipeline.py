@@ -14,20 +14,20 @@ What it does:
 
 
 # feature/transcript
-from ..features.transcript.errors import (TranscriptDownloadError,
-                                          TranscriptError,
-                                          TranscriptFetchingBlockedError,
-                                          TranscriptFetchingError,
-                                          TranscriptNotAvailibleError,
-                                          TranscriptNotFoundError,
-                                          VTTFileReadingError)
-from ..features.transcript.fetcher import TranscriptFetcher
-from ..features.transcript.vtt_transcript_extractor import \
+from vidsift.features.transcript.errors import (TranscriptDownloadError,
+                                                TranscriptError,
+                                                TranscriptFetchingBlockedError,
+                                                TranscriptFetchingError,
+                                                TranscriptNotAvailibleError,
+                                                TranscriptNotFoundError,
+                                                VTTFileReadingError)
+from vidsift.features.transcript.fetcher import TranscriptFetcher
+from vidsift.features.transcript.vtt_transcript_extractor import \
     VTTranscriptExtractor
 # data
-from ..models.video import Video
+from vidsift.models.video import Video
 # utils
-from ..shared.errorprotocol import logger
+from vidsift.shared.errorprotocol import logger
 
 log: logger = logger()
 

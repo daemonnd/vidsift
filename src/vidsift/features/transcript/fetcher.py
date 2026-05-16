@@ -7,10 +7,12 @@ from youtube_transcript_api._errors import (CookieError, InvalidVideoId,
 from yt_dlp import YoutubeDL
 from yt_dlp.utils import DownloadCancelled, DownloadError
 
-from ...shared.errorprotocol import logger
-from .errors import (TranscriptDownloadError, TranscriptError,
-                     TranscriptFetchingBlockedError, TranscriptFetchingError,
-                     TranscriptNotAvailibleError)
+from vidsift.features.transcript.errors import (TranscriptDownloadError,
+                                                TranscriptError,
+                                                TranscriptFetchingBlockedError,
+                                                TranscriptFetchingError,
+                                                TranscriptNotAvailibleError)
+from vidsift.shared.errorprotocol import logger
 
 log = logger()
 

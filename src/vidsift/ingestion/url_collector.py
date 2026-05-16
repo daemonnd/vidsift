@@ -1,8 +1,8 @@
 import feedparser
 
-from ..models.video import Video
-from ..shared.errorprotocol import logger
-from ..shared.video_id_extractor import VideoIDExtractor
+from vidsift.models.video import Video
+from vidsift.shared.errorprotocol import logger
+from vidsift.shared.video_id_extractor import VideoIDExtractor
 
 log = logger()
 

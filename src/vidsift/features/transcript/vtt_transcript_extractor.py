@@ -1,10 +1,9 @@
 import re
 from pathlib import Path
 
-from src.models import video
-
-from ...shared.errorprotocol import logger
-from .errors import TranscriptNotFoundError, VTTFileReadingError
+from vidsift.features.transcript.errors import (TranscriptNotFoundError,
+                                                VTTFileReadingError)
+from vidsift.shared.errorprotocol import logger
 
 log = logger()
 

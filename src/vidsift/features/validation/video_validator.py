@@ -2,9 +2,9 @@ from pathlib import Path
 
 from ollama import ChatResponse, chat
 
-from ...config.parser import VIDSIFT_CONFIG_DIR, ConfigParser
-from ...models.video import Video
-from ...shared.errorprotocol import logger
+from vidsift.config.parser import VIDSIFT_CONFIG_DIR, ConfigParser
+from vidsift.models.video import Video
+from vidsift.shared.errorprotocol import logger
 
 log = logger()
 config_parser: ConfigParser = ConfigParser()
