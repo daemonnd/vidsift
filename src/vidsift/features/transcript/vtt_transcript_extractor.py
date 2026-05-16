@@ -29,7 +29,7 @@ class VTTranscriptExtractor:
                 vtt_content = file.read()
         except FileNotFoundError:
             log.log_error(f"No file found at {str(vtt_file)}.")
-            raise TranscriptNotFoundError(f"No .vtt transcript found under /tmp/ with the video id {video_id}")
+            raise TranscriptNotFoundError(f"No .vtt transcript found under {str(vtt_file)}")
         except PermissionError:
             log.log_error(f"Reading permissions are missing for {str(vtt_file)}.")
             raise VTTFileReadingError(f"Reading permissions are missing for {str(vtt_file)}")
