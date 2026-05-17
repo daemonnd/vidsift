@@ -38,7 +38,7 @@ class VidsiftOrchestrator:
         self.vtt_transcript_extractor: VTTranscriptExtractor = VTTranscriptExtractor()
 
 
-    def fetch_and_download_transcript(self, video: Video) -> str | None:
+    def fetch_and_download_transcript(self, video: Video) -> str:
         transcript: str | None = None
         log.log_debug("Trying to fetch and download the transcript with yt-dlp...")
         transcript = self.fetch_and_download_transcript_yt_dlp(video)
@@ -47,7 +47,10 @@ class VidsiftOrchestrator:
             transcript = self.fetch_and_download_transcript_transcript_api(video)
             if transcript is None:
                 log.log_error(f"Failed to fetch the transcript of video {video.title} with url {video.url}")
+                raise TranscriptError(f"Both yt-dlp and youtube transcript api failed to fetch and download the transcript of video with video id {video.video_id}")
+            return transcript
         return transcript
+
 
     def fetch_and_download_transcript_yt_dlp(self, video: Video) -> str | None:
         # fetch the transcript and save it to a file

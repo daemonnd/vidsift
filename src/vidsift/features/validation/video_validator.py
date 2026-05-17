@@ -3,6 +3,10 @@ from pathlib import Path
 from ollama import ChatResponse, chat
 
 from vidsift.config.parser import VIDSIFT_CONFIG_DIR, ConfigParser
+from vidsift.features.validation.errors import (EmptyAIResponseError,
+                                                InvalidAIResponseFormatError,
+                                                InvalidScoreError,
+                                                VideoValidationError)
 from vidsift.models.video import Video
 from vidsift.shared.errorprotocol import logger
 
@@ -11,6 +15,11 @@ config_parser: ConfigParser = ConfigParser()
 
 class VideoValidator:
     def __init__(self, video: Video, model: str = "qwen3.6:27b") -> None:
+        """
+        raises:
+        FileNotFoundError if validation prompt file not found
+        PermissionError if validation prompt file does not have reading persimmsions
+        """
         self.model=model
         self.video: Video = video
         self.validation_file: Path = Path(VIDSIFT_CONFIG_DIR / "prompts" / "validation.md")
@@ -19,13 +28,13 @@ class VideoValidator:
                 self.validation_system_prompt: str = f.read()
         except FileNotFoundError:
             log.log_error(f"FileNotFoundError: The file at {str(self.validation_file)} does not exist, making video validation impossible")
-            raise
+            raise FileNotFoundError(f"The file at {str(self.validation_file)} does not exist, making video validation impossible")
         except PermissionError:
             log.log_error(f"PermissionError: The file at {str(self.validation_file)} is not allowed to be red, making video validation impossible")
-            raise
+            raise PermissionError(f"PermissionError: The file at {str(self.validation_file)} is not allowed to be red, making video validation impossible")
         except Exception as e:
             log.log_error(f"Exception while reading {str(self.validation_file)}: {e}")
-            raise
+            raise Exception(f"Exception while reading {str(self.validation_file)}: {e}")
 
     def validate_video(self, transcript: str) -> str | None:
         response: ChatResponse = chat(model=self.model, messages=[
@@ -40,25 +49,23 @@ class VideoValidator:
     Function to validate the AI response, converting it to an integer between 0 and 100
     to have something to work with later when downloading/summarizing/doing nothing with the video
     """
-    def validate_ai_response(self, ai_response: str | None) -> int | None:
+    def validate_ai_response(self, ai_response: str | None) -> int:
         try:
             if ai_response is None:
                 log.log_warning("Because the AI response was empty, this video will be skipped")
-                return
-            ai_response_clean: str = ai_response.replace(" ", "")
-            ai_response_score: int = int(ai_response_clean)
+                raise EmptyAIResponseError("Because the AI response is empty, the video validation failed")
+            ai_response_score: int = int(ai_response)
         except ValueError:
-            log.log_warning("Ai response for validating a video failed, because the ai did not return a number as a score")
-            return
+            log.log_warning("The ai did not return a number as a score")
+            raise InvalidAIResponseFormatError(f"The AI output is {ai_response}, which is not a valid integer")
         except Exception as e:
             log.log_error(f"Exception while converting the ai response for validaing the transcript: {e}")
-            return
+            raise VideoValidationError(f"{e}")
  
         # if it is actually a number that can be converted to an integer
         if ai_response_score > 100 or ai_response_score < 0:
             log.log_warning(f"Ai response is {ai_response_score}, which is not between 0 and 100, therefore this video will be skipped")
-            return
-        log.log_debug("SUCCESS")
+            raise InvalidScoreError(f"The AI response score is {ai_response_score}, which is not between 0 and 100")
         return ai_response_score
 
 

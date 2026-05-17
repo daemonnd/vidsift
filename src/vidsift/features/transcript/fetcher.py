@@ -46,7 +46,7 @@ class TranscriptFetcher:
             for snippet in fetched_transcript:
                 full_transcript.append(snippet.text)
             return "\n".join(full_transcript)
-    
+ 
     def extract_transcript_yt_dlp(self, video_url: str) -> None:
         ydl_opts = {
             "writesubtitles": True,
