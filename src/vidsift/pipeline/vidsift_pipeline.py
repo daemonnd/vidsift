@@ -24,7 +24,10 @@ from vidsift.features.transcript.errors import (TranscriptDownloadError,
 from vidsift.features.transcript.fetcher import TranscriptFetcher
 from vidsift.features.transcript.vtt_transcript_extractor import \
     VTTranscriptExtractor
+# video fetching
+from vidsift.ingestion.url_collector import UrlCollector
 # data
+from vidsift.models import video
 from vidsift.models.video import Video
 # utils
 from vidsift.shared.errorprotocol import logger
@@ -32,11 +35,15 @@ from vidsift.shared.errorprotocol import logger
 log: logger = logger()
 
 class VidsiftOrchestrator:
-    def __init__(self) -> None:
+    def __init__(self, channel_id_list: list[str]) -> None:
+        # video fetching
+        self.url_collector: UrlCollector = UrlCollector(channel_id_list=channel_id_list)
         # transcript
         self.transcript_fetcher: TranscriptFetcher = TranscriptFetcher()
         self.vtt_transcript_extractor: VTTranscriptExtractor = VTTranscriptExtractor()
 
+    def fetch_videos(self) -> list[Video]:
+        return self.url_collector.parse_all_channels()
 
     def fetch_and_download_transcript(self, video: Video) -> str:
         transcript: str | None = None
@@ -102,12 +109,6 @@ class VidsiftOrchestrator:
 
 
 if __name__ == "__main__":
-    vo = VidsiftOrchestrator()
-    video_object = Video(
-        title="Your Remote Desktop SUCKS!! Try this instead (FREE + Open Source)",
-        url="https://www.youtube.com/watch?v=EXL8mMUXs88",
-        author="NetworkChuck",
-        published="somedate",
-        video_id="EXL8mMUXs88"
-    )
-    print(vo.fetch_and_download_transcript(video_object))
+    vo = VidsiftOrchestrator(["UCX6OQ3DkcsbYNE6H8uQQuVA"])
+    videos: list[Video] = vo.fetch_videos()
+    vo.fetch_and_download_transcript(videos[1])

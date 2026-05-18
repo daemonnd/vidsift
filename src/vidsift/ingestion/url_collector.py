@@ -7,8 +7,11 @@ YOUTUBE_BASE_RSS_URL: str = "https://www.youtube.com/feeds/videos.xml?channel_id
 id_extractor = VideoIDExtractor()
 
 class UrlCollector:
-    def __init__(self, channel_id_list: list[Video]) -> None:
+    def __init__(self, channel_id_list: list[str]) -> None:
         self.channel_id_list: list = channel_id_list
+
+        if self.channel_id_list == []:
+            raise  ValueError("The channel ID list given for fetching video data is empty")
 
     def parse_all_channels(self) -> list[Video]:
         """

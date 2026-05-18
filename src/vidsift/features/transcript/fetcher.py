@@ -1,3 +1,5 @@
+from typing import Any
+
 # for the youtube_transcript_api backend
 from youtube_transcript_api import FetchedTranscript, YouTubeTranscriptApi
 from youtube_transcript_api._errors import (CookieError, InvalidVideoId,
@@ -39,15 +41,22 @@ class TranscriptFetcher:
             return "\n".join(full_transcript)
  
     def extract_transcript_yt_dlp(self, video_url: str) -> None:
-        ydl_opts = {
-            "writesubtitles": True,
+        ydl_opts: dict[str, Any] = {
             "writeautomaticsub": True,
+            "writesubtitles": True,
             "subtitlesformat": "vtt",
+            "cookiesfrombrowser": tuple(["firefox"]),
             "skip_download": True,
-            "sleep_requests": 3,
+            "sleep_interval_requests": 3,
             "outtmpl": "/tmp/%(id)s.%(lang)s.%(ext)s",
+            "remote-components": "ejs/github",
+            #"extractor_args": {
+            #    "youtube": {
+            #        "player_client": ["android"]
+            #    }
+            #}
         }
-        with YoutubeDL(ydl_opts) as ydl: # type: ignore
+        with YoutubeDL(ydl_opts) as ydl: 
             try:
                 ydl.extract_info(video_url, download=True)
             except DownloadError as e:
@@ -57,8 +66,7 @@ class TranscriptFetcher:
             except Exception as e:
                 raise TranscriptError(str(e))
 
-
-
-
-
+if __name__ == "__main__":
+    tf: TranscriptFetcher = TranscriptFetcher()
+    tf.extract_transcript_yt_dlp(video_url="https://www.youtube.com/watch?v=scEDHsr3APg")
 
