@@ -22,12 +22,11 @@ from vidsift.features.transcript.errors import (TranscriptDownloadError,
                                                 TranscriptNotFoundError,
                                                 VTTFileReadingError)
 from vidsift.features.transcript.fetcher import TranscriptFetcher
-from vidsift.features.transcript.vtt_transcript_extractor import \
-    VTTranscriptExtractor
+from vidsift.features.transcript.vtt_transcripty_parser import \
+    VTTranscriptParser
 # video fetching
 from vidsift.ingestion.url_collector import UrlCollector
 # data
-from vidsift.models import video
 from vidsift.models.video import Video
 # utils
 from vidsift.shared.errorprotocol import logger
@@ -40,10 +39,13 @@ class VidsiftOrchestrator:
         self.url_collector: UrlCollector = UrlCollector(channel_id_list=channel_id_list)
         # transcript
         self.transcript_fetcher: TranscriptFetcher = TranscriptFetcher()
-        self.vtt_transcript_extractor: VTTranscriptExtractor = VTTranscriptExtractor()
+        self.vtt_transcript_extractor: VTTranscriptParser = VTTranscriptParser()
 
     def fetch_videos(self) -> list[Video]:
         return self.url_collector.parse_all_channels()
+
+    def get_transcript(self, video: Video):
+        return transcript_service.get_transcript(video)
 
     def fetch_and_download_transcript(self, video: Video) -> str:
         transcript: str | None = None

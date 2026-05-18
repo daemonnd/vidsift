@@ -5,7 +5,7 @@ from vidsift.features.transcript.errors import (TranscriptNotFoundError,
                                                 VTTFileReadingError)
 
 
-class VTTranscriptExtractor:
+class VTTranscriptParser:
     def find_vtt_file(self, video_id: str) -> Path:
         """
         Method to get the path of the vtt transcript file
