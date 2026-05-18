@@ -1,3 +1,5 @@
+from typing import Any
+
 # for the youtube_transcript_api backend
 from youtube_transcript_api import FetchedTranscript, YouTubeTranscriptApi
 from youtube_transcript_api._errors import (CookieError, InvalidVideoId,
@@ -7,12 +9,11 @@ from youtube_transcript_api._errors import (CookieError, InvalidVideoId,
 from yt_dlp import YoutubeDL
 from yt_dlp.utils import DownloadCancelled, DownloadError
 
-from ...shared.errorprotocol import logger
-from .errors import (TranscriptDownloadError, TranscriptError,
-                     TranscriptFetchingBlockedError, TranscriptFetchingError,
-                     TranscriptNotAvailibleError)
-
-log = logger()
+from vidsift.features.transcript.errors import (TranscriptDownloadError,
+                                                TranscriptError,
+                                                TranscriptFetchingBlockedError,
+                                                TranscriptFetchingError,
+                                                TranscriptNotAvailibleError)
 
 
 class TranscriptFetcher:
@@ -22,52 +23,50 @@ class TranscriptFetcher:
         try:
             fetched_transcript: FetchedTranscript = self.transcript_api.fetch(video_id=video_id)
         except CookieError as e:
-            log.log_error(f"CookieError while extracting the transcript of video id {video_id}: {e}")
             raise TranscriptFetchingError(str(e))
         except InvalidVideoId as e:
-            log.log_error(f"InvalidVideoId while extracting the transcript of video id {video_id}: {e}")
             raise TranscriptNotAvailibleError(str(e))
         except VideoUnavailable as e:
-            log.log_error(f"VideoUnavailable Error while extracting the transcript of video id {video_id}: {e}")
             raise TranscriptNotAvailibleError(str(e))
         except IpBlocked as e:
-            log.log_error(f"IPBlocked Error while extracting the transcript of video id {video_id}: {e}")
             raise TranscriptFetchingBlockedError(str(e))
         except RequestBlocked as e:
-            log.log_error(f"RequestBlocked Error while extracting the transcript of video id {video_id}: {e}")
             raise TranscriptFetchingBlockedError(str(e))
         except Exception as e:
-            log.log_error(f"Exception while extracting the transcript of video id {video_id}: {e}")
             raise TranscriptError(str(e))
         else:
             full_transcript: list = []
             for snippet in fetched_transcript:
                 full_transcript.append(snippet.text)
             return "\n".join(full_transcript)
-    
+ 
     def extract_transcript_yt_dlp(self, video_url: str) -> None:
-        ydl_opts = {
-            "writesubtitles": True,
+        ydl_opts: dict[str, Any] = {
             "writeautomaticsub": True,
+            "writesubtitles": True,
             "subtitlesformat": "vtt",
+            "cookiesfrombrowser": tuple(["firefox"]),
             "skip_download": True,
-            "sleep_requests": 3,
+            "sleep_interval_requests": 3,
             "outtmpl": "/tmp/%(id)s.%(lang)s.%(ext)s",
+            "remote-components": "ejs/github",
+            #"extractor_args": {
+            #    "youtube": {
+            #        "player_client": ["android"]
+            #    }
+            #}
         }
-        with YoutubeDL(ydl_opts) as ydl: # type: ignore
+        with YoutubeDL(ydl_opts) as ydl: 
             try:
                 ydl.extract_info(video_url, download=True)
             except DownloadError as e:
-                log.log_error(f"DownloadError: The transcript of {video_url} could not be downloaded: {e}")
                 raise TranscriptDownloadError(str(e))
             except DownloadCancelled as e:
-                log.log_warning(f"DownloadCancelled: The transcript of {video_url} could not be downloaded, it got cancelled: {e}")
                 raise TranscriptDownloadError(str(e))
             except Exception as e:
-                log.log_warning(f"Exception: The transcript of {video_url} could not be downloaded: {e}")
+                raise TranscriptError(str(e))
 
-
-
-
-
+if __name__ == "__main__":
+    tf: TranscriptFetcher = TranscriptFetcher()
+    tf.extract_transcript_yt_dlp(video_url="https://www.youtube.com/watch?v=scEDHsr3APg")
 

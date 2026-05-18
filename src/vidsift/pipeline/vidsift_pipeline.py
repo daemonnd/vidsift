@@ -14,31 +14,38 @@ What it does:
 
 
 # feature/transcript
-from ..features.transcript.errors import (TranscriptDownloadError,
-                                          TranscriptError,
-                                          TranscriptFetchingBlockedError,
-                                          TranscriptFetchingError,
-                                          TranscriptNotAvailibleError,
-                                          TranscriptNotFoundError,
-                                          VTTFileReadingError)
-from ..features.transcript.fetcher import TranscriptFetcher
-from ..features.transcript.vtt_transcript_extractor import \
+from vidsift.features.transcript.errors import (TranscriptDownloadError,
+                                                TranscriptError,
+                                                TranscriptFetchingBlockedError,
+                                                TranscriptFetchingError,
+                                                TranscriptNotAvailibleError,
+                                                TranscriptNotFoundError,
+                                                VTTFileReadingError)
+from vidsift.features.transcript.fetcher import TranscriptFetcher
+from vidsift.features.transcript.vtt_transcript_extractor import \
     VTTranscriptExtractor
+# video fetching
+from vidsift.ingestion.url_collector import UrlCollector
 # data
-from ..models.video import Video
+from vidsift.models import video
+from vidsift.models.video import Video
 # utils
-from ..shared.errorprotocol import logger
+from vidsift.shared.errorprotocol import logger
 
 log: logger = logger()
 
 class VidsiftOrchestrator:
-    def __init__(self) -> None:
+    def __init__(self, channel_id_list: list[str]) -> None:
+        # video fetching
+        self.url_collector: UrlCollector = UrlCollector(channel_id_list=channel_id_list)
         # transcript
         self.transcript_fetcher: TranscriptFetcher = TranscriptFetcher()
         self.vtt_transcript_extractor: VTTranscriptExtractor = VTTranscriptExtractor()
 
+    def fetch_videos(self) -> list[Video]:
+        return self.url_collector.parse_all_channels()
 
-    def fetch_and_download_transcript(self, video: Video) -> str | None:
+    def fetch_and_download_transcript(self, video: Video) -> str:
         transcript: str | None = None
         log.log_debug("Trying to fetch and download the transcript with yt-dlp...")
         transcript = self.fetch_and_download_transcript_yt_dlp(video)
@@ -47,7 +54,10 @@ class VidsiftOrchestrator:
             transcript = self.fetch_and_download_transcript_transcript_api(video)
             if transcript is None:
                 log.log_error(f"Failed to fetch the transcript of video {video.title} with url {video.url}")
+                raise TranscriptError(f"Both yt-dlp and youtube transcript api failed to fetch and download the transcript of video with video id {video.video_id}")
+            return transcript
         return transcript
+
 
     def fetch_and_download_transcript_yt_dlp(self, video: Video) -> str | None:
         # fetch the transcript and save it to a file
@@ -99,12 +109,6 @@ class VidsiftOrchestrator:
 
 
 if __name__ == "__main__":
-    vo = VidsiftOrchestrator()
-    video_object = Video(
-        title="Your Remote Desktop SUCKS!! Try this instead (FREE + Open Source)",
-        url="https://www.youtube.com/watch?v=EXL8mMUXs88",
-        author="NetworkChuck",
-        published="somedate",
-        video_id="EXL8mMUXs88"
-    )
-    print(vo.fetch_and_download_transcript(video_object))
+    vo = VidsiftOrchestrator(["UCX6OQ3DkcsbYNE6H8uQQuVA"])
+    videos: list[Video] = vo.fetch_videos()
+    vo.fetch_and_download_transcript(videos[1])

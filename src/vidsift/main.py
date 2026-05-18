@@ -9,8 +9,8 @@ Tasks:
 """
 import argparse
 
-from .config.parser import ConfigParser
-from .pipeline.vidsift_pipeline import VidsiftOrchestrator
+from vidsift.config.parser import ConfigParser
+from vidsift.pipeline.vidsift_pipeline import VidsiftOrchestrator
 
 
 class VidsiftCLI:
