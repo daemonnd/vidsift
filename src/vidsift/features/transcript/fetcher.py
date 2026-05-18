@@ -19,7 +19,16 @@ from vidsift.features.transcript.errors import (TranscriptDownloadError,
 class TranscriptFetcher:
     def __init__(self) -> None:
         self.transcript_api: YouTubeTranscriptApi = YouTubeTranscriptApi()
-    def extract_transcript(self, video_id: str) -> str:
+    def extract_transcript_transcript_api(self, video_id: str) -> str:
+        """
+            returns the fetched transcript as str or raises.
+            Raises:
+            - TranscriptFetchingError (CookieError)
+            - InvalidVideoId
+            - TranscriptNotAvailibleError
+            - TranscriptFetchingBlockedError
+            - TranscriptError
+        """
         try:
             fetched_transcript: FetchedTranscript = self.transcript_api.fetch(video_id=video_id)
         except CookieError as e:
@@ -41,6 +50,14 @@ class TranscriptFetcher:
             return "\n".join(full_transcript)
  
     def extract_transcript_yt_dlp(self, video_url: str) -> None:
+        """
+            Writes transcript vtt to a file under /tmp/
+            Returns:
+            - None
+            Raises:
+            - TranscriptDownloadError
+            - TranscriptError
+        """
         ydl_opts: dict[str, Any] = {
             "writeautomaticsub": True,
             "writesubtitles": True,
