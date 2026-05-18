@@ -6,7 +6,7 @@ from vidsift.pipeline.vidsift_pipeline import VidsiftOrchestrator
 
 @pytest.fixture
 def basic_orchestrator():
-    return VidsiftOrchestrator(["UC9x0AN7BWHpCDHSm9NiJFJQ","UCo71RUe6DX4w-Vd47rFLXPg"])
+    return VidsiftOrchestrator(["UCX6OQ3DkcsbYNE6H8uQQuVA", "UCV03SRZXJEz-hchIAogeJOg"])
 
 
 

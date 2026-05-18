@@ -15,5 +15,4 @@ def test_convert_vtt_to_string(set_up_extractor):
     with pytest.raises(TranscriptNotFoundError) as excinfo:
         set_up_extractor.convert_vtt_to_str(Path("/tmp/aslödjöfasjdölfjasldfjasldfj.vtt"))
     assert str(excinfo.value) == "No .vtt transcript found under /tmp/aslödjöfasjdölfjasldfjasldfj.vtt"
-    
 
