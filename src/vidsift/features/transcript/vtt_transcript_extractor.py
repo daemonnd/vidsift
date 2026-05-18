@@ -3,9 +3,6 @@ from pathlib import Path
 
 from vidsift.features.transcript.errors import (TranscriptNotFoundError,
                                                 VTTFileReadingError)
-from vidsift.shared.errorprotocol import logger
-
-log = logger()
 
 
 class VTTranscriptExtractor:
@@ -28,10 +25,8 @@ class VTTranscriptExtractor:
             with open(vtt_file) as file:
                 vtt_content = file.read()
         except FileNotFoundError:
-            log.log_error(f"No file found at {str(vtt_file)}.")
             raise TranscriptNotFoundError(f"No .vtt transcript found under {str(vtt_file)}")
         except PermissionError:
-            log.log_error(f"Reading permissions are missing for {str(vtt_file)}.")
             raise VTTFileReadingError(f"Reading permissions are missing for {str(vtt_file)}")
         else:
             vtt_content_list: list[str] = vtt_content.splitlines()

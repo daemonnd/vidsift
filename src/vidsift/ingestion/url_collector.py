@@ -1,10 +1,7 @@
 import feedparser
 
 from vidsift.models.video import Video
-from vidsift.shared.errorprotocol import logger
 from vidsift.shared.video_id_extractor import VideoIDExtractor
-
-log = logger()
 
 YOUTUBE_BASE_RSS_URL: str = "https://www.youtube.com/feeds/videos.xml?channel_id="
 id_extractor = VideoIDExtractor()
@@ -33,35 +30,29 @@ class UrlCollector:
         videos: list[Video] = []
         channel_id_dict: dict = {}
 
-        try:
-            for entry in result.entries:
-                # collects:
-                # title
-                # author
-                # link
-                # published
+        for entry in result.entries:
+            # collects:
+            # title
+            # author
+            # link
+            # published
 
-                # not add channel creation and shorts to the list
-                if entry.title == entry.author:
-                    continue
-                if "/shorts/" in entry.link:
-                    continue
+            # not add channel creation and shorts to the list
+            if entry.title == entry.author:
+                continue
+            if "/shorts/" in entry.link:
+                continue
 
-                channel_id_dict[channel_id] = {
-                    "link": {}
-                }
-                video = Video(
-                    title=str(entry.title), author=str(entry.author),
-                    url=str(entry.link),
-                    published=str(entry.published),
-                    video_id=id_extractor.extract_id(str(entry.link))
-                )
-                videos.append(video)
-        except KeyError as e:
-            log.log_error(f"KeyError while parsing one channel: One entry seems to be nonexistant: {e}")
-        except Exception as e:
-            log.log_error(f"Exception while parsing one channel: {e}")
-
+            channel_id_dict[channel_id] = {
+                "link": {}
+            }
+            video = Video(
+                title=str(entry.title), author=str(entry.author),
+                url=str(entry.link),
+                published=str(entry.published),
+                video_id=id_extractor.extract_id(str(entry.link))
+            )
+            videos.append(video)
         return videos
 
 
