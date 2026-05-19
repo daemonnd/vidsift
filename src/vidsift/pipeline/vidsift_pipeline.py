@@ -13,22 +13,10 @@ What it does:
 
 
 
-# feature/transcript
-from vidsift.features.transcript.errors import (TranscriptDownloadError,
-                                                TranscriptError,
-                                                TranscriptFetchingBlockedError,
-                                                TranscriptFetchingError,
-                                                TranscriptNotAvailibleError,
-                                                TranscriptNotFoundError,
-                                                VTTFileReadingError)
-from vidsift.features.transcript.fetcher import TranscriptFetcher
-from vidsift.features.transcript.vtt_transcripty_parser import \
-    VTTranscriptParser
-# video fetching
+from vidsift.features.transcript.errors import TranscriptError
 from vidsift.ingestion.url_collector import UrlCollector
-# data
 from vidsift.models.video import Video
-# utils
+from vidsift.services.transcript_service import TranscriptService
 from vidsift.shared.errorprotocol import logger
 
 log: logger = logger()
@@ -38,79 +26,28 @@ class VidsiftOrchestrator:
         # video fetching
         self.url_collector: UrlCollector = UrlCollector(channel_id_list=channel_id_list)
         # transcript
-        self.transcript_fetcher: TranscriptFetcher = TranscriptFetcher()
-        self.vtt_transcript_extractor: VTTranscriptParser = VTTranscriptParser()
+        self.transcript_service: TranscriptService = TranscriptService()
 
     def fetch_videos(self) -> list[Video]:
         return self.url_collector.parse_all_channels()
 
-    def get_transcript(self, video: Video):
-        return transcript_service.get_transcript(video)
 
-    def fetch_and_download_transcript(self, video: Video) -> str:
-        transcript: str | None = None
-        log.log_debug("Trying to fetch and download the transcript with yt-dlp...")
-        transcript = self.fetch_and_download_transcript_yt_dlp(video)
-        if transcript is None:
-            log.log_warning("Fetching and downloading the transcript with yt-dlp failed")
-            transcript = self.fetch_and_download_transcript_transcript_api(video)
-            if transcript is None:
-                log.log_error(f"Failed to fetch the transcript of video {video.title} with url {video.url}")
-                raise TranscriptError(f"Both yt-dlp and youtube transcript api failed to fetch and download the transcript of video with video id {video.video_id}")
-            return transcript
-        return transcript
-
-
-    def fetch_and_download_transcript_yt_dlp(self, video: Video) -> str | None:
-        # fetch the transcript and save it to a file
-        yt_dlp_error_start: str = "Error while fetching and downloading the transcript with yt-dlp:"
-        try:
-            self.transcript_fetcher.extract_transcript_yt_dlp(video_url=video.url)
-        except TranscriptDownloadError as e:
-            log.log_error(f"TranscriptDownloadError: {yt_dlp_error_start} {e}")
-        except TranscriptFetchingBlockedError as e:
-            log.log_error(f"TranscriptFetchingBlockedError: {yt_dlp_error_start} {e}")
-        except TranscriptFetchingError as e:
-            log.log_error(f"TranscriptFetchingError: {yt_dlp_error_start} {e}")
-        except TranscriptNotAvailibleError as e:
-            log.log_error(f"TranscriptNotAvailibleError: {yt_dlp_error_start} {e}")
-        except TranscriptError as e:
-            log.log_error(f"TranscriptError: {yt_dlp_error_start} {e}")
-        except Exception as e:
-            log.log_error(f"Exception: {yt_dlp_error_start} {e}")
-        else:
+    def run(self) -> None:
+        log.log_debug("Starting to fetch video data...")
+        video_list: list[Video] = self.url_collector.parse_all_channels()
+        print(f"video list: {video_list}")
+        log.log_debug("Starting to iterate over each video and perform the validation action...")
+        for vid in video_list:
             try:
-                # get the transcript out of the vtt file
-                return self.vtt_transcript_extractor.convert_vtt_to_str(self.vtt_transcript_extractor.find_vtt_file(video.video_id))
-            except TranscriptNotFoundError as e:
-                log.log_error(f"TranscriptNotFoundError: {yt_dlp_error_start} {e}")
-            except VTTFileReadingError as e:
-                log.log_error(f"VTTFileReadingError: {yt_dlp_error_start} {e}")
+                log.log_debug(f"Fetching the transcript of {vid.video_id}...")
+                transcript: str = self.transcript_service.get_transcript(vid)
+                print(transcript)
             except TranscriptError as e:
-                log.log_error(f"TranscriptError: {yt_dlp_error_start} {e}")
-            except Exception as e:
-                log.log_error(f"Exception: {yt_dlp_error_start} {e}")
+                log.log_error(f"TranscriptError: Each transcript fetching provider failed: {str(e)}")
 
-    def fetch_and_download_transcript_transcript_api(self, video: Video) -> str | None:
-        youtube_transcript_api_error_start: str = "Error while fetching and downloading the transcript with youtube transcript api:"
-        try:
-            log.log_debug("Trying to get the transcript with youtube_transcript_api...")
-            return self.transcript_fetcher.extract_transcript(video_id=video.video_id)
-        except TranscriptDownloadError as e:
-            log.log_error(f"TranscriptDownloadError: {youtube_transcript_api_error_start} {e}")
-        except TranscriptFetchingBlockedError as e:
-            log.log_error(f"TranscriptFetchingBlockedError: {youtube_transcript_api_error_start} {e}")
-        except TranscriptFetchingError as e:
-            log.log_error(f"TranscriptFetchingError: {youtube_transcript_api_error_start} {e}")
-        except TranscriptNotAvailibleError as e:
-            log.log_error(f"TranscriptNotAvailibleError: {youtube_transcript_api_error_start} {e}")
-        except TranscriptError as e:
-            log.log_error(f"TranscriptError: {youtube_transcript_api_error_start} {e}")
-        except Exception as e:
-            log.log_error(f"Exception: {youtube_transcript_api_error_start} {e}")
+
 
 
 if __name__ == "__main__":
     vo = VidsiftOrchestrator(["UCX6OQ3DkcsbYNE6H8uQQuVA"])
-    videos: list[Video] = vo.fetch_videos()
-    vo.fetch_and_download_transcript(videos[1])
+    vo.run()
