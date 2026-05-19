@@ -13,10 +13,13 @@ What it does:
 
 
 
+from sys import exit
+
 from vidsift.features.transcript.errors import TranscriptError
-from vidsift.ingestion.url_collector import UrlCollector
+from vidsift.ingestion.errors import VideoDataCollectionError
 from vidsift.models.video import Video
 from vidsift.services.transcript_service import TranscriptService
+from vidsift.services.video_data_collection_service import VideoDataCollection
 from vidsift.shared.errorprotocol import logger
 
 log: logger = logger()
@@ -24,17 +27,22 @@ log: logger = logger()
 class VidsiftOrchestrator:
     def __init__(self, channel_id_list: list[str]) -> None:
         # video fetching
-        self.url_collector: UrlCollector = UrlCollector(channel_id_list=channel_id_list)
+        self.video_data_collector: VideoDataCollection = VideoDataCollection(channel_id_list=channel_id_list)
         # transcript
         self.transcript_service: TranscriptService = TranscriptService()
 
     def fetch_videos(self) -> list[Video]:
-        return self.url_collector.parse_all_channels()
+        return self.video_data_collector.get_videos_to_process()
 
 
     def run(self) -> None:
         log.log_debug("Starting to fetch video data...")
-        video_list: list[Video] = self.url_collector.parse_all_channels()
+        try:
+            video_list: list[Video] = self.fetch_videos()
+        except VideoDataCollectionError as e:
+            log.log_critical(f"VideoDataCollectionError: Failed to collect the necessary data about the videos to process: {str(e)}")
+            log.log_info("Exiting because no data exist...")
+            exit(1)
         print(f"video list: {video_list}")
         log.log_debug("Starting to iterate over each video and perform the validation action...")
         for vid in video_list:
@@ -49,5 +57,5 @@ class VidsiftOrchestrator:
 
 
 if __name__ == "__main__":
-    vo = VidsiftOrchestrator(["UCX6OQ3DkcsbYNE6H8uQQuVA"])
+    vo = VidsiftOrchestrator(["UC9x0AN7BWHpCDHSm9NiJFJQ"])
     vo.run()
