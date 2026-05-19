@@ -57,20 +57,20 @@ class YoutubeTranscriptApiProvider(TranscriptProvider):
             - TranscriptError
         """
         try:
-            log.log_debug(f"Fetching the transcript of video with id {video.video_id} with provider yt-dlp...")
+            log.log_debug(f"Fetching the transcript of video with id {video.video_id} with provider YouTube transcript API...")
             return self.extract_transcript_transcript_api(video_id=video.video_id)
         except TranscriptFetchingBlockedError as e:
             log.log_warning(f"TranscriptFetchingBlockedError: {str(e)}")
-            raise TranscriptError(f"Failed to get the transcript of {video.video_id} with yt-dlp")
+            raise TranscriptError(f"Failed to get the transcript of {video.video_id} with YouTube transcript API")
         except InvalidVideoId as e:
             log.log_warning(f"InvalidVideoId: {str(e)}")
-            raise TranscriptError(f"Failed to get the transcript of {video.video_id} with yt-dlp")
+            raise TranscriptError(f"Failed to get the transcript of {video.video_id} with YouTube transcript API")
         except TranscriptFetchingError as e:
             log.log_warning(f"TranscriptFetchingError: {str(e)}")
-            raise TranscriptError(f"Failed to get the transcript of {video.video_id} with yt-dlp")
+            raise TranscriptError(f"Failed to get the transcript of {video.video_id} with YouTube transcript API")
         except TranscriptNotAvailibleError as e:
             log.log_warning(f"TranscriptNotAvailibleError: {str(e)}")
-            raise TranscriptError(f"Failed to get the transcript of {video.video_id} with yt-dlp")
+            raise TranscriptError(f"Failed to get the transcript of {video.video_id} with YouTube transcript API")
         except TranscriptError as e:
             log.log_warning(f"TranscriptError: Failed to fetch and download the transcript of {video.video_id}: {str(e)}")
             raise TranscriptError(f"TranscriptError: Failed to download the transcript of {video.video_id}: {str(e)}")
