@@ -1,7 +1,14 @@
 import feedparser
+from feedparser import FeedParserDict
 
+from vidsift.ingestion.errors import (InvalidHTTPStatusError,
+                                      NonWellFormattedFeedError,
+                                      VideoDataCollectionError)
 from vidsift.models.video import Video
+from vidsift.shared.errorprotocol import logger
 from vidsift.shared.video_id_extractor import VideoIDExtractor
+
+log = logger()
 
 YOUTUBE_BASE_RSS_URL: str = "https://www.youtube.com/feeds/videos.xml?channel_id="
 id_extractor = VideoIDExtractor()
@@ -13,27 +20,35 @@ class UrlCollector:
         if self.channel_id_list == []:
             raise  ValueError("The channel ID list given for fetching video data is empty")
 
-    def parse_all_channels(self) -> list[Video]:
+
+
+    def fetch_feed(self, channel_id: str) -> FeedParserDict:
+        return feedparser.parse(f"{YOUTUBE_BASE_RSS_URL}{channel_id}")
+
+    def validate_feed_response(self, feed: FeedParserDict, channel_id: str) -> None:
         """
-        Method to iterate over the channel id list and put all the results in a list that gets returned
+        Method to validate if the feed is okay, if not it raises
+        Raises:
+        - InvalidHTTPStatusError if HTTP status is not 200
+        - NonWellFormattedFeedError if feed is unwell parsed
         """
-        self.video_list: list[Video] = []
-        for channel in self.channel_id_list:
-            self.video_list.extend(self.parse_one_channel(channel))
+        if feed.status != 200:
+            raise InvalidHTTPStatusError(f"The HTTP status of {YOUTUBE_BASE_RSS_URL}{channel_id} is {feed.status}, which is not 200")
+        if feed.bozo == 1:
+            raise NonWellFormattedFeedError(f"Bozo of {YOUTUBE_BASE_RSS_URL}{channel_id} is 1, indicating that the feed is non-well-formed")
 
-        return self.video_list
 
-
-    def parse_one_channel(self,  channel_id: str) -> list[Video]:
+    def parse_one_channel(self,  feed: FeedParserDict) -> list[Video]:
         """
         Method to get a list of Video objects of one channel
+        Raises:
+        - InvalidHTTPStatusError if the status is not 200
         """
-        result = feedparser.parse(f"{YOUTUBE_BASE_RSS_URL}{channel_id}")
 
         videos: list[Video] = []
-        channel_id_dict: dict = {}
+        #channel_id_dict: dict = {}
 
-        for entry in result.entries:
+        for entry in feed.entries:
             # collects:
             # title
             # author
@@ -46,9 +61,9 @@ class UrlCollector:
             if "/shorts/" in entry.link:
                 continue
 
-            channel_id_dict[channel_id] = {
-                "link": {}
-            }
+            #channel_id_dict[channel_id] = {
+            #"link": {}
+            #}
             video = Video(
                 title=str(entry.title), author=str(entry.author),
                 url=str(entry.link),
