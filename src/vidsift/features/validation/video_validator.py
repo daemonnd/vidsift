@@ -24,23 +24,23 @@ class VideoValidator:
         with open(self.validation_file, "r") as f:
             self.validation_system_prompt: str = f.read()
 
-    def validate_video(self, transcript: str) -> str | None:
+    def validate_video(self, transcript: str) -> str:
         response: ChatResponse = chat(model=self.model, messages=[
             {
                 'role': 'user',
                 'content': self.generate_final_prompt(transcript=transcript),
             },
         ])
+        if response.message.content is None:
+            raise EmptyAIResponseError("The AI anwer is empty")
         return response.message.content
 
     """
     Function to validate the AI response, converting it to an integer between 0 and 100
     to have something to work with later when downloading/summarizing/doing nothing with the video
     """
-    def validate_ai_response(self, ai_response: str | None) -> int:
+    def validate_ai_response(self, ai_response: str) -> int:
         try:
-            if ai_response is None:
-                raise EmptyAIResponseError("Because the AI response is empty, the video validation failed")
             ai_response_score: int = int(ai_response)
         except ValueError:
             raise InvalidAIResponseFormatError(f"The AI output is {ai_response}, which is not a valid integer")
@@ -82,6 +82,5 @@ if __name__ == "__main__":
     vv.validate_ai_response("-1")
     vv.validate_ai_response("$")
     vv.validate_ai_response("4.4")
-    vv.validate_ai_response(None)
     print("\n")
     print(vv.validate_video(transcript))

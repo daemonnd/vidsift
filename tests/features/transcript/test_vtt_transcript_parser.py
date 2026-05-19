@@ -3,13 +3,13 @@ from pathlib import Path
 import pytest
 
 from vidsift.features.transcript.errors import TranscriptNotFoundError
-from vidsift.features.transcript.vtt_transcript_extractor import \
-    VTTranscriptExtractor
+from vidsift.features.transcript.vtt_transcripty_parser import \
+    VTTranscriptParser
 
 
 @pytest.fixture
 def set_up_extractor():
-    return VTTranscriptExtractor()
+    return VTTranscriptParser()
 
 def test_convert_vtt_to_string(set_up_extractor):
     with pytest.raises(TranscriptNotFoundError) as excinfo:

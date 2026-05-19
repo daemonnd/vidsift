@@ -19,7 +19,16 @@ from vidsift.features.transcript.errors import (TranscriptDownloadError,
 class TranscriptFetcher:
     def __init__(self) -> None:
         self.transcript_api: YouTubeTranscriptApi = YouTubeTranscriptApi()
-    def extract_transcript(self, video_id: str) -> str:
+    def extract_transcript_transcript_api(self, video_id: str) -> str:
+        """
+            returns the fetched transcript as str or raises.
+            Raises:
+            - TranscriptFetchingError (CookieError)
+            - InvalidVideoId
+            - TranscriptNotAvailibleError
+            - TranscriptFetchingBlockedError
+            - TranscriptError
+        """
         try:
             fetched_transcript: FetchedTranscript = self.transcript_api.fetch(video_id=video_id)
         except CookieError as e:
@@ -40,33 +49,5 @@ class TranscriptFetcher:
                 full_transcript.append(snippet.text)
             return "\n".join(full_transcript)
  
-    def extract_transcript_yt_dlp(self, video_url: str) -> None:
-        ydl_opts: dict[str, Any] = {
-            "writeautomaticsub": True,
-            "writesubtitles": True,
-            "subtitlesformat": "vtt",
-            "cookiesfrombrowser": tuple(["firefox"]),
-            "skip_download": True,
-            "sleep_interval_requests": 3,
-            "outtmpl": "/tmp/%(id)s.%(lang)s.%(ext)s",
-            "remote-components": "ejs/github",
-            #"extractor_args": {
-            #    "youtube": {
-            #        "player_client": ["android"]
-            #    }
-            #}
-        }
-        with YoutubeDL(ydl_opts) as ydl: 
-            try:
-                ydl.extract_info(video_url, download=True)
-            except DownloadError as e:
-                raise TranscriptDownloadError(str(e))
-            except DownloadCancelled as e:
-                raise TranscriptDownloadError(str(e))
-            except Exception as e:
-                raise TranscriptError(str(e))
 
-if __name__ == "__main__":
-    tf: TranscriptFetcher = TranscriptFetcher()
-    tf.extract_transcript_yt_dlp(video_url="https://www.youtube.com/watch?v=scEDHsr3APg")
 
