@@ -16,6 +16,7 @@ class VideoDataCollection:
         if not self.channel_id_list:
             raise VideoDataCollectionError("The given channel id list is empty, no data can be collected")
 
+    @log.log
     def get_videos_to_process(self, ) -> list[Video]:
         video_list: list[Video] = []
         data_collector: UrlCollector = UrlCollector(channel_id_list=self.channel_id_list)

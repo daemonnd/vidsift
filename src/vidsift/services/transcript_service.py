@@ -14,6 +14,7 @@ class TranscriptService:
     def __init__(self) -> None:
         self.providers: list[TranscriptProvider] = [YtDlpTranscriptProvider(), YoutubeTranscriptApiProvider()]
 
+    @log.log
     def get_transcript(self, video: Video) -> str:
         for provider in self.providers:
             try:
