@@ -11,7 +11,7 @@ from vidsift.models.video import Video
 
 config_parser: ConfigParser = ConfigParser()
 
-class VideoValidator:
+class TranscriptValidator:
     def __init__(self, video: Video, model: str = "qwen3.6:27b") -> None:
         """
         raises:
@@ -75,12 +75,3 @@ if __name__ == "__main__":
             published="20206-345-3-45",
             video_id="some video id"
     )
-    vv = VideoValidator(video=video)
-    vv.validate_ai_response("j")
-    vv.validate_ai_response("6")
-    vv.validate_ai_response("101")
-    vv.validate_ai_response("-1")
-    vv.validate_ai_response("$")
-    vv.validate_ai_response("4.4")
-    print("\n")
-    print(vv.validate_video(transcript))
