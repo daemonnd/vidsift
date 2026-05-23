@@ -1,5 +1,5 @@
 """
-    File for defining the format for a validation result
+File for defining the format for a validation result
 """
 from dataclasses import dataclass
 
