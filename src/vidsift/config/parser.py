@@ -11,6 +11,8 @@ VIDSIFT_CONFIG_DIR: Path = Path(Path.home()/".config"/"vidsift")
 
 MAX_ALLOWED_TITLE_CLICKBAIT_PHRASES: int = 2
 MAX_ALLOWED_TRANSCRIPT_CLICKBAIT_PHRASES: int = 10
+MAX_ALLOWED_TITLE_CAPITAL_RATIO: float = 0.5
+MAX_ALLOWED_TITLE_EMOJIS: int = 2
 
 class ConfigParser:
     def __init__(self) -> None:

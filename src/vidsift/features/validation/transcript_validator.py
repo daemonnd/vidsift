@@ -20,7 +20,7 @@ class TranscriptValidator:
         """
         self.model=model
         self.video: Video = video
-        self.validation_file: Path = Path(VIDSIFT_CONFIG_DIR / "prompts" / "validation.md")
+        self.validation_file: Path = Path(VIDSIFT_CONFIG_DIR / "prompts" / "transcript_validation.md")
         with open(self.validation_file, "r") as f:
             self.validation_system_prompt: str = f.read()
 
