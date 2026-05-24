@@ -1,5 +1,5 @@
 """
-    Custom Errors of vidsift related to video validation
+Custom Errors of vidsift related to video validation
 """
 
 class VideoValidationError(Exception):

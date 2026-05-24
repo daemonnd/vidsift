@@ -8,7 +8,12 @@ from vidsift.config.parser import (MAX_ALLOWED_TITLE_CAPITAL_RATIO,
                                    MAX_ALLOWED_TITLE_CLICKBAIT_PHRASES,
                                    MAX_ALLOWED_TITLE_EMOJIS,
                                    MAX_ALLOWED_TRANSCRIPT_CLICKBAIT_PHRASES)
+from vidsift.features.validation.errors import (EmptyAIResponseError,
+                                                InvalidAIResponseFormatError)
+from vidsift.features.validation.metadata_validator import MetadataValidator
 from vidsift.features.validation.pre_validation import PreValidator
+from vidsift.models.validation.metadata_validation_result import \
+    MetadataValidationResult
 from vidsift.models.validation.pre_validation_result import PreValidationResult
 from vidsift.models.validation.validation_result import ValidationResult
 from vidsift.models.video import Video
@@ -19,9 +24,10 @@ log: logger = logger()
 
 
 class VideoValidator:
-    def __init__(self) -> None:
+    def __init__(self, ai_model: str = "qwen3.5:9b") -> None:
         self.pre_validator: PreValidator = PreValidator()
         self.text_normalizer: TextNormalizer = TextNormalizer()
+        self.metadata_validator: MetadataValidator = MetadataValidator(model=ai_model)
 
     @log.log
     def pre_validate(self, vid: Video, raw_transcript: str) -> PreValidationResult:
@@ -75,6 +81,21 @@ class VideoValidator:
             log.log_info(f"Skipping Video with id {vid.video_id} because max allowed emojis in title amoung {MAX_ALLOWED_TITLE_EMOJIS} are exeeded with {pre_validation_result.title_emoji_count} using these emojis: {pre_validation_result.title_emoji_list}")
             return True
         return False
+
+    def validate_metadata(self, vid: Video) -> MetadataValidationResult:
+        """
+        Method to run the metadata validation that should output raw json, manages the execution of that with retries
+        """
+        for i in range(3):
+            try:
+                response: str = self.metadata_validator.validate_metadata(prompt=)
+                return self.metadata_validator.validate_ai_response(ai_response=response)
+            except EmptyAIResponseError as e:
+                log.log_warning(f"The AI response is empty: {str(e)}")
+                log.log_info(f"Starting attempt {i+1} of 3")
+            except InvalidAIResponseFormatError as e:
+                log.log_warning(f"The AI did output invalid JSON: {str(e)}")
+                log.log_info(f"Starting attempt {i+1} of 3")
 
 
     def validate_video(self, vid: Video, transcript: str) -> ValidationResult:

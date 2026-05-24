@@ -16,7 +16,7 @@ from vidsift.models.video import Video
 config_parser: ConfigParser = ConfigParser()
 
 class MetadataValidator:
-    def __init__(self, model: str = 'qwen3.5:9b') -> None:
+    def __init__(self, model: str) -> None:
         """
         raises:
         FileNotFoundError if validation prompt file not found
@@ -28,11 +28,20 @@ class MetadataValidator:
         with open(self.metadata_sys_prompt_file, "r") as f:
             self.validation_system_prompt: str = f.read()
 
-    def validate_metadata(self, vid: Video) -> str:
+        self.metadata_retry_prompt_file: Path = Path(VIDSIFT_CONFIG_DIR / "prompts" / "metadata_retry.md")
+        with open(self.metadata_retry_prompt_file, "r") as f:
+            self.retry_system_prompt: str = f.read()
+
+    def validate_metadata(self, prompt: str) -> str:
+        """
+        Method to run the AI against metadata, returns a string of JSON if it works.
+        Raises:
+        - EmptyAIResponseError if the AI response is empty
+        """
         response: ChatResponse = chat(model=self.model, messages=[
             {
                 'role': 'user',
-                'content': self.generate_final_prompt(vid=vid),
+                'content': prompt,
             },
         ])
         if response.message.content is None:
@@ -40,6 +49,15 @@ class MetadataValidator:
         return response.message.content
 
     def validate_ai_response(self, ai_response: str) -> MetadataValidationResult:
+        """
+        Method to validate the response of the AI.
+        That includes:
+        - checking wether the JSON is parsable
+        - checking wether the values in the JSON have the correct type
+        Raises:
+        InvalidAIResponseFormatError if JSON is invalid or JSON output structure is broken
+        """
+
         try:
             parsed_json = json.loads(ai_response)
             print(f"parsed json: {parsed_json}")
@@ -52,14 +70,30 @@ class MetadataValidator:
         except ValidationError as e:
             raise InvalidAIResponseFormatError(f"Wrong JSON output structure: {str(e)}")
 
-    def generate_final_prompt(self, vid: Video) -> str:
+    def generate_first_prompt(self, vid: Video) -> str:
         """
         Method to get the final prompt send to the AI, containing both the metadata and the system prompt
+        This method generates the prompt for the first try.
         """
-        return f"{self.validation_system_prompt.replace("$CUSTOM_CHANNEL_INSTRUCTIONS", config_parser.get_custom_instructions(creator=vid.author))}{vid}"
+        return f"""
+            {self.validation_system_prompt.replace("$CUSTOM_CHANNEL_INSTRUCTIONS", config_parser.get_custom_instructions(creator=vid.author))}
+            title: {vid.title}
+            author: {vid.author}
+            published: {vid.published}
+            url: {vid.url}
+            video ID: {vid.video_id}
+            """
+
+    def generate_retry_prompt(self, prev_ai_output: str, error_msg: str) -> str:
+        """
+        Method that instructs the AI to correct the JSONDecodeError or ValidationError that occured because of a previous failure
+        """
+        return f"""
+                {self.retry_system_prompt.replace("$ERROR_MESSAGE", error_msg).replace("$PREVIOUS_AI_OUTPUT", prev_ai_output)}
+                """
 
 if __name__ == "__main__":
-    mv = MetadataValidator()
+    mv = MetadataValidator("qwen3.5:9b")
     vid: Video = Video(
         title="test",
         url="https",
