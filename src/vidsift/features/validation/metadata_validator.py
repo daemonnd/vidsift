@@ -1,12 +1,16 @@
+import json
 from pathlib import Path
 
 from ollama import ChatResponse, chat
+from pydantic import ValidationError
 
 from vidsift.config.parser import VIDSIFT_CONFIG_DIR, ConfigParser
 from vidsift.features.validation.errors import (EmptyAIResponseError,
                                                 InvalidAIResponseFormatError,
                                                 InvalidScoreError,
                                                 VideoValidationError)
+from vidsift.models.validation.metadata_validation_result import \
+    MetadataValidationResult
 from vidsift.models.video import Video
 
 config_parser: ConfigParser = ConfigParser()
@@ -35,18 +39,18 @@ class MetadataValidator:
             raise EmptyAIResponseError("The AI anwer is empty")
         return response.message.content
 
-    def validate_ai_response(self, ai_response: str) -> int:
+    def validate_ai_response(self, ai_response: str) -> MetadataValidationResult:
         try:
-            ai_response_score: int = int(ai_response)
-        except ValueError:
-            raise InvalidAIResponseFormatError(f"The AI output is {ai_response}, which is not a valid integer")
-        except Exception as e:
-            raise VideoValidationError(f"{e}")
- 
-        # if it is actually a number that can be converted to an integer
-        if ai_response_score > 100 or ai_response_score < 0:
-            raise InvalidScoreError(f"The AI response score is {ai_response_score}, which is not between 0 and 100")
-        return ai_response_score
+            parsed_json = json.loads(ai_response)
+            print(f"parsed json: {parsed_json}")
+            validate_response = MetadataValidationResult.model_validate(parsed_json)
+            print("model json schema")
+            print(MetadataValidationResult.model_json_schema())
+            return validate_response
+        except json.JSONDecodeError as e:
+            raise InvalidAIResponseFormatError(f"AI output invalid, invalid JSON syntax: {str(e)}")
+        except ValidationError as e:
+            raise InvalidAIResponseFormatError(f"Wrong JSON output structure: {str(e)}")
 
     def generate_final_prompt(self, vid: Video) -> str:
         """
@@ -63,4 +67,7 @@ if __name__ == "__main__":
         published="alsdjl",
         video_id="asldjfld"
     )
+    ai_response = mv.validate_metadata(vid=vid)
+    print("validation result")
+    print(mv.validate_ai_response(ai_response=ai_response))
     print(f"the ai response is \n{mv.validate_metadata(vid=vid)}")
