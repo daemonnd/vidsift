@@ -49,16 +49,3 @@ class MetadataValidator:
 
 
 
-if __name__ == "__main__":
-    mv = MetadataValidator("qwen3.5:9b")
-    vid: Video = Video(
-        title="test",
-        url="https",
-        author="NetworkChuck",
-        published="alsdjl",
-        video_id="asldjfld"
-    )
-    ai_response = mv.validate_metadata(vid=vid)
-    print("validation result")
-    print(mv.validate_ai_response(ai_response=ai_response))
-    print(f"the ai response is \n{mv.validate_metadata(vid=vid)}")
