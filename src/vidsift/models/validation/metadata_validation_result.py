@@ -4,9 +4,9 @@ from pydantic import BaseModel, Field
 
 
 class MetadataValidationResult(BaseModel):
-    metadata_score: int = Field(ge=0, le=100)
-    topic_match_score: int = Field(ge=0, le=100)
-    confidence: int = Field(ge=0, le=100)
+    metadata_score: int = Field(ge=1, le=3)
+    topic_match_score: int = Field(ge=1, le=3)
+    confidence: int = Field(ge=1, le=3)
     flags: set[
             Literal[
             "fake_urgency",

@@ -11,24 +11,21 @@ Scoring rules:
 
 metadata_score:
 
-- 90-100 = educational, neutral, trustworthy tone, low hype
-- 70-89 = mostly trustworthy, minor excitement or marketing tone
-- 40-69 = noticeable sensationalism, weak educational value, exaggerated tone
-- 0-39 = spam-like, manipulative, excessive hype, fake urgency, misleading style
+- 3 = educational, neutral, trustworthy tone, low hype
+- 2 = mostly trustworthy, minor excitement or marketing tone
+- 1 = spam-like, manipulative, excessive hype, fake urgency, misleading style
 
 topic_match_score:
 
-- 90-100 = strongly matches liked topics
-- 70-89 = somewhat relevant
-- 40-69 = weak relevance
-- 0-39 = unrelated or strongly matches disliked patterns
+- 3 = strongly matches liked topics
+- 2 = somewhat relevant
+- 1 = unrelated or strongly matches disliked patterns
 
 confidence:
 
-- 90-100 = metadata is very clear
-- 70-89 = reasonably confident
-- 40-69 = uncertain or mixed signals
-- 0-39 = insufficient metadata
+- 3 = metadata is very clear
+- 2 = reasonably confident
+- 1 = uncertain, mixed signals, or insufficient metadata
 
 Important rules:
 
@@ -57,13 +54,13 @@ Output requirements:
 - No explanations outside JSON.
 - Do not output additional keys.
 - flags must only contain allowed flags.
-- All scores must be integers from 0 to 100.
+- All scores must be integers from 1 to 3.
 
 Required JSON schema:
 {
-  "metadata_score": 0,
-  "topic_match_score": 0,
-  "confidence": 0,
+  "metadata_score": 1,
+  "topic_match_score": 1,
+  "confidence": 1,
   "flags": [],
   "summary_reason": ""
 }

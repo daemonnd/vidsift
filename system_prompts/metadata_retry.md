@@ -4,9 +4,9 @@ Your task is to REPAIR the JSON so that it strictly matches the required schema 
 
 Required JSON schema:
 {
-  "metadata_score": 0,
-  "topic_match_score": 0,
-  "confidence": 0,
+  "metadata_score": 1,
+  "topic_match_score": 1,
+  "confidence": 1,
   "flags": [],
   "summary_reason": ""
 }
@@ -19,8 +19,9 @@ Allowed flags ONLY:
   "spam_tone",
   "suspicious_certainty",
   "low_topic_match"
+]
 
-Scoring values have to be between 0 and 100 and integers.
+Scoring values have to be integers between 1 and 3.
 
 You MUST:
 
@@ -47,4 +48,3 @@ Previous invalid AI output:
 $PREVIOUS_AI_OUTPUT
 
 Return ONLY the corrected JSON.
-

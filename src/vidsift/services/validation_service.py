@@ -47,7 +47,7 @@ class VideoValidator:
 
         # title uppercase ratio
         title_uppercase_chars: int = self.pre_validator.check_title_uppercase(title=title)
-        title_uppercase_ratio: float = (max(title_char_length, 1) * max(title_uppercase_chars, 1)) / 100 # to get the number in %
+        title_uppercase_ratio: float = (max(title_uppercase_chars, 1) / max(title_char_length, 1) * 100) # to get the result in percent
 
         # title emoji count and list
         title_emoji_count, title_emoji_list = self.pre_validator.get_emoji_count(title=title)
