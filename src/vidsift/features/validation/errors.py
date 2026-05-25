@@ -1,5 +1,5 @@
 """
-    Custom Errors of vidsift related to video validation
+Custom Errors of vidsift related to video validation
 """
 
 class VideoValidationError(Exception):
@@ -11,10 +11,6 @@ class InvalidAIResponseFormatError(VideoValidationError):
         super().__init__(*args)
 
 class EmptyAIResponseError(VideoValidationError):
-    def __init__(self, *args: object) -> None:
-        super().__init__(*args)
-
-class InvalidScoreError(VideoValidationError):
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
 

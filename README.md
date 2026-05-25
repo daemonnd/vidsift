@@ -2,16 +2,12 @@
 
 > **AI-powered YouTube feed filtering and transcript-based video validation.**
 
-
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Platform](https://img.shields.io/badge/platform-linux-lightgrey)
 ![CI](https://img.shields.io/github/actions/workflow/status/daemonnd/vidsift-python/ci.yml?label=CI\&logo=github)
 ![Last Commit](https://img.shields.io/github/last-commit/daemonnd/vidsift-python)
 ![Repo Size](https://img.shields.io/github/repo-size/daemonnd/vidsift-python)
 ![Maintained](https://img.shields.io/badge/maintained-yes-success)
-
-
-
 
 ---
 
@@ -35,7 +31,7 @@ The project is designed around:
 * minimal external dependencies
 * Linux-first development
 
-Unlike simple download scripts, `vidsift` separates ingestion, transcript handling, AI validation, summarization, orchestration, and shared utilities into isolated modules.
+`vidsift` is built as a step-by-step pipeline designed to keep data downloading and local AI processing separate.
 
 ---
 
@@ -225,8 +221,6 @@ Current configuration system:
 src/config/parser.py
 ```
 
-
-
 Possible future additions:
 
 * environment variable overrides
@@ -343,7 +337,7 @@ src/shared/errorprotocol.py
 
 Current error handling strategy (Not implemented yet):
 
-* 
+*
 
 ---
 
@@ -411,7 +405,6 @@ Potential future improvements:
 * caching
 * worker pools
 
-
 ---
 
 # Contributing
@@ -442,8 +435,6 @@ pytest
 ---
 
 # Versioning (No versions yet)
-
-
 
 ---
 
@@ -485,11 +476,7 @@ See `LICENSE`.
 
 ## Issues
 
-
-
 ## Discussions / Community
-
-
 
 ---
 

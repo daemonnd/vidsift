@@ -16,6 +16,8 @@ What it does:
 from sys import exit
 
 from vidsift.features.transcript.errors import TranscriptError
+from vidsift.features.validation.errors import VideoValidationError
+from vidsift.features.validation.video_validator import VideoValidator
 from vidsift.ingestion.errors import VideoDataCollectionError
 from vidsift.models.video import Video
 from vidsift.services.transcript_service import TranscriptService
@@ -31,14 +33,10 @@ class VidsiftOrchestrator:
         # transcript
         self.transcript_service: TranscriptService = TranscriptService()
 
-    def fetch_videos(self) -> list[Video]:
-        return self.video_data_collector.get_videos_to_process()
-
-
+    @log.log
     def run(self) -> None:
-        log.log_debug("Starting to fetch video data...")
         try:
-            video_list: list[Video] = self.fetch_videos()
+            video_list: list[Video] = self.video_data_collector.get_videos_to_process()
         except VideoDataCollectionError as e:
             log.log_critical(f"VideoDataCollectionError: Failed to collect the necessary data about the videos to process: {str(e)}")
             log.log_info("Exiting because no data exist...")
@@ -52,6 +50,8 @@ class VidsiftOrchestrator:
                 print(transcript)
             except TranscriptError as e:
                 log.log_error(f"TranscriptError: Each transcript fetching provider failed: {str(e)}")
+                log.log_info("Moving on to the next video because of the previous TranscriptError...")
+                continue
 
 
 

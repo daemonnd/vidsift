@@ -6,10 +6,12 @@ This is the file that is executed the first.
 """
 # importing the modules
 import logging
+from functools import wraps
+from io import StringIO
 from pathlib import Path
+
 from rich.console import Console
 from rich.text import Text
-from io import StringIO
 
 
 def get_style(message: str, levelname: str) -> str:
@@ -87,7 +89,7 @@ class logger:
                 "{levelname}: {message}",
                 style="{"
             )
-                
+
             self.file_handler.setFormatter(self.formatter)
             self.console_handler.setFormatter(self.consoleformatter)
             self.logger.setLevel(logging.DEBUG)
@@ -98,8 +100,8 @@ class logger:
         except Exception as e:
             log.log_error(f"Exception while initializing the logger: {e}")
             exit(1)
-        
-        
+
+
     def log_debug(self, msg: str) -> None:
         self.logger.debug(msg, stacklevel=logging.DEBUG)
     def log_info(self, msg: str) -> None:          
@@ -111,6 +113,18 @@ class logger:
     def log_critical(self, msg: str) -> None:
         self.logger.critical(msg, stacklevel=logging.CRITICAL)
 
+    def log(self, func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            self.log_debug(f"Calling {func.__name__}")
+
+            try:
+                return func(*args, **kwargs)
+
+            finally:
+                self.log_debug(f"Finished {func.__name__}")
+
+        return wrapper
     
 if __name__ == "__main__":
     print((str(Path(Path(__file__).parent.parent.parent / "ReMailD.log"))))
