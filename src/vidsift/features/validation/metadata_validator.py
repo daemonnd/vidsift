@@ -1,8 +1,5 @@
 import json
-from datetime import time
-from pathlib import Path
 
-from ollama import ChatResponse, chat
 from pydantic import ValidationError
 
 from vidsift.config.parser import VIDSIFT_CONFIG_DIR, ConfigParser
