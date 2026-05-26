@@ -17,7 +17,6 @@ from sys import exit
 
 from vidsift.features.transcript.errors import TranscriptError
 from vidsift.features.validation.errors import VideoValidationError
-from vidsift.features.validation.video_validator import VideoValidator
 from vidsift.ingestion.errors import VideoDataCollectionError
 from vidsift.models.video import Video
 from vidsift.services.transcript_service import TranscriptService
@@ -47,7 +46,6 @@ class VidsiftOrchestrator:
             try:
                 log.log_debug(f"Fetching the transcript of {vid.video_id}...")
                 transcript: str = self.transcript_service.get_transcript(vid)
-                print(transcript)
             except TranscriptError as e:
                 log.log_error(f"TranscriptError: Each transcript fetching provider failed: {str(e)}")
                 log.log_info("Moving on to the next video because of the previous TranscriptError...")
