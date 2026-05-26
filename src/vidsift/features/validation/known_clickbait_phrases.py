@@ -103,4 +103,5 @@ CLICKBAIT_TRANSCRIPT_PHRASES = [
     "urgent",
     "limited time",
     "act now",
+    "WOW",
 ]
