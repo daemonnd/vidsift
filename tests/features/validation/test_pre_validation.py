@@ -2,7 +2,8 @@ from pathlib import Path
 
 import pytest
 
-from vidsift.features.validation.pre_validation import PreValidator
+from vidsift.features.validation.pre_validation.metrics_counter import \
+    PreValidator
 from vidsift.models.video import Video
 
 
