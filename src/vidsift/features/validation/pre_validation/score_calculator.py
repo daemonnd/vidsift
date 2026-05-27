@@ -36,7 +36,9 @@ class PreValidationScoreCalculator:
             return 1.0, reason
 
         weak_signals = self.get_weak_signals(result)
-        return sum(weak_signals) / (WEIGHT_TITLE_EMOJI_RATIO + WEIGHT_TITLE_PUNCTUATION_RATIO + WEIGHT_TITLE_CLICKBAIT_RATIO + WEIGHT_TRANSCRIPT_CLICKBAIT_RATIO), ""
+        sum_weak_signals = sum(weak_signals)
+        sum_all_weights = WEIGHT_TITLE_EMOJI_RATIO + WEIGHT_TITLE_PUNCTUATION_RATIO + WEIGHT_TITLE_CLICKBAIT_RATIO + WEIGHT_TRANSCRIPT_CLICKBAIT_RATIO
+        return sum_weak_signals / sum_all_weights, f"{sum_weak_signals} weak signals weight out of {sum_all_weights} total weight which is {sum_weak_signals / sum_all_weights:.2f} score"
 
 
 
@@ -60,26 +62,24 @@ class PreValidationScoreCalculator:
         """
         Method to check if any of the pre-validation metrics are above the weak signal threshold, if so, return a list of the weak signals, otherwise return an empty list
         """
-        print()
-        print()
         weak_signals: list[float] = []
         if result.title_uppercase_ratio > WEAK_TITLE_UPPERCASE_RATIO:
-            print(f"title_uppercase_ratio is {result.title_uppercase_ratio}, which is above the weak signal threshold of {WEAK_TITLE_UPPERCASE_RATIO}")
+            #print(f"title_uppercase_ratio is {result.title_uppercase_ratio}, which is above the weak signal threshold of {WEAK_TITLE_UPPERCASE_RATIO}")
             weak_signals.append(WEIGHT_TITLE_UPPERCASE_RATIO)
         if result.title_punctuation_ratio > WEAK_TITLE_PUNCTUATION_RATIO:
-            print(f"title_punctuation_ratio is {result.title_punctuation_ratio}, which is above the weak signal threshold of {WEAK_TITLE_PUNCTUATION_RATIO}")
+            #print(f"title_punctuation_ratio is {result.title_punctuation_ratio}, which is above the weak signal threshold of {WEAK_TITLE_PUNCTUATION_RATIO}")
             weak_signals.append(WEIGHT_TITLE_PUNCTUATION_RATIO)
         if result.title_clickbait_ratio > WEAK_TITLE_CLICKBAIT_RATIO:
-            print(f"title_clickbait_ratio is {result.title_clickbait_ratio}, which is above the weak signal threshold of {WEAK_TITLE_CLICKBAIT_RATIO}")
+            #print(f"title_clickbait_ratio is {result.title_clickbait_ratio}, which is above the weak signal threshold of {WEAK_TITLE_CLICKBAIT_RATIO}")
             weak_signals.append(WEIGHT_TITLE_CLICKBAIT_RATIO)
         if result.title_emoji_ratio > WEAK_TITLE_EMOJI_RATIO:
-            print(f"title_emoji_ratio is {result.title_emoji_ratio}, which is above the weak signal threshold of {WEAK_TITLE_EMOJI_RATIO}")
+            #print(f"title_emoji_ratio is {result.title_emoji_ratio}, which is above the weak signal threshold of {WEAK_TITLE_EMOJI_RATIO}")
             weak_signals.append(WEIGHT_TITLE_EMOJI_RATIO)
         if result.transcript_clickbait_ratio > WEAK_TRANSCRIPT_CLICKBAIT_RATIO:
-            print(f"transcript_clickbait_ratio is {result.transcript_clickbait_ratio}, which is above the weak signal of {WEAK_TRANSCRIPT_CLICKBAIT_RATIO}")
+            #print(f"transcript_clickbait_ratio is {result.transcript_clickbait_ratio}, which is above the weak signal of {WEAK_TRANSCRIPT_CLICKBAIT_RATIO}")
             weak_signals.append(WEIGHT_TRANSCRIPT_CLICKBAIT_RATIO)
 
-        print(f"Weak signals: {weak_signals}")
+        #print(f"Weak signals: {weak_signals}")
         return weak_signals
 
 if __name__ == "__main__":
