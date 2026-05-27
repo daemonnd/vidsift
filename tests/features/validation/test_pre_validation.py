@@ -300,19 +300,20 @@ def test_get_emoji_ratio(set_up_validator):
     assert pre_validator.get_emoji_ratio(fvid_emoji_3.title) == 0.0
     assert pre_validator.get_emoji_ratio(fvid_full_signal_2.title) == 0.8571428571428571
 
-def test_count_title_clickbait_phrases(set_up_validator):
+def test_get_title_clickbait_phrase_ratio(set_up_validator):
     pre_validator: PreValidator = set_up_validator
-    assert pre_validator.count_title_clickbait_phrases(rvid1.title) == 0
-    assert pre_validator.count_title_clickbait_phrases(fvid_clickbait_1.title) == 1
-    assert pre_validator.count_title_clickbait_phrases(fvid_clickbait_2.title) == 0
-    assert pre_validator.count_title_clickbait_phrases(fvid_clickbait_3.title) == 2
-    assert pre_validator.count_title_clickbait_phrases(fvid_borderline_1.title) == 1
-    assert pre_validator.count_title_clickbait_phrases(fvid_full_signal_1.title) == 0
+    assert pre_validator.get_title_clickbait_phrase_ratio(rvid1.title) == 0
+    assert pre_validator.get_title_clickbait_phrase_ratio(fvid_clickbait_1.title) == 0.3333333333333333
+    assert pre_validator.get_title_clickbait_phrase_ratio(fvid_clickbait_2.title) == 0
+    assert pre_validator.get_title_clickbait_phrase_ratio(fvid_clickbait_3.title) == 0.5
+    assert pre_validator.get_title_clickbait_phrase_ratio(fvid_borderline_1.title) == 0.2
+    assert pre_validator.get_title_clickbait_phrase_ratio(fvid_full_signal_1.title) == 0
 
-def test_count_transcript_clickbait_phrases(set_up_validator):
+def test_get_transcript_clickbait_phrase_ratio(set_up_validator):
     pre_validator: PreValidator = set_up_validator
-    assert pre_validator.count_transcript_clickbait_phrases(rtranscript1) == 3
-    assert pre_validator.count_transcript_clickbait_phrases(rtranscript2) == 0
-    assert pre_validator.count_transcript_clickbait_phrases(ftranscript_clean_1) == 0
-    assert pre_validator.count_transcript_clickbait_phrases(ftranscript_clean_2) == 0
-    assert pre_validator.count_transcript_clickbait_phrases(ftranscript_transcript_1) == 5
+    assert pre_validator.get_transcript_clickbait_phrase_ratio(rtranscript1) == 0.0004369356248179435
+    assert pre_validator.get_transcript_clickbait_phrase_ratio(rtranscript2) == 0
+    assert pre_validator.get_transcript_clickbait_phrase_ratio(ftranscript_clean_1) == 0
+    assert pre_validator.get_transcript_clickbait_phrase_ratio(ftranscript_clean_2) == 0
+    assert pre_validator.get_transcript_clickbait_phrase_ratio(ftranscript_transcript_1) == 0.2777777777777778
+
