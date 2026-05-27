@@ -35,7 +35,6 @@ class PreValidator:
             self.compiled_transcript_patterns.append(re.compile(word_boundary_pattern))
 
 
-
     def get_title_uppercase_ratio(self, title: str) -> float:
         """
         get the title uppercase ratio (the number of uppercase chars devided by the number of letters)
@@ -62,11 +61,11 @@ class PreValidator:
         log.log_debug(f"Emoji list of title {title}: {emoji.emoji_list(title)}")
         return emoji.emoji_count(title) / max(len(title), 1)
 
-    def count_title_clickbait_phrases(self, title: str):
+    def get_title_clickbait_phrase_ratio(self, title: str):
         """
         Check how many known clickbait phrases there are int the video/title
         Returns:
-        number of founds in title number of findings in transcript
+        number of founds in title number of findings in transcript / number of words in title
         """
 
         lower_title: str = title.casefold()
@@ -77,13 +76,14 @@ class PreValidator:
             if compiled_pattern.search(lower_title):
                 clickbait_count += 1
 
-        return clickbait_count
+        print(f"Title clickbait count: {clickbait_count}, title word count: {len(title.split())}, ratio: {clickbait_count / max(len(title.split()), 1)}")
+        return clickbait_count / max(len(title.split()), 1)
 
-    def count_transcript_clickbait_phrases(self, transcript: str):
+    def get_transcript_clickbait_phrase_ratio(self, transcript: str) -> float:
         """
         Check how many known clickbait phrases there are int the video/transcript
         Returns:
-        number of founds in title number of findings in transcript
+        number of founds in title number of findings in transcript / number of words in transcript
         """
 
         lower_transcript: str = transcript.casefold()
@@ -94,21 +94,22 @@ class PreValidator:
             if compiled_pattern.search(lower_transcript):
                 clickbait_count += 1
 
-        return clickbait_count
+        print(f"Transcript clickbait count: {clickbait_count}, transcript word count: {len(transcript.split())}, ratio: {clickbait_count / max(len(transcript.split()), 1)}")
+        return clickbait_count / max(len(transcript.split()), 1)
 
     def build_pre_validation_features(self, vid: Video, transcript: str) -> PreValidationResult:
         """
         Build the pre validation features for the video
         Returns:
-        A dictionary with the pre validation features
+        a PreValidationResult object containing the pre validation features for the video
         """
 
         return PreValidationResult(
             title_uppercase_ratio=self.get_title_uppercase_ratio(vid.title),
             title_punctuation_ratio=self.get_title_punctuation_ratio(vid.title),
             title_emoji_ratio=self.get_emoji_ratio(vid.title),
-            title_clickbait_phrases=self.count_title_clickbait_phrases(vid.title),
-            transcript_clickbait_phrases=self.count_transcript_clickbait_phrases(transcript)
+            title_clickbait_ratio=self.get_title_clickbait_phrase_ratio(vid.title),
+            transcript_clickbait_ratio=self.get_transcript_clickbait_phrase_ratio(transcript)
         )
 
 
