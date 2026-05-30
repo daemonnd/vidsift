@@ -1,6 +1,7 @@
 import re
 from typing import Generator
 
+from vidsift.features.validation.errors import EmptyTranscriptError
 from vidsift.shared.text_normalizer import TextNormalizer
 
 
@@ -27,19 +28,29 @@ class TranscriptChunkGenerator:
             to_yield = ''.join(next_sentence)
             yield self.text_normalizer.normalize(re.sub("\n", " ", to_yield))  # Replace newlines with spaces in the yielded sentence
 
-    def build_chunks(self, sentences: Generator[str, None, None]):
+    def build_chunks(self, sentences: Generator[str, None, None]) -> Generator[tuple[str, int], None, None]:
+        """
+        Method to build chunks of the transcript from the sentences.
+        It respects sentence boundaries and ensures that each chunk does not exceed the specified character limit.
+        It raises an EmptyTranscriptError if the transcript is empty and cannot be chunked.
+        """
         current_chunk_sentences: list[str] = []
         char_count: int = 0
+        chunk_count: int = 0
 
         for sentence in sentences:
             current_chunk_sentences.append(sentence)
             char_count += len(sentence)
             if char_count >= self.char_chunk_size:
-                yield ''.join(current_chunk_sentences)
+                yield ''.join(current_chunk_sentences), chunk_count
                 current_chunk_sentences = []
                 char_count = 0
+                chunk_count += 1
         if current_chunk_sentences:
-            yield ''.join(current_chunk_sentences)  # Yield any remaining sentences as the last chunk
+            yield ''.join(current_chunk_sentences), chunk_count
+            chunk_count += 1
+        if not chunk_count:
+            raise EmptyTranscriptError("The transcript is empty and cannot be chunked.")
 
 
 
