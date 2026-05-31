@@ -2,13 +2,10 @@ import json
 
 from pydantic import ValidationError
 
-from vidsift.config.parser import VIDSIFT_CONFIG_DIR, ConfigParser
-from vidsift.features.validation.errors import (EmptyAIResponseError,
-                                                InvalidAIResponseFormatError)
+from vidsift.config.parser import ConfigParser
+from vidsift.features.validation.errors import InvalidAIResponseFormatError
 from vidsift.models.validation.metadata_validation_result import \
     MetadataValidationResult
-from vidsift.models.video import Video
-from vidsift.shared.ai_runner import AIUsageManager
 
 config_parser: ConfigParser = ConfigParser()
 

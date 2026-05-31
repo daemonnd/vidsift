@@ -2,7 +2,6 @@
 File for managing the validation process and returning the score of the video
 """
 from dataclasses import asdict
-from pprint import pprint
 
 from vidsift.config.parser import ConfigParser
 from vidsift.features.validation.errors import (EmptyAIResponseError,
@@ -18,7 +17,7 @@ from vidsift.models.validation.metadata_validation_result import \
 from vidsift.models.validation.pre_validation_result import PreValidationResult
 from vidsift.models.validation.validation_result import ValidationResult
 from vidsift.models.video import Video
-from vidsift.shared.ai_runner import AIUsageManager
+from vidsift.shared.AI.run_model import AIUsageManager
 from vidsift.shared.errorprotocol import logger
 from vidsift.shared.text_normalizer import TextNormalizer
 
