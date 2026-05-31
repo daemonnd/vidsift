@@ -10,11 +10,15 @@ from vidsift.features.validation.pre_validation.metrics_counter import \
     PreValidator
 from vidsift.features.validation.pre_validation.score_calculator import \
     PreValidationScoreCalculator
+from vidsift.features.validation.transcript_validator.transcript_chunk_provider import \
+    TranscriptChunkProvider
 from vidsift.models.ai_json_requirements import (AIJSONBaseRequirements,
                                                  AIJSONRuntimeRequirements)
 from vidsift.models.validation.metadata_validation_result import \
     MetadataValidationResult
 from vidsift.models.validation.pre_validation_result import PreValidationResult
+from vidsift.models.validation.transcript_validation_result import \
+    TranscriptValidationResult
 from vidsift.models.validation.validation_result import ValidationResult
 from vidsift.models.video import Video
 from vidsift.shared.AI.errors import AIError
@@ -71,7 +75,7 @@ class VideoValidator:
                 system_prompt_filename="metadata_validation.md",
                 retry_system_filename="metadata_retry.md",
                 output_format_instance=MetadataValidationResult
-                )
+            )
         )
         try:
             return ai_manager.run_ai_pipeline(
@@ -84,21 +88,53 @@ class VideoValidator:
             )
         except AIError as e:
             log.log_error(f"AIError during metadata validation: {str(e)}")
+            raise VideoValidationError(f"Metadata validation failed for video with id {vid.video_id} due to AI error: {str(e)}")
 
 
-        def validate_video(self, vid: Video, transcript: str) -> ValidationResult:
-            # pre-validate
-            if not self.pre_validate(vid=vid, raw_transcript=transcript):
-                log.log_info(f"The video with id {vid.video_id} contains signs for exessive clickbait, skipping")
-                return ValidationResult(metadata_score=-1, total_transcript_score=-1, flags= ["excessive_clickbait_signs"])
-            else:
-                log.log_info(f"The video with id {vid.video_id} does not contain strong signs of clickbait, moving to metadata validation")
+    def validate_transcript(self, vid: Video, transcript: str) -> TranscriptValidationResult:
+        """
+        Method to run the transcript validation that should output raw json, manages the execution of that with retries
+        """
+        chunks: str = TranscriptChunkProvider().get_necessary_chunks(transcript=transcript)
+        ai_manager: AIJsonOutputManager = AIJsonOutputManager(
+            requirements=AIJSONBaseRequirements(
+                system_prompt_filename="transcript_validation.md",
+                retry_system_filename="transcript_retry.md",
+                output_format_instance=TranscriptValidationResult
+            )
+        )
+        try:
+            return ai_manager.run_ai_pipeline(
+                AIJSONRuntimeRequirements(
+                    ai_model="qwen3.5:9b",
+                    first_attempt_pattern="$CUSTOM_CHANNEL_INSTRUCTIONS",
+                    first_attempt_replacement=config_parser.get_custom_instructions(vid.author),
+                    first_attempt_append=f"\n{chunks}",
+                )
+            )
+        except AIError as e:
+            log.log_error(f"AIError during transcript validation: {str(e)}")
+            raise VideoValidationError(f"Transcript validation failed for video with id {vid.video_id} due to AI error: {str(e)}")
 
-            metadata_validation_result: MetadataValidationResult = self.validate_metadata(vid=vid)
+
+
+    def validate_video(self, vid: Video, transcript: str) -> ValidationResult:
+        # pre-validate
+        if not self.pre_validate(vid=vid, raw_transcript=transcript):
+            log.log_info(f"The video with id {vid.video_id} contains signs for exessive clickbait, skipping")
+            return ValidationResult(metadata_score=-1, total_transcript_score=-1, flags= ["excessive_clickbait_signs"])
+        else:
+            log.log_info(f"The video with id {vid.video_id} does not contain strong signs of clickbait, moving to metadata validation")
+
+        metadata_validation_result: MetadataValidationResult = self.validate_metadata(vid=vid)
 
 if __name__ == "__main__":
     vv = VideoValidator()
     vid = Video(title="Iiiiiii😀iiii", url="lasjdlas", author="NetworkChuck", published="aaioueopr", video_id="sadkasdjfl")
     transcript = ". or no python. Python is a programming language. it is really popular. me "
     print(vv.pre_validate(vid=vid, raw_transcript=transcript))
-    print(vv.validate_metadata(vid=vid))
+    with open("/home/user/projects/python/vidsift/fake-transcript.txt", "r") as f:
+        transcript = f.read()
+    result = vv.validate_transcript(vid=vid, transcript=transcript)
+    print("RESULT:")
+    print(result)
