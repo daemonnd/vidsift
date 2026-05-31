@@ -12,6 +12,7 @@ class AIJSONBaseRequirements:
     output_format_instance: MetadataValidationResult | ValidationResult
     
 
+@dataclass
 class AIJSONRuntimeRequirements:
     ai_model: str
 

@@ -10,12 +10,15 @@ from vidsift.features.validation.pre_validation.metrics_counter import \
     PreValidator
 from vidsift.features.validation.pre_validation.score_calculator import \
     PreValidationScoreCalculator
+from vidsift.models.ai_json_requirements import (AIJSONBaseRequirements,
+                                                 AIJSONRuntimeRequirements)
 from vidsift.models.validation.metadata_validation_result import \
     MetadataValidationResult
 from vidsift.models.validation.pre_validation_result import PreValidationResult
 from vidsift.models.validation.validation_result import ValidationResult
 from vidsift.models.video import Video
-from vidsift.shared.AI.run_model import AIUsageManager
+from vidsift.shared.AI.errors import AIError
+from vidsift.shared.AI.json_output_manager import AIJsonOutputManager
 from vidsift.shared.errorprotocol import logger
 from vidsift.shared.text_normalizer import TextNormalizer
 
@@ -63,60 +66,39 @@ class VideoValidator:
         """
         Method to run the metadata validation that should output raw json, manages the execution of that with retries
         """
-        validation_ai: AIUsageManager = AIUsageManager("metadata_validation.md")
-        retry_system_ai: AIUsageManager = AIUsageManager("metadata_retry.md")
-        ai_executor: AIUsageManager = AIUsageManager("")
-        for i in range(3):
-            log.log_info(f"Starting attempt {i+1} of 3")
-
-            # on the first attempt
-            if i == 0:
-                # get the prompt
-                prompt: str = validation_ai.generate_prompt(
-                    pattern="$CUSTOM_CHANNEL_INSTRUCTIONS", 
-                    replacement=config_parser.get_custom_instructions(creator=vid.author),
-                    append=f"title: {vid.title}\nauthor: {vid.author}\nurl: {vid.url}\nvideo ID: {vid.video_id}"
+        ai_manager: AIJsonOutputManager = AIJsonOutputManager(
+            requirements=AIJSONBaseRequirements(
+                system_prompt_filename="metadata_validation.md",
+                retry_system_filename="metadata_retry.md",
+                output_format_instance=MetadataValidationResult
                 )
-                print(f"prompt: {prompt}")
+        )
+        try:
+            return ai_manager.run_ai_pipeline(
+                AIJSONRuntimeRequirements(
+                    ai_model="qwen3.5:9b",
+                    first_attempt_pattern="$CUSTOM_CHANNEL_INSTRUCTIONS",
+                    first_attempt_replacement=config_parser.get_custom_instructions(vid.author),
+                    first_attempt_append=f"title: {vid.title}\nauthor: {vid.author}\nurl: {vid.url}\nvideo ID: {vid.video_id}",
+                )
+            )
+        except AIError as e:
+            log.log_error(f"AIError during metadata validation: {str(e)}")
 
-            # for the attempts that come after, when response and error message exist
+
+        def validate_video(self, vid: Video, transcript: str) -> ValidationResult:
+            # pre-validate
+            if not self.pre_validate(vid=vid, raw_transcript=transcript):
+                log.log_info(f"The video with id {vid.video_id} contains signs for exessive clickbait, skipping")
+                return ValidationResult(metadata_score=-1, total_transcript_score=-1, flags= ["excessive_clickbait_signs"])
             else:
-                # get the prompt
-                prompt: str = retry_system_ai.generate_prompt(
-                            system_prompt=retry_system_ai.generate_prompt(
-                            pattern="$ERROR_MESSAGE",
-                            replacement=error_msg,
-                        ),
-                        pattern="$PREVIOUS_AI_OUTPUT",
-                        replacement=response,
-                    )
-                print(f"prompt: {prompt}")
-            try:
-                response: str = ai_executor.run_ai(prompt=prompt, model="qwen3.5:9b")
-                print(f"response: {response}")
-                return self.metadata_validator.validate_ai_response(ai_response=response)
-            except EmptyAIResponseError as e:
-                error_msg: str = str(e)
-                response: str = ""
-                log.log_warning(f"EmptyAIResponseError: {str(e)}")
-            except InvalidAIResponseFormatError as e:
-                error_msg: str = str(e)
-                log.log_warning(f"The AI did output invalid JSON: {str(e)}")
-        raise VideoValidationError("After 3 attempts, the AI output does not match the required JSON")
+                log.log_info(f"The video with id {vid.video_id} does not contain strong signs of clickbait, moving to metadata validation")
 
-
-    def validate_video(self, vid: Video, transcript: str) -> ValidationResult:
-        # pre-validate
-        if not self.pre_validate(vid=vid, raw_transcript=transcript):
-            log.log_info(f"The video with id {vid.video_id} contains signs for exessive clickbait, skipping")
-            return ValidationResult(metadata_score=-1, total_transcript_score=-1, flags= ["excessive_clickbait_signs"])
-        else:
-            log.log_info(f"The video with id {vid.video_id} does not contain strong signs of clickbait, moving to metadata validation")
-
-        metadata_validation_result: MetadataValidationResult = self.validate_metadata(vid=vid)
+            metadata_validation_result: MetadataValidationResult = self.validate_metadata(vid=vid)
 
 if __name__ == "__main__":
     vv = VideoValidator()
     vid = Video(title="Iiiiiii😀iiii", url="lasjdlas", author="NetworkChuck", published="aaioueopr", video_id="sadkasdjfl")
     transcript = ". or no python. Python is a programming language. it is really popular. me "
     print(vv.pre_validate(vid=vid, raw_transcript=transcript))
+    print(vv.validate_metadata(vid=vid))

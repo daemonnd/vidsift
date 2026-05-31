@@ -5,8 +5,6 @@ from pydantic import ValidationError
 from vidsift.config.parser import MAX_ALLOWED_AI_JSON_OUTPUT_RUNS, ConfigParser
 from vidsift.models.ai_json_requirements import (AIJSONBaseRequirements,
                                                  AIJSONRuntimeRequirements)
-from vidsift.models.validation.metadata_validation_result import \
-    MetadataValidationResult
 from vidsift.shared.AI.errors import (AIError, EmptyAIResponseError,
                                       InvalidAIResponseFormatError)
 from vidsift.shared.AI.run_model import AIUsageManager
