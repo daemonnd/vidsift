@@ -60,7 +60,7 @@ class TranscriptChunkProvider:
     def get_necessary_chunks(self, transcript: str) -> str:
         """
         Method to get the necessary chunks of the transcript for validation.
-        Returns a tuple of the list of the first two chunks, the list of the last two chunks, and one middle chunk.
+        Returns a string containing the first two chunks, the middle chunk (if applicable), and the last two chunks of the transcript for validation.
         """
         first_chunks, last_chunks, chunk_index = self.collect_chunk_metadata(transcript=transcript)
         first_chunks, last_chunks = self.remove_duplication(

@@ -21,7 +21,7 @@ class AIJsonOutputManager:
         self.retry_system_filename: str = requirements.retry_system_filename
     def run_ai_pipeline(self, requirements: AIJSONRuntimeRequirements):
         """
-        Method to run the metadata validation that should output raw json, manages the execution of that with retries
+        Method to run the AI pipeline to get a valid JSON output from the AI, with retries if the output is not valid.
         """
         validation_ai: AIUsageManager = AIUsageManager(self.system_prompt_filename)
         retry_system_ai: AIUsageManager = AIUsageManager(self.retry_system_filename)
