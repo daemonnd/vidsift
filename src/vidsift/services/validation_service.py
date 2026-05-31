@@ -69,6 +69,8 @@ class VideoValidator:
     def validate_metadata(self, vid: Video) -> MetadataValidationResult:
         """
         Method to run the metadata validation that should output raw json, manages the execution of that with retries
+        Raises:
+        VideoValidationError: If the AI fails to validate the metadata after the maximum number of retries, or if any unexpected error occurs during the validation process.
         """
         ai_manager: AIJsonOutputManager = AIJsonOutputManager(
             requirements=AIJSONBaseRequirements(
@@ -91,11 +93,16 @@ class VideoValidator:
             raise VideoValidationError(f"Metadata validation failed for video with id {vid.video_id} due to AI error: {str(e)}")
 
 
-    def validate_transcript(self, vid: Video, transcript: str) -> TranscriptValidationResult:
+    def validate_transcript(self, vid: Video, raw_transcript: str) -> TranscriptValidationResult:
         """
         Method to run the transcript validation that should output raw json, manages the execution of that with retries
+        Raises:
+        VideoValidationError: If the AI fails to validate the transcript after the maximum number of retries, or if any unexpected error occurs during the validation process.
         """
+        transcript: str = self.text_normalizer.normalize(raw_transcript)
+
         chunks: str = TranscriptChunkProvider().get_necessary_chunks(transcript=transcript)
+
         ai_manager: AIJsonOutputManager = AIJsonOutputManager(
             requirements=AIJSONBaseRequirements(
                 system_prompt_filename="transcript_validation.md",
@@ -135,6 +142,6 @@ if __name__ == "__main__":
     print(vv.pre_validate(vid=vid, raw_transcript=transcript))
     with open("/home/user/projects/python/vidsift/fake-transcript.txt", "r") as f:
         transcript = f.read()
-    result = vv.validate_transcript(vid=vid, transcript=transcript)
+    result = vv.validate_transcript(vid=vid, raw_transcript=transcript)
     print("RESULT:")
     print(result)
