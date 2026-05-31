@@ -10,13 +10,13 @@ from vidsift.models.validation.metadata_validation_result import \
 config_parser: ConfigParser = ConfigParser()
 
 class MetadataValidator:
-    def __init__(self, model: str) -> None:
+    def __init__(self) -> None:
         """
         raises:
         FileNotFoundError if validation prompt file not found
         PermissionError if validation prompt file does not have reading persimmsions
         """
-        self.model=model
+        pass
 
 
     def validate_ai_response(self, ai_response: str) -> MetadataValidationResult:

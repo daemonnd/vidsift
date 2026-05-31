@@ -4,9 +4,7 @@ File for managing the validation process and returning the score of the video
 from dataclasses import asdict
 
 from vidsift.config.parser import ConfigParser
-from vidsift.features.validation.errors import (EmptyAIResponseError,
-                                                InvalidAIResponseFormatError,
-                                                VideoValidationError)
+from vidsift.features.validation.errors import VideoValidationError
 from vidsift.features.validation.metadata_validator import MetadataValidator
 from vidsift.features.validation.pre_validation.metrics_counter import \
     PreValidator
@@ -26,10 +24,10 @@ config_parser: ConfigParser = ConfigParser()
 
 
 class VideoValidator:
-    def __init__(self, ai_model: str = "qwen3.5:9b") -> None:
+    def __init__(self) -> None:
         self.pre_validator: PreValidator = PreValidator()
         self.text_normalizer: TextNormalizer = TextNormalizer()
-        self.metadata_validator: MetadataValidator = MetadataValidator(model=ai_model)
+        self.metadata_validator: MetadataValidator = MetadataValidator()
         self.pre_validation_score_calculator: PreValidationScoreCalculator = PreValidationScoreCalculator()
 
     @log.log

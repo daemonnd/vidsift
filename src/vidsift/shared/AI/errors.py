@@ -1,17 +1,12 @@
-"""
-Custom Errors of vidsift related to video validation
-"""
 
-class VideoValidationError(Exception):
+class AIError(Exception):
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
 
-
-class NoMiddleChunkError(VideoValidationError):
+class InvalidAIResponseFormatError(AIError):
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
 
-class EmptyTranscriptError(VideoValidationError):
+class EmptyAIResponseError(AIError):
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
-

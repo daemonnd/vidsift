@@ -1,11 +1,10 @@
 """
 File for defining the format for a validation result
 """
-from dataclasses import dataclass
+from pydantic import BaseModel
 
 
-@dataclass
-class ValidationResult:
-    metadata_score: int
+class ValidationResult(BaseModel):
+    metadata_score: int 
     total_transcript_score: int
     flags: list[str]
