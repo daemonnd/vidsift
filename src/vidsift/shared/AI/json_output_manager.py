@@ -26,13 +26,12 @@ class AIJsonOutputManager:
         validation_ai: AIUsageManager = AIUsageManager(self.system_prompt_filename)
         retry_system_ai: AIUsageManager = AIUsageManager(self.retry_system_filename)
         ai_executor: AIUsageManager = AIUsageManager("")
+        use_full_validate: bool = True
         for i in range(MAX_ALLOWED_AI_JSON_OUTPUT_RUNS):
             log.log_info(f"Starting attempt {i+1} of {MAX_ALLOWED_AI_JSON_OUTPUT_RUNS}")
 
-            # on the first attempt
-            full_validate_condition: list[int] = [0]
-            print(f"full validate condition: {full_validate_condition}")
-            if i in full_validate_condition:
+            # on the first attempt or if the ai response is empty (use_full_validate is true)
+            if use_full_validate:
                 # get the prompt
                 prompt: str = validation_ai.generate_prompt(
                     pattern=requirements.first_attempt_pattern, 
@@ -61,9 +60,10 @@ class AIJsonOutputManager:
                 error_msg: str = str(e)
                 response: str = ""
                 log.log_warning(f"EmptyAIResponseError: {str(e)}")
-                full_validate_condition.append(i+1)
-                print(f"full validate condition: {full_validate_condition}")
+                use_full_validate: bool = True
+                print(f"use_full_validate: {use_full_validate}")
             except InvalidAIResponseFormatError as e:
+                use_full_validate: bool = False
                 error_msg: str = str(e)
                 log.log_warning(f"The AI did output invalid JSON: {str(e)}")
         raise AIError("After 3 attempts, the AI output does not match the required JSON")
