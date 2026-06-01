@@ -7,7 +7,7 @@ from pathlib import Path
 from ollama import ChatResponse, chat
 
 from vidsift.config.parser import VIDSIFT_CONFIG_DIR
-from vidsift.features.validation.errors import EmptyAIResponseError
+from vidsift.shared.AI.errors import EmptyAIResponseError
 
 
 class AIUsageManager:
@@ -51,13 +51,15 @@ class AIUsageManager:
         Raises:
         - EmptyAIResponseError if the AI response is empty
         """
-        response: ChatResponse = chat(model=model, messages=[
+        response: ChatResponse = chat(model=model,  messages=[
             {
                 'role': 'user',
                 'content': prompt,
             },
         ])
-        if response.message.content is None:
+        if not response.message.content:
+            raise EmptyAIResponseError("The AI anwer is empty")
+        if response.message.content.replace(" ", "") == "":
             raise EmptyAIResponseError("The AI anwer is empty")
         return response.message.content
 

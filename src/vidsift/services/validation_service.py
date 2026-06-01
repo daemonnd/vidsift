@@ -2,23 +2,27 @@
 File for managing the validation process and returning the score of the video
 """
 from dataclasses import asdict
-from pprint import pprint
 
 from vidsift.config.parser import ConfigParser
-from vidsift.features.validation.errors import (EmptyAIResponseError,
-                                                InvalidAIResponseFormatError,
-                                                VideoValidationError)
+from vidsift.features.validation.errors import VideoValidationError
 from vidsift.features.validation.metadata_validator import MetadataValidator
 from vidsift.features.validation.pre_validation.metrics_counter import \
     PreValidator
 from vidsift.features.validation.pre_validation.score_calculator import \
     PreValidationScoreCalculator
+from vidsift.features.validation.transcript_validator.transcript_chunk_provider import \
+    TranscriptChunkProvider
+from vidsift.models.ai_json_requirements import (AIJSONBaseRequirements,
+                                                 AIJSONRuntimeRequirements)
 from vidsift.models.validation.metadata_validation_result import \
     MetadataValidationResult
 from vidsift.models.validation.pre_validation_result import PreValidationResult
+from vidsift.models.validation.transcript_validation_result import \
+    TranscriptValidationResult
 from vidsift.models.validation.validation_result import ValidationResult
 from vidsift.models.video import Video
-from vidsift.shared.ai_runner import AIUsageManager
+from vidsift.shared.AI.errors import AIError
+from vidsift.shared.AI.json_output_manager import AIJsonOutputManager
 from vidsift.shared.errorprotocol import logger
 from vidsift.shared.text_normalizer import TextNormalizer
 
@@ -27,10 +31,10 @@ config_parser: ConfigParser = ConfigParser()
 
 
 class VideoValidator:
-    def __init__(self, ai_model: str = "qwen3.5:9b") -> None:
+    def __init__(self) -> None:
         self.pre_validator: PreValidator = PreValidator()
         self.text_normalizer: TextNormalizer = TextNormalizer()
-        self.metadata_validator: MetadataValidator = MetadataValidator(model=ai_model)
+        self.metadata_validator: MetadataValidator = MetadataValidator()
         self.pre_validation_score_calculator: PreValidationScoreCalculator = PreValidationScoreCalculator()
 
     @log.log
@@ -65,47 +69,60 @@ class VideoValidator:
     def validate_metadata(self, vid: Video) -> MetadataValidationResult:
         """
         Method to run the metadata validation that should output raw json, manages the execution of that with retries
+        Raises:
+        VideoValidationError: If the AI fails to validate the metadata after the maximum number of retries, or if any unexpected error occurs during the validation process.
         """
-        validation_ai: AIUsageManager = AIUsageManager("metadata_validation.md")
-        retry_system_ai: AIUsageManager = AIUsageManager("metadata_retry.md")
-        ai_executor: AIUsageManager = AIUsageManager("")
-        for i in range(3):
-            log.log_info(f"Starting attempt {i+1} of 3")
-
-            # on the first attempt
-            if i == 0:
-                # get the prompt
-                prompt: str = validation_ai.generate_prompt(
-                    pattern="$CUSTOM_CHANNEL_INSTRUCTIONS", 
-                    replacement=config_parser.get_custom_instructions(creator=vid.author),
-                    append=f"title: {vid.title}\nauthor: {vid.author}\nurl: {vid.url}\nvideo ID: {vid.video_id}"
+        ai_manager: AIJsonOutputManager = AIJsonOutputManager(
+            requirements=AIJSONBaseRequirements(
+                system_prompt_filename="metadata_validation.md",
+                retry_system_filename="metadata_retry.md",
+                output_format_instance=MetadataValidationResult
+            )
+        )
+        try:
+            return ai_manager.run_ai_pipeline(
+                AIJSONRuntimeRequirements(
+                    ai_model="qwen3.5:9b",
+                    first_attempt_pattern="$CUSTOM_CHANNEL_INSTRUCTIONS",
+                    first_attempt_replacement=config_parser.get_custom_instructions(vid.author),
+                    first_attempt_append=f"title: {vid.title}\nauthor: {vid.author}\nurl: {vid.url}\nvideo ID: {vid.video_id}",
                 )
-                print(f"prompt: {prompt}")
+            )
+        except AIError as e:
+            log.log_error(f"AIError during metadata validation: {str(e)}")
+            raise VideoValidationError(f"Metadata validation failed for video with id {vid.video_id} due to AI error: {str(e)}")
 
-            # for the attempts that come after, when response and error message exist
-            else:
-                # get the prompt
-                prompt: str = retry_system_ai.generate_prompt(
-                            system_prompt=retry_system_ai.generate_prompt(
-                            pattern="$ERROR_MESSAGE",
-                            replacement=error_msg,
-                        ),
-                        pattern="$PREVIOUS_AI_OUTPUT",
-                        replacement=response,
-                    )
-                print(f"prompt: {prompt}")
-            try:
-                response: str = ai_executor.run_ai(prompt=prompt, model="qwen3.5:9b")
-                print(f"response: {response}")
-                return self.metadata_validator.validate_ai_response(ai_response=response)
-            except EmptyAIResponseError as e:
-                error_msg: str = str(e)
-                response: str = ""
-                log.log_warning(f"EmptyAIResponseError: {str(e)}")
-            except InvalidAIResponseFormatError as e:
-                error_msg: str = str(e)
-                log.log_warning(f"The AI did output invalid JSON: {str(e)}")
-        raise VideoValidationError("After 3 attempts, the AI output does not match the required JSON")
+
+    def validate_transcript(self, vid: Video, raw_transcript: str) -> TranscriptValidationResult:
+        """
+        Method to run the transcript validation that should output raw json, manages the execution of that with retries
+        Raises:
+        VideoValidationError: If the AI fails to validate the transcript after the maximum number of retries, or if any unexpected error occurs during the validation process.
+        """
+        transcript: str = self.text_normalizer.normalize(raw_transcript)
+
+        chunks: str = TranscriptChunkProvider().get_necessary_chunks(transcript=transcript)
+
+        ai_manager: AIJsonOutputManager = AIJsonOutputManager(
+            requirements=AIJSONBaseRequirements(
+                system_prompt_filename="transcript_validation.md",
+                retry_system_filename="transcript_retry.md",
+                output_format_instance=TranscriptValidationResult
+            )
+        )
+        try:
+            return ai_manager.run_ai_pipeline(
+                AIJSONRuntimeRequirements(
+                    ai_model="qwen3.5:9b",
+                    first_attempt_pattern="$CUSTOM_CHANNEL_INSTRUCTIONS",
+                    first_attempt_replacement=config_parser.get_custom_instructions(vid.author),
+                    first_attempt_append=f"\n{chunks}",
+                )
+            )
+        except AIError as e:
+            log.log_error(f"AIError during transcript validation: {str(e)}")
+            raise VideoValidationError(f"Transcript validation failed for video with id {vid.video_id} due to AI error: {str(e)}")
+
 
 
     def validate_video(self, vid: Video, transcript: str) -> ValidationResult:
@@ -123,3 +140,8 @@ if __name__ == "__main__":
     vid = Video(title="Iiiiiii😀iiii", url="lasjdlas", author="NetworkChuck", published="aaioueopr", video_id="sadkasdjfl")
     transcript = ". or no python. Python is a programming language. it is really popular. me "
     print(vv.pre_validate(vid=vid, raw_transcript=transcript))
+    with open("/home/user/projects/python/vidsift/fake-transcript.txt", "r") as f:
+        transcript = f.read()
+    result = vv.validate_transcript(vid=vid, raw_transcript=transcript)
+    print("RESULT:")
+    print(result)
