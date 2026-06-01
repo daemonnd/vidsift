@@ -87,23 +87,3 @@ Middle Chunk:
 Last Chunks:
 {"\n".join(last_chunks)}
 """
-
-
-
-
-
-
-
-if __name__ == "__main__":
-    tcp = TranscriptChunkProvider()
-    transcript = """This is a sample transcript. 
-    It contains multiple sentences. 
-    Each sentence will be processed.
-    This is the fourth sentence.
-    And this is the fifth sentence.
-    This is one random midldle sentence that is quite long and should be split into multiple chunks because it exceeds the chunk size.
-    This sentence is really long and should be included in the last chunk,
-    and also it ends with a period."""
-    transcript = "this is simple."
-    transcript = ""
-    print(tcp.get_necessary_chunks(transcript=transcript))
