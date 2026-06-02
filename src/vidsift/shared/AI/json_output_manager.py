@@ -54,7 +54,7 @@ class AIJsonOutputManager:
                     )
             try:
                 response: str = ai_executor.run_ai(prompt=prompt, model=requirements.ai_model)
-                print(f"response: {response}")
+                log.log_debug(f"response: {response}")
                 return self.validate_ai_response(ai_response=response)
             except EmptyAIResponseError as e:
                 error_msg: str = str(e)
@@ -81,10 +81,9 @@ class AIJsonOutputManager:
 
         try:
             parsed_json = json.loads(ai_response)
-            print(f"parsed json: {parsed_json}")
+            log.log_debug(f"parsed json: {parsed_json}")
             validate_response = self.output_format_instance.model_validate(parsed_json)
-            print("model json schema")
-            print(self.output_format_instance.model_json_schema())
+            log.log_debug(f"Model JSON Schema: \n{self.output_format_instance.model_json_schema()}")
             return validate_response
         except json.JSONDecodeError as e:
             raise InvalidAIResponseFormatError(f"AI output invalid, invalid JSON syntax: {str(e)}")
