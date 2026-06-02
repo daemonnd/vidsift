@@ -14,7 +14,7 @@ What it does:
 
 from dataclasses import asdict
 from sys import exit
-from typing import Literal
+from typing import Generator, Literal
 
 from vidsift.features.transcript.errors import TranscriptError
 from vidsift.features.validation.errors import VideoValidationError
@@ -39,7 +39,7 @@ class VidsiftOrchestrator:
     @log.log
     def run(self) -> None:
         try:
-            video_list: list[Video] = self.video_data_collector.get_videos_to_process()
+            video_list: Generator[Video, None, None] = self.video_data_collector.get_videos_to_process()
         except VideoDataCollectionError as e:
             log.log_critical(f"VideoDataCollectionError: Failed to collect the necessary data about the videos to process: {str(e)}")
             log.log_info("Exiting because no data exist...")

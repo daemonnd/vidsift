@@ -37,6 +37,7 @@ class VideoValidator:
         self.text_normalizer: TextNormalizer = TextNormalizer()
         self.metadata_validator: MetadataValidator = MetadataValidator()
         self.pre_validation_score_calculator: PreValidationScoreCalculator = PreValidationScoreCalculator()
+        self.transcript_chunk_provider: TranscriptChunkProvider = TranscriptChunkProvider()
 
     @log.log
     def pre_validate(self, vid: Video, transcript: str) -> bool:
@@ -100,7 +101,7 @@ class VideoValidator:
         VideoValidationError: If the AI fails to validate the transcript after the maximum number of retries, or if any unexpected error occurs during the validation process.
         """
 
-        chunks: str = TranscriptChunkProvider().get_necessary_chunks(transcript=transcript)
+        chunks: str = self.transcript_chunk_provider.get_necessary_chunks(transcript=transcript)
 
         ai_manager: AIJsonOutputManager = AIJsonOutputManager(
             requirements=AIJSONBaseRequirements(

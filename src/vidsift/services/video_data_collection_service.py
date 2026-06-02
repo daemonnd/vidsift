@@ -33,12 +33,12 @@ class VideoDataCollection:
             except InvalidHTTPStatusError as e:
                 log.log_warning(f"InvalidHTTPStatusError: The HTTP Status of the feed seems to be corrupt: {str(e)}")
                 log.log_warning(f"Failed to fetch the data of channel {channel}")
-                raise VideoDataCollectionError("No data got collected because of previous erros")
+                continue
             except NonWellFormattedFeedError as e:
                 log.log_warning(f"NonWellFormattedFeedError: {str(e)}")
                 log.log_warning(f"Failed to fetch the data of channel {channel}")
-                raise VideoDataCollectionError("No data got collected because of previous erros")
+                continue
             except VideoDataCollectionError as e:
                 log.log_warning(f"VideoDataCollectionError: {str(e)}")
                 log.log_warning(f"Failed to fetch the data of channel {channel}")
-                raise VideoDataCollectionError("No data got collected because of previous erros")
+                continue
