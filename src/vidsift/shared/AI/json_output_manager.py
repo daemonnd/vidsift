@@ -32,16 +32,17 @@ class AIJsonOutputManager:
 
             # on the first attempt or if the ai response is empty (use_full_validate is true)
             if use_full_validate:
+                log.log_info("Using full validation for this attempt")
                 # get the prompt
                 prompt: str = validation_ai.generate_prompt(
                     pattern=requirements.first_attempt_pattern, 
                     replacement=requirements.first_attempt_replacement,
                     append=requirements.first_attempt_append,
                 )
-                print(f"prompt: {prompt}")
 
             # for the attempts that come after, when response and error message exist
             else:
+                log.log_info("Using retry validation for this attempt")
                 # get the prompt
                 prompt: str = retry_system_ai.generate_prompt(
                             system_prompt=retry_system_ai.generate_prompt(
@@ -51,7 +52,6 @@ class AIJsonOutputManager:
                         pattern="$PREVIOUS_AI_OUTPUT",
                         replacement=response,
                     )
-                print(f"prompt: {prompt}")
             try:
                 response: str = ai_executor.run_ai(prompt=prompt, model=requirements.ai_model)
                 print(f"response: {response}")
@@ -61,11 +61,12 @@ class AIJsonOutputManager:
                 response: str = ""
                 log.log_warning(f"EmptyAIResponseError: {str(e)}")
                 use_full_validate: bool = True
-                print(f"use_full_validate: {use_full_validate}")
+                continue
             except InvalidAIResponseFormatError as e:
                 use_full_validate: bool = False
                 error_msg: str = str(e)
                 log.log_warning(f"The AI did output invalid JSON: {str(e)}")
+                continue
         raise AIError("After 3 attempts, the AI output does not match the required JSON")
 
     def validate_ai_response(self, ai_response: str):
@@ -89,6 +90,4 @@ class AIJsonOutputManager:
             raise InvalidAIResponseFormatError(f"AI output invalid, invalid JSON syntax: {str(e)}")
         except ValidationError as e:
             raise InvalidAIResponseFormatError(f"Wrong JSON output structure: {str(e)}")
-
-
 
