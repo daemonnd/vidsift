@@ -12,8 +12,9 @@ What it does:
 """
 
 
-
+from dataclasses import asdict
 from sys import exit
+from typing import Literal
 
 from vidsift.features.transcript.errors import TranscriptError
 from vidsift.features.validation.errors import VideoValidationError
@@ -51,17 +52,17 @@ class VidsiftOrchestrator:
                 log.log_debug(f"Fetching the transcript of {vid.video_id}...")
                 transcript: str = self.transcript_service.get_transcript(vid)
 
-                # pre-validate the video, if it seems to be clickbait based on the pre-validation step, skip it and move on to the next one
-                log.log_debug(f"Starting the validation process of {vid.video_id}...")
-                pre_validation_result: bool = self.video_validator.pre_validate(vid, transcript)
-                if not pre_validation_result:
-                    log.log_info(f"Video with id {vid.video_id} is likely to be clickbait based on the pre-validation step. Moving on to the next video...")
-                    continue
+                # validate the video and get the action to perform
+                validation_result: Literal["download", "summarize", "discard"] = self.video_validator.validate_video(vid=vid, raw_transcript=transcript)
 
-                # validate the video based on the metadata and the transcript with AI
-                metadata_validation_result = self.video_validator.validate_metadata(vid=vid)
-
-                transcript_validation_result = self.video_validator.validate_transcript(vid=vid, raw_transcript=transcript)
+                # take the appropriate action based on the validation result
+                match validation_result:
+                    case "download":
+                        log.log_info(f"Video {asdict(vid)} with id {vid.video_id} will be downloaded.")
+                    case "summarize":
+                        log.log_info(f"Video {asdict(vid)} with id {vid.video_id} will be summarized.")
+                    case "discard":
+                        log.log_info(f"Video {asdict(vid)} with id {vid.video_id} will be discarded.")
             except TranscriptError as e:
                 log.log_error(f"TranscriptError: Each transcript fetching provider failed: {str(e)}")
                 log.log_info("Moving on to the next video because of the previous TranscriptError...")

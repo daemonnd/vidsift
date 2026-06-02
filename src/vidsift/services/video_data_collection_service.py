@@ -1,3 +1,5 @@
+from typing import Generator
+
 from feedparser import FeedParserDict
 
 from vidsift.ingestion.errors import (InvalidHTTPStatusError,
@@ -17,25 +19,26 @@ class VideoDataCollection:
             raise VideoDataCollectionError("The given channel id list is empty, no data can be collected")
 
     @log.log
-    def get_videos_to_process(self, ) -> list[Video]:
-        video_list: list[Video] = []
+    def get_videos_to_process(self, ) -> Generator[Video, None, None]:
         data_collector: UrlCollector = UrlCollector(channel_id_list=self.channel_id_list)
 
         for channel in self.channel_id_list:
             try:
                 feed: FeedParserDict = data_collector.fetch_feed(channel_id=channel)
                 data_collector.validate_feed_response(feed, channel)
-                video_list.extend(data_collector.parse_one_channel(feed=feed))
+                current_channel_data = data_collector.parse_one_channel(feed=feed)
+                for video in current_channel_data:
+                    yield video
 
             except InvalidHTTPStatusError as e:
                 log.log_warning(f"InvalidHTTPStatusError: The HTTP Status of the feed seems to be corrupt: {str(e)}")
                 log.log_warning(f"Failed to fetch the data of channel {channel}")
+                raise VideoDataCollectionError("No data got collected because of previous erros")
             except NonWellFormattedFeedError as e:
                 log.log_warning(f"NonWellFormattedFeedError: {str(e)}")
                 log.log_warning(f"Failed to fetch the data of channel {channel}")
+                raise VideoDataCollectionError("No data got collected because of previous erros")
             except VideoDataCollectionError as e:
                 log.log_warning(f"VideoDataCollectionError: {str(e)}")
                 log.log_warning(f"Failed to fetch the data of channel {channel}")
-        if not video_list:
-            raise VideoDataCollectionError("No data got collected because of previous erros")
-        return video_list
+                raise VideoDataCollectionError("No data got collected because of previous erros")

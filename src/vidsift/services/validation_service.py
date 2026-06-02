@@ -167,9 +167,16 @@ class VideoValidator:
 
 if __name__ == "__main__":
     vv = VideoValidator()
-    vid = Video(title="Perplexity computer is awesome!", url="lasjdlas", author="NetworkChuck", published="aaioueopr", video_id="sadkasdjfl")
+    vid = Video(title="i didn't want to like this", url="https://www.youtube.com/watch?v=G3jvn7n-68Y", author="NetworkChuck", published="32497954", video_id="G3jvn7n-68Y")
     with open("/home/user/projects/python/vidsift/fake-transcript.txt", "r") as f:
         transcript = f.read()
+    with open("/home/user/projects/python/vidsift/test_data/test_transcript2.txt", "r") as f:
+        transcript2 = f.read()
     result = vv.validate_video(vid=vid, raw_transcript=transcript)
     print("RESULT:")
     print(result)
+    vid = Video(title="i didn't want to like this", url="https://www.youtube.com/watch?v=G3jvn7n-68Y", author="NetworkChuck", published="32497954", video_id="G3jvn7n-68Y")
+    result2 = vv.validate_video(vid=vid, raw_transcript=transcript2)
+    print("RESULT2:")
+    print(result2)
+
