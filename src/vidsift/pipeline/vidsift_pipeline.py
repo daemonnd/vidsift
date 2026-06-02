@@ -39,14 +39,13 @@ class VidsiftOrchestrator:
     @log.log
     def run(self) -> None:
         try:
-            video_list: Generator[Video, None, None] = self.video_data_collector.get_videos_to_process()
+            video_generator: Generator[Video, None, None] = self.video_data_collector.get_videos_to_process()
         except VideoDataCollectionError as e:
             log.log_critical(f"VideoDataCollectionError: Failed to collect the necessary data about the videos to process: {str(e)}")
             log.log_info("Exiting because no data exist...")
             exit(1)
-        print(f"video list: {video_list}")
         log.log_debug("Starting to iterate over each video and perform the validation action...")
-        for vid in video_list:
+        for vid in video_generator:
             try:
                 # fetch the transcript
                 log.log_debug(f"Fetching the transcript of {vid.video_id}...")
