@@ -2,14 +2,15 @@ from dataclasses import dataclass
 
 from vidsift.models.validation.metadata_validation_result import \
     MetadataValidationResult
-from vidsift.models.validation.validation_result import ValidationResult
+from vidsift.models.validation.transcript_validation_result import \
+    TranscriptValidationResult
 
 
 @dataclass
 class AIJSONBaseRequirements:
     system_prompt_filename: str
     retry_system_filename: str
-    output_format_instance: MetadataValidationResult | ValidationResult
+    output_format_instance: MetadataValidationResult | TranscriptValidationResult
     
 
 @dataclass

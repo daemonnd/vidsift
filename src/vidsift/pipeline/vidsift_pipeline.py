@@ -12,8 +12,9 @@ What it does:
 """
 
 
-
+from dataclasses import asdict
 from sys import exit
+from typing import Generator, Literal
 
 from vidsift.features.transcript.errors import TranscriptError
 from vidsift.features.validation.errors import VideoValidationError
@@ -38,30 +39,29 @@ class VidsiftOrchestrator:
     @log.log
     def run(self) -> None:
         try:
-            video_list: list[Video] = self.video_data_collector.get_videos_to_process()
+            video_generator: Generator[Video, None, None] = self.video_data_collector.get_videos_to_process()
         except VideoDataCollectionError as e:
             log.log_critical(f"VideoDataCollectionError: Failed to collect the necessary data about the videos to process: {str(e)}")
             log.log_info("Exiting because no data exist...")
             exit(1)
-        print(f"video list: {video_list}")
         log.log_debug("Starting to iterate over each video and perform the validation action...")
-        for vid in video_list:
+        for vid in video_generator:
             try:
                 # fetch the transcript
                 log.log_debug(f"Fetching the transcript of {vid.video_id}...")
                 transcript: str = self.transcript_service.get_transcript(vid)
 
-                # pre-validate the video, if it seems to be clickbait based on the pre-validation step, skip it and move on to the next one
-                log.log_debug(f"Starting the validation process of {vid.video_id}...")
-                pre_validation_result: bool = self.video_validator.pre_validate(vid, transcript)
-                if not pre_validation_result:
-                    log.log_info(f"Video with id {vid.video_id} is likely to be clickbait based on the pre-validation step. Moving on to the next video...")
-                    continue
+                # validate the video and get the action to perform
+                validation_result: Literal["download", "summarize", "discard"] = self.video_validator.validate_video(vid=vid, raw_transcript=transcript)
 
-                # validate the video based on the metadata and the transcript with AI
-                metadata_validation_result = self.video_validator.validate_metadata(vid=vid)
-
-                transcript_validation_result = self.video_validator.validate_transcript(vid=vid, raw_transcript=transcript)
+                # take the appropriate action based on the validation result
+                match validation_result:
+                    case "download":
+                        log.log_info(f"Video {asdict(vid)} with id {vid.video_id} will be downloaded.")
+                    case "summarize":
+                        log.log_info(f"Video {asdict(vid)} with id {vid.video_id} will be summarized.")
+                    case "discard":
+                        log.log_info(f"Video {asdict(vid)} with id {vid.video_id} will be discarded.")
             except TranscriptError as e:
                 log.log_error(f"TranscriptError: Each transcript fetching provider failed: {str(e)}")
                 log.log_info("Moving on to the next video because of the previous TranscriptError...")
