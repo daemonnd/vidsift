@@ -1,36 +1,29 @@
-from pathlib import Path
-
-from ollama import ChatResponse, chat
-
-from vidsift.config.parser import VIDSIFT_CONFIG_DIR
+from vidsift.shared.AI.errors import AIError
+from vidsift.shared.AI.run_model import AIUsageManager
 
 
 class Summarizer:
-    def __init__(self, transcript: str) -> None:
+    def __init__(self, ai_model: str) -> None:
         """
             Raises: 
             - FileNotFoundError
             - PersmissionError
         """
-        self.transcript: str = transcript
-        self.model='qwen3.5:9'
-        self.summary_prompt_file: Path = Path(VIDSIFT_CONFIG_DIR / "prompts" / "summary.md")
-        with open(self.summary_prompt_file, "r") as f:
-            self.summary_system_prompt: str = f.read()
+        self.ai_manager: AIUsageManager = AIUsageManager(system_prompt_file_name="summary.md")
+        self.ai_model: str = ai_model
 
-    def summarize(self) -> str | None:
+    def summarize(self, transcript: str) -> str:
+        try:
+            return self.ai_manager.run_ai(self.ai_manager.generate_prompt(append=transcript), model=self.ai_model)
+        except AIError as e:
+            raise AIError(f"An error occurred while summarizing the transcript: {str(e)}") from e
 
-        response: ChatResponse = chat(model=self.model, messages=[
-            {
-                'role': 'user',
-                'content': f"{self.summary_system_prompt}\n{self.transcript}",
-            },
-        ])
-        return response.message.content
+
+
 
 if __name__ == "__main__":
     with open(file="/home/user/projects/python/vidsift/fake-transcript.txt", mode="r") as file:
         transcript = file.read()
 
-    s = Summarizer(transcript=transcript)
-    print(s.summarize())
+    s = Summarizer("qwen3.5:9b")
+    print(s.summarize(transcript=transcript))
