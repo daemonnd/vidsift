@@ -16,6 +16,7 @@ from dataclasses import asdict
 from sys import exit
 from typing import Generator, Literal
 
+from vidsift.features.summary.summarizer import Summarizer
 from vidsift.features.transcript.errors import TranscriptError
 from vidsift.features.validation.errors import VideoValidationError
 from vidsift.ingestion.errors import VideoDataCollectionError
