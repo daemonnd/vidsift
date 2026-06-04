@@ -7,9 +7,6 @@ from yt_dlp.utils import DownloadCancelled, DownloadError
 
 from vidsift.features.transcript.errors import (TranscriptDownloadError,
                                                 TranscriptError,
-                                                TranscriptFetchingBlockedError,
-                                                TranscriptFetchingError,
-                                                TranscriptNotAvailibleError,
                                                 TranscriptNotFoundError,
                                                 VTTFileReadingError)
 from vidsift.features.transcript.providers.base import TranscriptProvider
