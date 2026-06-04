@@ -37,7 +37,7 @@ class ChunkSummaryManager:
         except AIError as e:
             raise SummaryError(f"An error occurred during chunk summarization: {e}") from e
 
-    def summarize_all_chunks(self, transcript: str, chunk_amount: int | str = "Unknown") -> list[str]:
+    def summarize_all_chunks(self, transcript: str) -> list[str]:
         """
         Method to summarize all the chunks.
         Raises:
@@ -48,7 +48,7 @@ class ChunkSummaryManager:
             self.transcript_chunk_generator.split_into_sentences(transcript=transcript))
         summaries: list[str] = []
         for chunk, chunk_index in self.transcript_chunks:
-            log.log_debug(f"Summarizing chunk {chunk_index + 1} of {chunk_amount} with length {len(chunk)} characters...")
+            log.log_debug(f"Summarizing chunk {chunk_index + 1} with length {len(chunk)} characters...")
             summary = self.summarize_chunk(chunk)
             if summary.strip() == "NO_IMPORTANT_INFORMATION":
                 continue
