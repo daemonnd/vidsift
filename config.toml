@@ -1,0 +1,79 @@
+# ============================================================
+# AI
+# ============================================================
+
+[ai]
+default_model = "qwen3.5:9b"
+validation_model = "qwen3.5:9b"
+summary_model = "qwen3.5:9b"
+
+max_allowed_json_output_runs = 3
+
+
+# ============================================================
+# Validation
+# ============================================================
+
+[validation]
+enabled = true
+
+transcript_chunk_char_size = 500
+
+
+# ============================================================
+# Validation - Pre Validation
+# ============================================================
+
+[validation.pre_validation.max_allowed]
+title_punctuation_ratio = 0.07
+title_uppercase_ratio = 0.4
+title_emoji_ratio = 0.15
+title_clickbait_ratio = 0.15
+transcript_clickbait_ratio = 0.1
+
+[validation.pre_validation.weak]
+title_uppercase_ratio = 0.2
+title_emoji_ratio = 0.03
+title_punctuation_ratio = 0.04
+title_clickbait_ratio = 0.05
+transcript_clickbait_ratio = 0.02
+
+[validation.pre_validation.weights]
+title_uppercase_ratio = 1.0
+title_emoji_ratio = 1.0
+title_punctuation_ratio = 0.5
+title_clickbait_ratio = 1.5
+transcript_clickbait_ratio = 2.5
+
+
+# ============================================================
+# Summarization
+# ============================================================
+
+[summarization]
+enabled = true
+char_chunk_size = 10000
+
+
+# ============================================================
+# Downloads
+# ============================================================
+
+[downloads]
+enabled = true
+output_dir = "~/Videos/vidsift/"
+
+
+# ============================================================
+# Channels
+# ============================================================
+
+[[channels]]
+id = "UC9x0AN7BWHpCDHSm9NiJFJQ"
+name = "NetworkChuck"
+# action = "validate"
+
+[[channels]]
+id = "UCo71RUe6DX4w-Vd47rFLXPg"
+name = "typecraft_dev"
+# action = "validate"
