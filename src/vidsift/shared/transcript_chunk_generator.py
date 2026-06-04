@@ -32,7 +32,8 @@ class TranscriptChunkGenerator:
         """
         Method to build chunks of the transcript from the sentences.
         It respects sentence boundaries and ensures that each chunk does not exceed the specified character limit.
-        It raises an EmptyTranscriptError if the transcript is empty and cannot be chunked.
+        Raises:
+        EmptyTranscriptError if transcript is empty and cannot be chunked
         """
         current_chunk_sentences: list[str] = []
         char_count: int = 0
