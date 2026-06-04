@@ -14,3 +14,7 @@ class EmptyAIResponseError(AIError):
 class AIModelError(AIError):
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
+
+class AIRequestError(AIError):
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)

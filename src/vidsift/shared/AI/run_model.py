@@ -4,10 +4,11 @@ It runs the AI and generates the prompts for it
 """
 from pathlib import Path
 
-from ollama import ChatResponse, ResponseError, chat
+from ollama import ChatResponse, RequestError, ResponseError, chat
 
 from vidsift.config.parser import VIDSIFT_CONFIG_DIR
-from vidsift.shared.AI.errors import AIModelError, EmptyAIResponseError
+from vidsift.shared.AI.errors import (AIModelError, AIRequestError,
+                                      EmptyAIResponseError)
 
 
 class AIUsageManager:
@@ -50,6 +51,7 @@ class AIUsageManager:
         Method to run the AI
         Raises:
         - EmptyAIResponseError if the AI response is empty
+        - AIModelError if an error with the model occured
         """
         try:
             response: ChatResponse = chat(model=model,  messages=[
@@ -64,7 +66,9 @@ class AIUsageManager:
                 raise EmptyAIResponseError("The AI anwer is empty")
             return response.message.content
         except ResponseError as e:
-            raise AIModelError(f"An error occurred while running the AI model: {e}")
+            raise AIModelError(f"An error occurred while running the AI model: {e}") from e
+        except RequestError as e:
+            raise AIRequestError(f"An error occured while making a request to the AI: {e}") from e
 
     def get_system_prompt(self) -> str:
         """
