@@ -39,11 +39,11 @@ title_clickbait_ratio = 0.05
 transcript_clickbait_ratio = 0.02
 
 [validation.pre_validation.weights]
-title_uppercase_ratio = 1.0
-title_emoji_ratio = 1.0
-title_punctuation_ratio = 0.5
-title_clickbait_ratio = 1.5
-transcript_clickbait_ratio = 2.5
+title_uppercase_weight = 1.0
+title_emoji_weight = 1.0
+title_punctuation_weight = 0.5
+title_clickbait_weight = 1.5
+transcript_clickbait_weight = 2.5
 
 
 # ============================================================
