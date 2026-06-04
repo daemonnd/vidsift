@@ -47,9 +47,14 @@ class ChunkSummaryManager:
         self.transcript_chunks = self.transcript_chunk_generator.build_chunks(
             self.transcript_chunk_generator.split_into_sentences(transcript=transcript))
         summaries: list[str] = []
+        summary: str = ""
         for chunk, chunk_index in self.transcript_chunks:
             log.log_debug(f"Summarizing chunk {chunk_index + 1} with length {len(chunk)} characters...")
-            summary = self.summarize_chunk(chunk)
+            try:
+                summary = self.summarize_chunk(chunk)
+            except SummaryError as e:
+                log.log_warning(f"SummaryError: Failed to summarized one transcript chunk, some important information in the final summary may be missing: {str(e)}")
+                continue
             if summary.strip() == "NO_IMPORTANT_INFORMATION":
                 continue
             summaries.append(summary)
