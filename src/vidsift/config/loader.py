@@ -4,35 +4,28 @@ File to parse the config and transform the config into variables
 import tomllib
 from pathlib import Path
 
+from pydantic import ValidationError
+
 from vidsift.config.errors import (ConfigFileNotFoundError,
-                                   ConfigFilePermissionError)
+                                   ConfigFilePermissionError,
+                                   ConfigValidationError)
+from vidsift.config.models import AppConfig
 from vidsift.shared.errorprotocol import logger
 
 log = logger()
 
-VIDSIFT_CONFIG_DIR: Path = Path(Path.home()/".config"/"vidsift")
+CONFIG_FILE_PATH: Path = Path(Path.home() / ".config" / "vidsift" / "config.toml")
 
 
-
-
-class ConfigLoader:
-    def __init__(self) -> None:
-        self.config_file_path: Path = Path(VIDSIFT_CONFIG_DIR / "config.toml")
-    def get_config(self) -> dict:
-        """
-        Method to get the configfile as a dict
-        Raises:
-        - ConfigFilePermissionError if PermissionError occurs
-        - ConfigFileNotFoundError if FileNotFoundError occurs
-        Returns:
-        The dict of the config file
-        """
-        try:
-            with open(file=self.config_file_path, mode="rb") as f:
-                return tomllib.load(f)
-        except FileNotFoundError as e:
-            raise ConfigFileNotFoundError(f"The config file has not been found at {self.config_file_path}: {str(e)}") from e
-        except PermissionError as e:
-            raise ConfigFilePermissionError(f"Permission Error while opening the config file at {self.config_file_path}: {str(e)}") from e
+def load_config() -> AppConfig:
+    try:
+        with open(CONFIG_FILE_PATH, mode="rb") as f:
+            return AppConfig.model_validate(tomllib.load(f))
+    except FileNotFoundError as e:
+        raise ConfigFileNotFoundError(f"The config file has not been found at {CONFIG_FILE_PATH}: {str(e)}") from e
+    except PermissionError as e:
+        raise ConfigFilePermissionError(f"Permission Error while opening the config file at {CONFIG_FILE_PATH}: {str(e)}") from e
+    except ValidationError as e:
+        raise ConfigValidationError(f"The Config seems to be wrong: {str(e)}") from e
 
 
