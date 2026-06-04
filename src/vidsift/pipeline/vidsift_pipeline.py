@@ -1,3 +1,4 @@
+
 """
 Vidsifts orchestrator
 It gets called by main.py
@@ -13,9 +14,11 @@ What it does:
 
 
 from dataclasses import asdict
+from pathlib import Path
 from sys import exit
 from typing import Generator, Literal
 
+from vidsift.config import CONFIG
 from vidsift.features.download.downloader import VideoDownloader
 from vidsift.features.summary.errors import SummaryError
 from vidsift.features.transcript.errors import TranscriptError
@@ -64,7 +67,7 @@ class VidsiftOrchestrator:
                 match validation_result:
                     case "download":
                         log.log_info(f"Downloading video {asdict(vid)} with id {vid.video_id}...")
-                        self.downloader.download(vid.url)
+                        self.downloader.download(vid.url, output_path=Path(CONFIG.downloads.output_dir))
                     case "summarize":
                         log.log_info(f"Video {asdict(vid)} with id {vid.video_id} will be summarized.")
                         self.summarizer.summarize(raw_transcript=transcript)

@@ -3,12 +3,10 @@ from youtube_transcript_api._errors import (CookieError, InvalidVideoId,
                                             IpBlocked, RequestBlocked,
                                             VideoUnavailable)
 
-from vidsift.features.transcript.errors import (TranscriptDownloadError,
-                                                TranscriptError,
+from vidsift.features.transcript.errors import (TranscriptError,
                                                 TranscriptFetchingBlockedError,
                                                 TranscriptFetchingError,
-                                                TranscriptNotAvailibleError,
-                                                TranscriptNotFoundError)
+                                                TranscriptNotAvailibleError)
 from vidsift.features.transcript.providers.base import TranscriptProvider
 from vidsift.models.video import Video
 from vidsift.shared.errorprotocol import logger

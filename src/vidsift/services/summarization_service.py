@@ -1,4 +1,4 @@
-from vidsift.config.parser import AI_MODEL
+from vidsift.config import CONFIG
 from vidsift.features.summary.chunk_summarizer import ChunkSummaryManager
 from vidsift.features.summary.errors import SummaryError
 from vidsift.features.summary.final_summarizer import FinalSummarizer
@@ -10,10 +10,10 @@ from vidsift.shared.text_normalizer import TextNormalizer
 log: logger = logger()
 
 class SummarizationService:
-    def __init__(self, ai_model: str = AI_MODEL) -> None:
+    def __init__(self, ai_model: str = CONFIG.ai.summary_model) -> None:
         self.ai_model: str = ai_model
         self.chunk_summarizer: ChunkSummaryManager = ChunkSummaryManager(ai_model=ai_model)
-        self.final_summarizer: FinalSummarizer = FinalSummarizer(ai_model=AI_MODEL)
+        self.final_summarizer: FinalSummarizer = FinalSummarizer(ai_model=CONFIG.ai.summary_model)
         self.text_normalizer: TextNormalizer = TextNormalizer()
 
     def summarize_all_chunks(self, transcript: str) -> list[str]:

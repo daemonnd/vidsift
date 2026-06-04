@@ -6,14 +6,13 @@ from pathlib import Path
 
 from ollama import ChatResponse, RequestError, ResponseError, chat
 
-from vidsift.config.parser import VIDSIFT_CONFIG_DIR
 from vidsift.shared.AI.errors import (AIModelError, AIRequestError,
                                       EmptyAIResponseError)
 
 
 class AIUsageManager:
     def __init__(self, system_prompt_file_name: str) -> None:
-        self.sys_prompt_file: Path = Path(VIDSIFT_CONFIG_DIR / "prompts" / system_prompt_file_name)
+        self.sys_prompt_file: Path = Path(Path().home() / ".config" / "vidsift" / "prompts" / system_prompt_file_name)
         if not system_prompt_file_name:
             self.system_prompt: str = ""
         else:

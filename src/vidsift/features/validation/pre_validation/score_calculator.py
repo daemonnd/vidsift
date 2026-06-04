@@ -1,26 +1,16 @@
 from typing import Tuple
 
-from vidsift.config.parser import (MAX_ALLOWED_TITLE_CLICKBAIT_RATIO,
-                                   MAX_ALLOWED_TITLE_EMOJI_RATIO,
-                                   MAX_ALLOWED_TITLE_PUNCTUATION_RATIO,
-                                   MAX_ALLOWED_TITLE_UPPERCASE_RATIO,
-                                   MAX_ALLOWED_TRANSCRIPT_CLICKBAIT_RATIO,
-                                   WEAK_TITLE_CLICKBAIT_RATIO,
-                                   WEAK_TITLE_EMOJI_RATIO,
-                                   WEAK_TITLE_PUNCTUATION_RATIO,
-                                   WEAK_TITLE_UPPERCASE_RATIO,
-                                   WEAK_TRANSCRIPT_CLICKBAIT_RATIO,
-                                   WEIGHT_TITLE_CLICKBAIT_RATIO,
-                                   WEIGHT_TITLE_EMOJI_RATIO,
-                                   WEIGHT_TITLE_PUNCTUATION_RATIO,
-                                   WEIGHT_TITLE_UPPERCASE_RATIO,
-                                   WEIGHT_TRANSCRIPT_CLICKBAIT_RATIO)
+from vidsift.config import CONFIG
 from vidsift.features.validation.pre_validation.metrics_counter import \
     PreValidator
 from vidsift.models.validation.pre_validation_result import PreValidationResult
 from vidsift.models.video import Video
 
 METRIC_AMOUNT: int = 5
+
+weak = CONFIG.validation.pre_validation.weak
+max_allowed = CONFIG.validation.pre_validation.max_allowed
+weights = CONFIG.validation.pre_validation.weights
 
 class PreValidationScoreCalculator:
     def __init__(self) -> None:
@@ -37,49 +27,50 @@ class PreValidationScoreCalculator:
 
         weak_signals = self.get_weak_signals(result)
         sum_weak_signals = sum(weak_signals)
-        sum_all_weights = WEIGHT_TITLE_EMOJI_RATIO + WEIGHT_TITLE_PUNCTUATION_RATIO + WEIGHT_TITLE_CLICKBAIT_RATIO + WEIGHT_TRANSCRIPT_CLICKBAIT_RATIO
+        sum_all_weights = weights.title_emoji_weight + weights.title_uppercase_weight + weights.title_punctuation_weight + weights.transcript_clickbait_weight
         return sum_weak_signals / sum_all_weights, f"{sum_weak_signals} weak signals weight out of {sum_all_weights} total weight which is {sum_weak_signals / sum_all_weights:.2f} score"
-
 
 
     def check_suspicious_metric(self, result: PreValidationResult) -> Tuple[bool, str]:
         """
         Method to check if any of the pre-validation metrics are above the threshold, if so, return True and the reason, otherwise return False and an empty string
         """
-        if result.title_uppercase_ratio > MAX_ALLOWED_TITLE_UPPERCASE_RATIO:
+        if result.title_uppercase_ratio > max_allowed.title_uppercase_ratio:
             return True, f"title_uppercase_ratio is {result.title_uppercase_ratio}, which is above the threshold of 0.4"
-        if result.title_punctuation_ratio > MAX_ALLOWED_TITLE_PUNCTUATION_RATIO:
+        if result.title_punctuation_ratio > max_allowed.title_punctuation_ratio:
             return True, f"title_punctuation_ratio is {result.title_punctuation_ratio}, which is above the threshold of 0.1"
-        if result.title_clickbait_ratio > MAX_ALLOWED_TITLE_CLICKBAIT_RATIO:
+        if result.title_clickbait_ratio > max_allowed.title_clickbait_ratio:
             return True, f"title_clickbait_ratio is {result.title_clickbait_ratio}, which is above the threshold of 0.15"
-        if result.title_emoji_ratio > MAX_ALLOWED_TITLE_EMOJI_RATIO:
+        if result.title_emoji_ratio > max_allowed.title_punctuation_ratio:
             return True, f"title_emoji_ratio is {result.title_emoji_ratio}, which is above the threshold of 0.2"
-        if result.transcript_clickbait_ratio > MAX_ALLOWED_TRANSCRIPT_CLICKBAIT_RATIO:
+        if result.transcript_clickbait_ratio > max_allowed.transcript_clickbait_ratio:
             return True, f"transcript_clickbait_ratio is {result.transcript_clickbait_ratio}, which is above the threshold of 0.1"
         return False, ""
 
     def get_weak_signals(self, result: PreValidationResult) -> list[float]:
         """
-        Method to check if any of the pre-validation metrics are above the weak signal threshold, if so, return a list of the weak signals, otherwise return an empty list
+        Method to check if any of the pre-validation metrics are above the weak signal threshold,
+        if so, return a list of the weak signals, otherwise return an empty list.
         """
         weak_signals: list[float] = []
-        if result.title_uppercase_ratio > WEAK_TITLE_UPPERCASE_RATIO:
-            #print(f"title_uppercase_ratio is {result.title_uppercase_ratio}, which is above the weak signal threshold of {WEAK_TITLE_UPPERCASE_RATIO}")
-            weak_signals.append(WEIGHT_TITLE_UPPERCASE_RATIO)
-        if result.title_punctuation_ratio > WEAK_TITLE_PUNCTUATION_RATIO:
-            #print(f"title_punctuation_ratio is {result.title_punctuation_ratio}, which is above the weak signal threshold of {WEAK_TITLE_PUNCTUATION_RATIO}")
-            weak_signals.append(WEIGHT_TITLE_PUNCTUATION_RATIO)
-        if result.title_clickbait_ratio > WEAK_TITLE_CLICKBAIT_RATIO:
-            #print(f"title_clickbait_ratio is {result.title_clickbait_ratio}, which is above the weak signal threshold of {WEAK_TITLE_CLICKBAIT_RATIO}")
-            weak_signals.append(WEIGHT_TITLE_CLICKBAIT_RATIO)
-        if result.title_emoji_ratio > WEAK_TITLE_EMOJI_RATIO:
-            #print(f"title_emoji_ratio is {result.title_emoji_ratio}, which is above the weak signal threshold of {WEAK_TITLE_EMOJI_RATIO}")
-            weak_signals.append(WEIGHT_TITLE_EMOJI_RATIO)
-        if result.transcript_clickbait_ratio > WEAK_TRANSCRIPT_CLICKBAIT_RATIO:
-            #print(f"transcript_clickbait_ratio is {result.transcript_clickbait_ratio}, which is above the weak signal of {WEAK_TRANSCRIPT_CLICKBAIT_RATIO}")
-            weak_signals.append(WEIGHT_TRANSCRIPT_CLICKBAIT_RATIO)
 
-        #print(f"Weak signals: {weak_signals}")
+        weights = CONFIG.validation.pre_validation.weights
+
+        if result.title_uppercase_ratio > weak.title_uppercase_ratio:
+            weak_signals.append(weights.title_uppercase_weight)
+
+        if result.title_punctuation_ratio > weak.title_punctuation_ratio:
+            weak_signals.append(weights.title_punctuation_weight)
+
+        if result.title_clickbait_ratio > weak.title_clickbait_ratio:
+            weak_signals.append(weights.title_clickbait_weight)
+
+        if result.title_emoji_ratio > weak.title_emoji_ratio:
+            weak_signals.append(weights.title_emoji_weight)
+
+        if result.transcript_clickbait_ratio > weak.transcript_clickbait_ratio:
+            weak_signals.append(weights.transcript_clickbait_weight)
+
         return weak_signals
 
 if __name__ == "__main__":

@@ -1,13 +1,13 @@
 import collections
 from typing import Generator, Tuple
 
-from vidsift.config.parser import TRANSCRIPT_CHUNK_CHAR_SIZE
+from vidsift.config import CONFIG
 from vidsift.features.validation.errors import NoMiddleChunkError
 from vidsift.shared.transcript_chunk_generator import TranscriptChunkGenerator
 
 
 class TranscriptChunkProvider:
-    def __init__(self, char_chunk_size: int = TRANSCRIPT_CHUNK_CHAR_SIZE):
+    def __init__(self, char_chunk_size: int = CONFIG.validation.transcript_chunk_char_size):
         self.transcript_chunk_generator = TranscriptChunkGenerator(char_chunk_size=char_chunk_size)
 
 

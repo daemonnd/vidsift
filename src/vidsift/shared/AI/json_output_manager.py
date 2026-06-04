@@ -2,7 +2,7 @@ import json
 
 from pydantic import ValidationError
 
-from vidsift.config.parser import MAX_ALLOWED_AI_JSON_OUTPUT_RUNS, ConfigParser
+from vidsift.config import CONFIG
 from vidsift.models.ai_json_requirements import (AIJSONBaseRequirements,
                                                  AIJSONRuntimeRequirements)
 from vidsift.shared.AI.errors import (AIError, EmptyAIResponseError,
@@ -11,7 +11,6 @@ from vidsift.shared.AI.run_model import AIUsageManager
 from vidsift.shared.errorprotocol import logger
 
 log: logger = logger()
-config_parser: ConfigParser = ConfigParser()
 
 
 class AIJsonOutputManager:
@@ -27,8 +26,8 @@ class AIJsonOutputManager:
         retry_system_ai: AIUsageManager = AIUsageManager(self.retry_system_filename)
         ai_executor: AIUsageManager = AIUsageManager("")
         use_full_validate: bool = True
-        for i in range(MAX_ALLOWED_AI_JSON_OUTPUT_RUNS):
-            log.log_info(f"Starting attempt {i+1} of {MAX_ALLOWED_AI_JSON_OUTPUT_RUNS}")
+        for i in range(CONFIG.ai.max_allowed_json_output_runs):
+            log.log_info(f"Starting attempt {i+1} of {CONFIG.ai.max_allowed_json_output_runs}")
 
             # on the first attempt or if the ai response is empty (use_full_validate is true)
             if use_full_validate:

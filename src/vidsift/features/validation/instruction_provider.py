@@ -10,7 +10,7 @@ def get_custom_instructions(creator: str) -> str:
     - PermissionError if the reading permissions are missing
     - exception if an unknown error occured
     """
-    custom_instructions_path: Path = Path(VIDSIFT_CONFIG_DIR/"custom_channel_instructions")
+    custom_instructions_path: Path = Path(Path().home() / ".config" / "vidsift" /"custom_channel_instructions")
     creator_instructions_path:Path = Path(custom_instructions_path/f"{creator}.md")
 
     with open(file=Path(creator_instructions_path), mode="r") as f:
