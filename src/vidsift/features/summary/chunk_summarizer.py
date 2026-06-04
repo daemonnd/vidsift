@@ -2,9 +2,12 @@ from vidsift.config.parser import AI_MODEL, SUMMARIZATION_CHAR_CHUNK_SIZE
 from vidsift.features.summary.errors import SummaryError
 from vidsift.shared.AI.errors import AIError
 from vidsift.shared.AI.run_model import AIUsageManager
+from vidsift.shared.errorprotocol import logger
 from vidsift.shared.one_retry import retry_once
 from vidsift.shared.text_normalizer import TextNormalizer
 from vidsift.shared.transcript_chunk_generator import TranscriptChunkGenerator
+
+log: logger = logger()
 
 
 class ChunkSummaryManager:
@@ -34,9 +37,9 @@ class ChunkSummaryManager:
         except AIError as e:
             raise SummaryError(f"An error occurred during chunk summarization: {e}") from e
 
-    def summarize_all_chunks(self, transcript: str) -> list[str]:
-        """ 
-        Method to summarize all the chunks. 
+    def summarize_all_chunks(self, transcript: str, chunk_amount: int | str = "Unknown") -> list[str]:
+        """
+        Method to summarize all the chunks.
         Raises:
         - SummaryError if a SummaryError occured while summarizing one chunk
         - EmptyTranscriptError if the transcript cannot be chunked because it is empty
@@ -45,7 +48,10 @@ class ChunkSummaryManager:
             self.transcript_chunk_generator.split_into_sentences(transcript=transcript))
         summaries: list[str] = []
         for chunk, chunk_index in self.transcript_chunks:
+            log.log_debug(f"Summarizing chunk {chunk_index + 1} of {chunk_amount} with length {len(chunk)} characters...")
             summary = self.summarize_chunk(chunk)
+            if summary.strip() == "NO_IMPORTANT_INFORMATION":
+                continue
             summaries.append(summary)
 
         return summaries
