@@ -16,10 +16,12 @@ from dataclasses import asdict
 from sys import exit
 from typing import Generator, Literal
 
+from vidsift.features.summary.errors import SummaryError
 from vidsift.features.transcript.errors import TranscriptError
 from vidsift.features.validation.errors import VideoValidationError
 from vidsift.ingestion.errors import VideoDataCollectionError
 from vidsift.models.video import Video
+from vidsift.services.summarization_service import SummarizationService
 from vidsift.services.transcript_service import TranscriptService
 from vidsift.services.validation_service import VideoValidator
 from vidsift.services.video_data_collection_service import VideoDataCollection
@@ -35,6 +37,8 @@ class VidsiftOrchestrator:
         self.video_validator: VideoValidator = VideoValidator()
         # transcript
         self.transcript_service: TranscriptService = TranscriptService()
+        # summarization
+        self.summarizer: SummarizationService = SummarizationService()
 
     @log.log
     def run(self) -> None:
@@ -60,6 +64,7 @@ class VidsiftOrchestrator:
                         log.log_info(f"Video {asdict(vid)} with id {vid.video_id} will be downloaded.")
                     case "summarize":
                         log.log_info(f"Video {asdict(vid)} with id {vid.video_id} will be summarized.")
+                        self.summarizer.summarize(raw_transcript=transcript)
                     case "discard":
                         log.log_info(f"Video {asdict(vid)} with id {vid.video_id} will be discarded.")
             except TranscriptError as e:
@@ -69,6 +74,10 @@ class VidsiftOrchestrator:
             except VideoValidationError as e:
                 log.log_error(f"VideoValidationError: Failed to validate the video with id {vid.video_id} because of the following error: {str(e)}")
                 log.log_info("Moving on to the next video because of the previous VideoValidationError...")
+                continue
+            except SummaryError as e:
+                log.log_error(f"SummaryError: Failed to summarize the video with id {vid.video_id} because of the following error: {str(e)}")
+                log.log_info("Moving on to the next video because of the previous SummaryError...")
                 continue
 
 

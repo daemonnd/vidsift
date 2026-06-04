@@ -1,0 +1,64 @@
+from vidsift.config.parser import AI_MODEL
+from vidsift.features.summary.chunk_summarizer import ChunkSummaryManager
+from vidsift.features.summary.errors import SummaryError
+from vidsift.features.summary.final_summarizer import FinalSummarizer
+from vidsift.features.validation.errors import EmptyTranscriptError
+from vidsift.shared.AI.errors import AIError
+from vidsift.shared.errorprotocol import logger
+from vidsift.shared.text_normalizer import TextNormalizer
+
+log: logger = logger()
+
+class SummarizationService:
+    def __init__(self, ai_model: str = AI_MODEL) -> None:
+        self.ai_model: str = ai_model
+        self.chunk_summarizer: ChunkSummaryManager = ChunkSummaryManager(ai_model=ai_model)
+        self.final_summarizer: FinalSummarizer = FinalSummarizer(ai_model=AI_MODEL)
+        self.text_normalizer: TextNormalizer = TextNormalizer()
+
+    def summarize_all_chunks(self, transcript: str) -> list[str]:
+        try:
+            return self.chunk_summarizer.summarize_all_chunks(transcript=transcript)
+        except EmptyTranscriptError as e:
+            raise SummaryError(f"An Error occured while summarizing chunks of the transcript: {e}") from e
+        # a SummaryError can propagate, cause if will be caught later, in the vidsift pipeline
+
+
+    def store_summaries(self, summaries: list[str]) -> None:
+        # Placeholder for storing summaries in a database or file system
+        pass
+
+    def summarize_overall(self, summaries: list[str]) -> str:
+        """
+        Method to summarize all the short, bulleted summaries
+        Raises: 
+        AIError if the summarizer fails
+        Returns:
+        str of the final summary
+        """
+        try:
+            return self.final_summarizer.summarize(summaries)
+        except AIError as e:
+            raise SummaryError(f"An error occured while summarizing the short summaries of the chunks: {e}") from e
+
+    def summarize(self, raw_transcript: str) -> str:
+        """
+        Method to summarize the whole transcript. 
+        It calls summarize, store_summaries and summarize_overall and returns the final result
+        Raises:
+        SummaryError if something went wrong
+        Returns: 
+        Final String of the AI summary
+        """
+        transcript: str = self.text_normalizer.normalize(raw_transcript)
+        summaries: list[str] = self.summarize_all_chunks(transcript=transcript)
+        self.store_summaries(summaries=summaries)
+        return self.summarize_overall(summaries=summaries)
+
+if __name__ == "__main__":
+    summarization_service = SummarizationService(ai_model="qwen3.5:9b")
+    with open("/home/user/projects/python/vidsift/test_data/test_transcript2.txt", "r") as f:
+        transcript = f.read()
+    summary = summarization_service.summarize(raw_transcript=transcript)
+    print("RESULT:")
+    print(summary)

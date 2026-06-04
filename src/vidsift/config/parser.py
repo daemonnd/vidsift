@@ -37,6 +37,10 @@ TRANSCRIPT_CHUNK_CHAR_SIZE: int = 500
 
 MAX_ALLOWED_AI_JSON_OUTPUT_RUNS: int = 3
 
+SUMMARIZATION_CHAR_CHUNK_SIZE: int = 10000
+
+AI_MODEL: str = "qwen3.5:9b"
+
 
 
 class ConfigParser:

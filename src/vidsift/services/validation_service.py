@@ -91,7 +91,7 @@ class VideoValidator:
             )
         except AIError as e:
             log.log_error(f"AIError during metadata validation: {str(e)}")
-            raise VideoValidationError(f"Metadata validation failed for video with id {vid.video_id} due to AI error: {str(e)}")
+            raise VideoValidationError(f"Metadata validation failed for video with id {vid.video_id} due to AI error: {str(e)}") from e
 
 
     def validate_transcript(self, vid: Video, transcript: str) -> TranscriptValidationResult:
