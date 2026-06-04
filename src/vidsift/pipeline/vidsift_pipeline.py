@@ -16,6 +16,7 @@ from dataclasses import asdict
 from sys import exit
 from typing import Generator, Literal
 
+from vidsift.features.download.downloader import VideoDownloader
 from vidsift.features.summary.errors import SummaryError
 from vidsift.features.transcript.errors import TranscriptError
 from vidsift.features.validation.errors import VideoValidationError
@@ -39,7 +40,8 @@ class VidsiftOrchestrator:
         self.transcript_service: TranscriptService = TranscriptService()
         # summarization
         self.summarizer: SummarizationService = SummarizationService()
-
+        # downloading
+        self.downloader: VideoDownloader = VideoDownloader()
     @log.log
     def run(self) -> None:
         try:
@@ -61,7 +63,8 @@ class VidsiftOrchestrator:
                 # take the appropriate action based on the validation result
                 match validation_result:
                     case "download":
-                        log.log_info(f"Video {asdict(vid)} with id {vid.video_id} will be downloaded.")
+                        log.log_info(f"Downloading video {asdict(vid)} with id {vid.video_id}...")
+                        self.downloader.download(vid.url)
                     case "summarize":
                         log.log_info(f"Video {asdict(vid)} with id {vid.video_id} will be summarized.")
                         self.summarizer.summarize(raw_transcript=transcript)
