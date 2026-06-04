@@ -9,3 +9,7 @@ class ConfigFileNotFoundError(ConfigError):
 class ConfigFilePermissionError(ConfigError):
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
+
+class ConfigValidationError(ConfigError):
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)
