@@ -4,10 +4,10 @@ File for managing the validation process and returning the score of the video
 from dataclasses import asdict
 from typing import Literal
 
-from vidsift.config.parser import ConfigParser
 from vidsift.features.validation.decision_engine import DecisionEngine
 from vidsift.features.validation.errors import VideoValidationError
-from vidsift.features.validation.metadata_validator import MetadataValidator
+from vidsift.features.validation.instruction_provider import \
+    get_custom_instructions
 from vidsift.features.validation.pre_validation.metrics_counter import \
     PreValidator
 from vidsift.features.validation.pre_validation.score_calculator import \
@@ -28,14 +28,12 @@ from vidsift.shared.errorprotocol import logger
 from vidsift.shared.text_normalizer import TextNormalizer
 
 log: logger = logger()
-config_parser: ConfigParser = ConfigParser()
 
 
 class VideoValidator:
     def __init__(self) -> None:
         self.pre_validator: PreValidator = PreValidator()
         self.text_normalizer: TextNormalizer = TextNormalizer()
-        self.metadata_validator: MetadataValidator = MetadataValidator()
         self.pre_validation_score_calculator: PreValidationScoreCalculator = PreValidationScoreCalculator()
         self.transcript_chunk_provider: TranscriptChunkProvider = TranscriptChunkProvider()
 
@@ -85,7 +83,7 @@ class VideoValidator:
                 AIJSONRuntimeRequirements(
                     ai_model="qwen3.5:9b",
                     first_attempt_pattern="$CUSTOM_CHANNEL_INSTRUCTIONS",
-                    first_attempt_replacement=config_parser.get_custom_instructions(vid.author),
+                    first_attempt_replacement=get_custom_instructions(vid.author),
                     first_attempt_append=f"title: {vid.title}\nauthor: {vid.author}\nurl: {vid.url}\nvideo ID: {vid.video_id}",
                 )
             )
@@ -115,7 +113,7 @@ class VideoValidator:
                 AIJSONRuntimeRequirements(
                     ai_model="qwen3.5:9b",
                     first_attempt_pattern="$CUSTOM_CHANNEL_INSTRUCTIONS",
-                    first_attempt_replacement=config_parser.get_custom_instructions(vid.author),
+                    first_attempt_replacement=get_custom_instructions(vid.author),
                     first_attempt_append=f"\n{chunks}",
                 )
             )

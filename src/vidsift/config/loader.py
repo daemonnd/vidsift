@@ -1,0 +1,31 @@
+"""
+File to parse the config and transform the config into variables
+"""
+import tomllib
+from pathlib import Path
+
+from pydantic import ValidationError
+
+from vidsift.config.errors import (ConfigFileNotFoundError,
+                                   ConfigFilePermissionError,
+                                   ConfigValidationError)
+from vidsift.config.models import AppConfig
+from vidsift.shared.errorprotocol import logger
+
+log = logger()
+
+CONFIG_FILE_PATH: Path = Path(Path.home() / ".config" / "vidsift" / "config.toml")
+
+
+def load_config() -> AppConfig:
+    try:
+        with open(CONFIG_FILE_PATH, mode="rb") as f:
+            return AppConfig.model_validate(tomllib.load(f))
+    except FileNotFoundError as e:
+        raise ConfigFileNotFoundError(f"The config file has not been found at {CONFIG_FILE_PATH}: {str(e)}") from e
+    except PermissionError as e:
+        raise ConfigFilePermissionError(f"Permission Error while opening the config file at {CONFIG_FILE_PATH}: {str(e)}") from e
+    except ValidationError as e:
+        raise ConfigValidationError(f"The Config seems to be wrong: {str(e)}") from e
+
+

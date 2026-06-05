@@ -1,4 +1,4 @@
-from vidsift.config.parser import AI_MODEL, SUMMARIZATION_CHAR_CHUNK_SIZE
+from vidsift.config import CONFIG
 from vidsift.features.summary.errors import SummaryError
 from vidsift.shared.AI.errors import AIError
 from vidsift.shared.AI.run_model import AIUsageManager
@@ -11,10 +11,10 @@ log: logger = logger()
 
 
 class ChunkSummaryManager:
-    def __init__(self, ai_model: str = AI_MODEL):
+    def __init__(self, ai_model: str = CONFIG.ai.summary_model):
         self.chunk_summary_ai: AIUsageManager = AIUsageManager(system_prompt_file_name="chunk_summary.md")
         self.ai_model: str = ai_model
-        self.transcript_chunk_generator: TranscriptChunkGenerator = TranscriptChunkGenerator(char_chunk_size=SUMMARIZATION_CHAR_CHUNK_SIZE)
+        self.transcript_chunk_generator: TranscriptChunkGenerator = TranscriptChunkGenerator(char_chunk_size=CONFIG.summarization.char_chunk_size)
         self.text_normalizer: TextNormalizer = TextNormalizer()
 
     @retry_once
