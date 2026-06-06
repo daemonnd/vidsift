@@ -8,4 +8,4 @@ class Video:
     author: str
     published: str
     video_id: str
-    #channel_id: str
+    channel_id: str

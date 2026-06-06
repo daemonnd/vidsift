@@ -26,7 +26,7 @@ class VideoDataCollection:
             try:
                 feed: FeedParserDict = data_collector.fetch_feed(channel_id=channel)
                 data_collector.validate_feed_response(feed, channel)
-                current_channel_data = data_collector.parse_one_channel(feed=feed)
+                current_channel_data = data_collector.parse_one_channel(feed=feed, channel_id=channel)
                 for video in current_channel_data:
                     yield video
 

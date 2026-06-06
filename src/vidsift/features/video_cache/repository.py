@@ -15,7 +15,7 @@ from vidsift.models.video_cache_model import VideoCacheModel
 class VideoCacheRepository:
     def __init__(self) -> None:
         self.db_path: Path = Path(Path.home() / ".local" / "share" / "vidsift" / "processed_videos.db")
-        self.db_path.mkdir(parents=True, exist_ok=True)
+        self.db_path.parent.mkdir(parents=True, exist_ok=True)
         self.conn: Connection = sqlite3.connect(str(self.db_path))
         self.conn.row_factory = sqlite3.Row
         self.cur: Cursor = self.conn.cursor()
@@ -38,7 +38,6 @@ class VideoCacheRepository:
 
     def save(self,
                 vid: Video, 
-                channel_id: str, 
                 decision: Literal["downloaded", "summarized", "discarded"],
                 quality_score: float,
                 topic_match_score: float,
@@ -54,7 +53,7 @@ class VideoCacheRepository:
                 "video_id": vid.video_id,
                 "title": vid.title,
                 "author": vid.author,
-                "channel_id": channel_id,
+                "channel_id": vid.channel_id,
                 "decision": decision,
                 "quality_score": quality_score,
                 "topic_match_score": topic_match_score,
@@ -109,10 +108,10 @@ class VideoCacheRepository:
 if __name__ == "__main__":
     vcr = VideoCacheRepository()
     vid: Video = Video(
-            title="sometitle", url="someurl", author="randomauthor", published="someday", video_id="ad90a7di7hk"
+            title="sometitle", url="someurl", author="randomauthor", published="someday", video_id="ad90a7di7hk", channel_id="somechannelid"
     )
-    vcr.save(vid=vid, channel_id="alsdjaöldjöasjdöafs", decision="discarded", quality_score=4.0, topic_match_score=5.0, reason="somereason")
-    vcr.save(vid=vid, channel_id="alsdjaöldjöasjdöafs", decision="discarded", quality_score=4.0, topic_match_score=5.0, reason="somereason")
+    vcr.save(vid=vid, decision="discarded", quality_score=4.0, topic_match_score=5.0, reason="somereason")
+    vcr.save(vid=vid, decision="discarded", quality_score=4.0, topic_match_score=5.0, reason="somereason")
 
     print(f"should be something: {vcr.get("ad90a7di7hk")}")
     print(f"should be nothing: {vcr.get("saldjalsdjöajsöljdföas")}")
