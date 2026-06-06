@@ -40,7 +40,7 @@ class UrlCollector:
             raise NonWellFormattedFeedError(f"Bozo of {YOUTUBE_BASE_RSS_URL}{channel_id} is 1, indicating that the feed is non-well-formed")
 
 
-    def parse_one_channel(self,  feed: FeedParserDict) -> Generator[Video, None, None]:
+    def parse_one_channel(self,  feed: FeedParserDict, channel_id: str) -> Generator[Video, None, None]:
         """
         Method to get a list of Video objects of one channel
         Raises:
@@ -69,7 +69,8 @@ class UrlCollector:
                 title=str(entry.title), author=str(entry.author),
                 url=str(entry.link),
                 published=str(entry.published),
-                video_id=id_extractor.extract_id(str(entry.link))
+                video_id=id_extractor.extract_id(str(entry.link)),
+                channel_id=channel_id
             )
             yield video
 

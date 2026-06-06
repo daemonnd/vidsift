@@ -9,6 +9,7 @@ from vidsift.models.validation.metadata_validation_result import \
     MetadataValidationResult
 from vidsift.models.validation.transcript_validation_result import \
     TranscriptValidationResult
+from vidsift.models.validation.validation_result import ValidationResult
 
 # defining the decision engine constants
 HIGH_TOPIC_MATCH_THRESHOLD = 2.5
@@ -44,7 +45,7 @@ class DecisionEngine:
             "quality_score": quality_score
         }
 
-    def make_decision(self, scores: dict[str, float]) -> Literal["download", "summarize", "discard"]:
+    def make_decision(self, scores: dict[str, float]) -> ValidationResult:
         """
         Method to make a decision based on the calculated scores. 
         How decisions are made:
@@ -64,29 +65,127 @@ class DecisionEngine:
 
         # high topic match and high quality -> download
         if topic_match_score >= HIGH_TOPIC_MATCH_THRESHOLD and quality_score >= HIGH_QUALITY_THRESHOLD:
-            return "download"
+            return ValidationResult(
+                    content_quality_score=quality_score, 
+                    topic_match_score=topic_match_score, 
+                    decision="downloaded", 
+                    summary_reason={
+                        "metadata": {
+                            "reason": self.metadata_result.summary_reason,
+                            "flags": self.metadata_result.flags,
+                        },
+                        "transcript": {
+                            "reason": self.transcript_result.summary_reason,
+                            "flags": self.transcript_result.flags,
+                        }
+                    }
+                )
 
         # high quality and medium topic match -> download
         elif quality_score >= HIGH_QUALITY_THRESHOLD and topic_match_score >= MEDIUM_TOPIC_MATCH_THRESHOLD:
-            return "download"
+            return ValidationResult(
+                    content_quality_score=quality_score, 
+                    topic_match_score=topic_match_score, 
+                    decision="downloaded", 
+                    summary_reason={
+                        "metadata": {
+                            "reason": self.metadata_result.summary_reason,
+                            "flags": self.metadata_result.flags,
+                        },
+                        "transcript": {
+                            "reason": self.transcript_result.summary_reason,
+                            "flags": self.transcript_result.flags,
+                        }
+                    }
+                )
 
         # medium quality and medium topic match -> summarize
         elif quality_score >= MEDIUM_QUALITY_THRESHOLD and topic_match_score >= MEDIUM_TOPIC_MATCH_THRESHOLD:
-            return "summarize"
+            return ValidationResult(
+                    content_quality_score=quality_score, 
+                    topic_match_score=topic_match_score, 
+                    decision="summarized", 
+                    summary_reason={
+                        "metadata": {
+                            "reason": self.metadata_result.summary_reason,
+                            "flags": self.metadata_result.flags,
+                        },
+                        "transcript": {
+                            "reason": self.transcript_result.summary_reason,
+                            "flags": self.transcript_result.flags,
+                        }
+                    }
+                )
 
         # low quality and high topic match -> summarize
         elif topic_match_score >= HIGH_TOPIC_MATCH_THRESHOLD and quality_score >= MEDIUM_QUALITY_THRESHOLD:
-            return "summarize"
+            return ValidationResult(
+                    content_quality_score=quality_score, 
+                    topic_match_score=topic_match_score, 
+                    decision="summarized", 
+                    summary_reason={
+                        "metadata": {
+                            "reason": self.metadata_result.summary_reason,
+                            "flags": self.metadata_result.flags,
+                        },
+                        "transcript": {
+                            "reason": self.transcript_result.summary_reason,
+                            "flags": self.transcript_result.flags,
+                        }
+                    }
+                )
 
         # high quality and low topic match -> summarize
         elif quality_score >= HIGH_QUALITY_THRESHOLD and topic_match_score < MEDIUM_TOPIC_MATCH_THRESHOLD:
-            return "summarize"
+            return ValidationResult(
+                    content_quality_score=quality_score, 
+                    topic_match_score=topic_match_score, 
+                    decision="summarized", 
+                    summary_reason={
+                        "metadata": {
+                            "reason": self.metadata_result.summary_reason,
+                            "flags": self.metadata_result.flags,
+                        },
+                        "transcript": {
+                            "reason": self.transcript_result.summary_reason,
+                            "flags": self.transcript_result.flags,
+                        }
+                    }
+                )
 
         # low topic match -> discard
         elif topic_match_score < MEDIUM_TOPIC_MATCH_THRESHOLD:
-            return "discard"
+            return ValidationResult(
+                    content_quality_score=quality_score, 
+                    topic_match_score=topic_match_score, 
+                    decision="discarded", 
+                    summary_reason={
+                        "metadata": {
+                            "reason": self.metadata_result.summary_reason,
+                            "flags": self.metadata_result.flags,
+                        },
+                        "transcript": {
+                            "reason": self.transcript_result.summary_reason,
+                            "flags": self.transcript_result.flags,
+                        }
+                    }
+                )
 
         # else discard
         else:
-            return "discard"
+            return ValidationResult(
+                    content_quality_score=quality_score, 
+                    topic_match_score=topic_match_score, 
+                    decision="discarded", 
+                    summary_reason={
+                        "metadata": {
+                            "reason": self.metadata_result.summary_reason,
+                            "flags": self.metadata_result.flags,
+                        },
+                        "transcript": {
+                            "reason": self.transcript_result.summary_reason,
+                            "flags": self.transcript_result.flags,
+                        }
+                    }
+                )
 

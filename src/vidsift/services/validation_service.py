@@ -21,6 +21,7 @@ from vidsift.models.validation.metadata_validation_result import \
 from vidsift.models.validation.pre_validation_result import PreValidationResult
 from vidsift.models.validation.transcript_validation_result import \
     TranscriptValidationResult
+from vidsift.models.validation.validation_result import ValidationResult
 from vidsift.models.video import Video
 from vidsift.shared.AI.errors import AIError
 from vidsift.shared.AI.json_output_manager import AIJsonOutputManager
@@ -50,6 +51,7 @@ class VideoValidator:
                 author=vid.author,
                 published=vid.published,
                 video_id=vid.video_id,
+                channel_id=vid.channel_id
         )
 
         pre_vali_result: PreValidationResult =  self.pre_validator.build_pre_validation_features(vid=new_vid, transcript=transcript)
@@ -124,14 +126,19 @@ class VideoValidator:
 
 
     @log.log
-    def validate_video(self, vid: Video, raw_transcript: str) -> Literal["download", "summarize", "discard"]:
+    def validate_video(self, vid: Video, raw_transcript: str) -> ValidationResult:
         # normalize the transcript
         transcript: str = self.text_normalizer.normalize(raw_transcript)
 
         # pre-validate
         if not self.pre_validate(vid=vid, transcript=transcript):
             log.log_info(f"The video with id {vid.video_id} contains signs for exessive clickbait, skipping")
-            return "discard"
+            return ValidationResult(
+                content_quality_score=0,
+                topic_match_score=0,
+                decision="discarded",
+                summary_reason={"reason": "signs of exessive clickbait are present"}
+            )
         else:
             log.log_info(f"The video with id {vid.video_id} does not contain strong signs of clickbait, moving to metadata validation")
 
@@ -166,7 +173,7 @@ class VideoValidator:
 
 if __name__ == "__main__":
     vv = VideoValidator()
-    vid = Video(title="i didn't want to like this", url="https://www.youtube.com/watch?v=G3jvn7n-68Y", author="NetworkChuck", published="32497954", video_id="G3jvn7n-68Y")
+    vid = Video(title="i didn't want to like this", url="https://www.youtube.com/watch?v=G3jvn7n-68Y", author="NetworkChuck", published="32497954", video_id="G3jvn7n-68Y", channel_id="alsdjöasdjf")
     with open("/home/user/projects/python/vidsift/fake-transcript.txt", "r") as f:
         transcript = f.read()
     with open("/home/user/projects/python/vidsift/test_data/test_transcript2.txt", "r") as f:
@@ -174,7 +181,7 @@ if __name__ == "__main__":
     result = vv.validate_video(vid=vid, raw_transcript=transcript)
     print("RESULT:")
     print(result)
-    vid = Video(title="i didn't want to like this", url="https://www.youtube.com/watch?v=G3jvn7n-68Y", author="NetworkChuck", published="32497954", video_id="G3jvn7n-68Y")
+    vid = Video(title="i didn't want to like this", url="https://www.youtube.com/watch?v=G3jvn7n-68Y", author="NetworkChuck", published="32497954", video_id="G3jvn7n-68Y", channel_id="asdojlöasdjlöaslödf")
     result2 = vv.validate_video(vid=vid, raw_transcript=transcript2)
     print("RESULT2:")
     print(result2)
