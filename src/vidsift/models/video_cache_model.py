@@ -5,7 +5,7 @@ from pydantic import BaseModel, Field
 
 
 class VideoCacheModel(BaseModel):
-    video_id: str
+    video_id: str = Field(max_length=11, min_length=11)
     title: str
     author: str
     channel_id: str
