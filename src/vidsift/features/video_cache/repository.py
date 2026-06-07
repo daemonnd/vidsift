@@ -29,6 +29,7 @@ class VideoCacheRepository:
             url TEXT NOT NULL,
             author TEXT NOT NULL, 
             channel_id TEXT NOT NULL, 
+            published TEXT NOT NULL,
 
             status TEXT NOT NULL,
 
@@ -48,10 +49,10 @@ class VideoCacheRepository:
         Method for setting the status to VALIDATING after a video got discovered
         """
         try:
-            parameters: tuple = (vid.video_id, vid.title, vid.url, vid.author, vid.channel_id, ProcessingStatus.VALIDATING.value, None, None, None, None,  None, None)
+            parameters: tuple = (vid.video_id, vid.title, vid.url, vid.author, vid.channel_id, vid.published, ProcessingStatus.VALIDATING.value, None, None, None, None,  None, None)
             self.cur.execute("""
             INSERT INTO processed_videos VALUES
-            (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", parameters)
+            (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", parameters)
             self.conn.commit()
         except IntegrityError as e:
             raise DBWritingError(f"Failed to write to DB while setting the status to VALIDATING because a database operand violated a constraint: {str(e)}") from e
@@ -165,7 +166,7 @@ class VideoCacheRepository:
         rows = self.cur.execute("""
         SELECT * FROM processed_videos
         WHERE status = ?
-        """, parameters)
+        """, parameters).fetchall()
         if rows is None:
             return None
         for row in rows:

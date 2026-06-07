@@ -21,6 +21,7 @@ class VideoCacheModel(BaseModel):
     url: str
     author: str
     channel_id: str
+    published: str
     status: ProcessingStatus
     decision: Literal["downloaded", "summarized", "discarded"] | None
     quality_score: float | None = Field(default=None, ge=0) 
