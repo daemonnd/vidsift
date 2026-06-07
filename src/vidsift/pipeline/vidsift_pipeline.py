@@ -38,7 +38,7 @@ log: logger = logger()
 
 class VidsiftOrchestrator:
     def __init__(
-        self, 
+        self,
         channel_id_list: list[str],
         video_validator: VideoValidator | None = None,
         transcript_service: TranscriptService | None = None,
@@ -50,15 +50,15 @@ class VidsiftOrchestrator:
         # video fetching
         self.video_data_collector: VideoDataCollection = VideoDataCollection(channel_id_list=channel_id_list)
         # video cache
-        self.video_db: VideoCacheRepository = VideoCacheRepository()
+        self.video_db: VideoCacheRepository = (video_db or VideoCacheRepository())
         # validation
-        self.video_validator: VideoValidator = VideoValidator()
+        self.video_validator: VideoValidator = (video_validator or VideoValidator())
         # transcript
-        self.transcript_service: TranscriptService = TranscriptService()
+        self.transcript_service: TranscriptService = (transcript_service or TranscriptService())
         # summarization
-        self.summarizer: SummarizationService = SummarizationService()
+        self.summarizer: SummarizationService = (summarizer or SummarizationService())
         # downloading
-        self.downloader: VideoDownloader = VideoDownloader()
+        self.downloader: VideoDownloader = (downloader or VideoDownloader())
 
     def _convert_video_cache_to_vid(self, video_db: VideoCacheModel) -> Video:
         return Video(
