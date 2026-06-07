@@ -14,6 +14,7 @@ What it does:
 
 
 from dataclasses import asdict
+from os import error
 from pathlib import Path
 from sys import exit
 from typing import Generator, Literal
@@ -40,7 +41,7 @@ class VidsiftOrchestrator:
         # video fetching
         self.video_data_collector: VideoDataCollection = VideoDataCollection(channel_id_list=channel_id_list)
         # video cache
-        self.video_cache: VideoCacheRepository = VideoCacheRepository()
+        self.video_db: VideoCacheRepository = VideoCacheRepository()
         # validation
         self.video_validator: VideoValidator = VideoValidator()
         # transcript
@@ -62,28 +63,28 @@ class VidsiftOrchestrator:
             for vid in video_generator:
                 try:
                     # check if the video has already been handled
-                    if self.video_cache.exists(video_id=vid.video_id):
+                    if self.video_db.exists(video_id=vid.video_id):
                         continue
                     # fetch the transcript
                     log.log_debug(f"Fetching the transcript of {vid.video_id}...")
                     transcript: str = self.transcript_service.get_transcript(vid)
 
                     # update the database, set the status to VALIDATING
-                    self.video_cache.create(vid=vid)
-                    log.log_debug(f"current status: {self.video_cache.get(vid.video_id)}")
+                    self.video_db.create(vid=vid)
+                    log.log_debug(f"current status: {self.video_db.get(vid.video_id)}")
 
                     # validate the video and get the action to perform
                     video_validation_result: ValidationResult = self.video_validator.validate_video(vid=vid, raw_transcript=transcript)
 
                     # update the database after validation
-                    self.video_cache.update_after_validation(
+                    self.video_db.update_after_validation(
                         video_id=vid.video_id,
                         decision=video_validation_result.decision,
                         quality_score=video_validation_result.content_quality_score,
                         topic_match_score=video_validation_result.topic_match_score,
                         reason=str(video_validation_result.summary_reason)
                     )
-                    log.log_debug(f"current status: {self.video_cache.get(vid.video_id)}")
+                    log.log_debug(f"current status: {self.video_db.get(vid.video_id)}")
 
                     # take the appropriate action based on the validation result
                     match video_validation_result.decision:
@@ -91,45 +92,39 @@ class VidsiftOrchestrator:
                             log.log_info(f"Downloading video {asdict(vid)} with id {vid.video_id}...")
                             self.downloader.download(vid.url, output_path=Path(CONFIG.downloads.output_dir))
                             # add it to the video cache
-                            self.video_cache.save(
-                                vid=vid, decision="downloaded", 
-                                quality_score=video_validation_result.content_quality_score, 
-                                topic_match_score=video_validation_result.topic_match_score,
-                                reason=str(video_validation_result.summary_reason)
-                            )
+                            self.video_db.update_after_done(video_id=vid.video_id, decision="downloaded")
                         case "summarized":
                             log.log_info(f"Video {asdict(vid)} with id {vid.video_id} will be summarized.")
                             self.summarizer.summarize(raw_transcript=transcript)
                             # add it to the video cache
-                            self.video_cache.save(
-                                vid=vid, decision="summarized", 
-                                quality_score=video_validation_result.content_quality_score, 
-                                topic_match_score=video_validation_result.topic_match_score,
-                                reason=str(video_validation_result.summary_reason)
-                            )
+                            self.video_db.update_after_done(video_id=vid.video_id, decision="summarized")
                         case "discarded":
                             log.log_info(f"Video {asdict(vid)} with id {vid.video_id} will be discarded.")
                             # add it to the video cache
-                            self.video_cache.save(
-                                vid=vid, decision="discarded", 
-                                quality_score=video_validation_result.content_quality_score, 
-                                topic_match_score=video_validation_result.topic_match_score,
-                                reason=str(video_validation_result.summary_reason)
-                            )
+                            self.video_db.update_after_done(video_id=vid.video_id, decision="discarded")
                 except TranscriptError as e:
-                    log.log_error(f"TranscriptError: Each transcript fetching provider failed: {str(e)}")
+                    error_msg: str = f"TranscriptError: Each transcript fetching provider failed: {str(e)}"
+                    log.log_error(error_msg)
+                    # add the failure to the video database
+                    self.video_db.mark_failed(error_msg=error_msg, video_id=vid.video_id)
                     log.log_info("Moving on to the next video because of the previous TranscriptError...")
                     continue
                 except VideoValidationError as e:
-                    log.log_error(f"VideoValidationError: Failed to validate the video with id {vid.video_id} because of the following error: {str(e)}")
+                    error_msg: str = f"VideoValidationError: Failed to validate the video with id {vid.video_id} because of the following error: {str(e)}"
+                    log.log_error(error_msg)
+                    # add the failure to the video database
+                    self.video_db.mark_failed(error_msg=error_msg, video_id=vid.video_id)
                     log.log_info("Moving on to the next video because of the previous VideoValidationError...")
                     continue
                 except SummaryError as e:
-                    log.log_error(f"SummaryError: Failed to summarize the video with id {vid.video_id} because of the following error: {str(e)}")
+                    error_msg: str = f"SummaryError: Failed to summarize the video with id {vid.video_id} because of the following error: {str(e)}"
+                    log.log_error(error_msg)
+                    # add the failure to the video database
+                    self.video_db.mark_failed(error_msg=error_msg, video_id=vid.video_id)
                     log.log_info("Moving on to the next video because of the previous SummaryError...")
                     continue
         finally:
-            self.video_cache.close()
+            self.video_db.close()
 
 
 
