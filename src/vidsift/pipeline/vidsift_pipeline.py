@@ -68,8 +68,22 @@ class VidsiftOrchestrator:
                     log.log_debug(f"Fetching the transcript of {vid.video_id}...")
                     transcript: str = self.transcript_service.get_transcript(vid)
 
+                    # update the database, set the status to VALIDATING
+                    self.video_cache.create(vid=vid)
+                    log.log_debug(f"current status: {self.video_cache.get(vid.video_id)}")
+
                     # validate the video and get the action to perform
                     video_validation_result: ValidationResult = self.video_validator.validate_video(vid=vid, raw_transcript=transcript)
+
+                    # update the database after validation
+                    self.video_cache.update_after_validation(
+                        video_id=vid.video_id,
+                        decision=video_validation_result.decision,
+                        quality_score=video_validation_result.content_quality_score,
+                        topic_match_score=video_validation_result.topic_match_score,
+                        reason=str(video_validation_result.summary_reason)
+                    )
+                    log.log_debug(f"current status: {self.video_cache.get(vid.video_id)}")
 
                     # take the appropriate action based on the validation result
                     match video_validation_result.decision:
@@ -121,5 +135,5 @@ class VidsiftOrchestrator:
 
 
 if __name__ == "__main__":
-    vo = VidsiftOrchestrator(["UC9x0AN7BWHpCDHSm9NiJFJQ"])
+    vo = VidsiftOrchestrator(["UCo71RUe6DX4w-Vd47rFLXPg"])
     vo.run()
