@@ -18,6 +18,7 @@ class ProcessingStatus(Enum):
 class VideoCacheModel(BaseModel):
     video_id: str = Field(max_length=11, min_length=11)
     title: str
+    url: str
     author: str
     channel_id: str
     status: ProcessingStatus
@@ -25,5 +26,5 @@ class VideoCacheModel(BaseModel):
     quality_score: float | None = Field(default=None, ge=0) 
     topic_match_score: float | None = Field(default=None, ge=0)
     reason: str | None
-    processed_at: datetime
+    processed_at: datetime | None
 
