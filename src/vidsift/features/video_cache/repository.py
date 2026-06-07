@@ -47,7 +47,7 @@ class VideoCacheRepository:
         Method for setting the status to VALIDATING after a video got discovered
         """
         try:
-            parameters = (vid.video_id, vid.title, vid.author, vid.channel_id, ProcessingStatus.VALIDATING.value, None, None, None, None, datetime.datetime.now().isoformat(), None)
+            parameters: tuple = (vid.video_id, vid.title, vid.author, vid.channel_id, ProcessingStatus.VALIDATING.value, None, None, None, None, datetime.datetime.now().isoformat(), None)
             self.cur.execute("""
             INSERT INTO processed_videos VALUES
             (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", parameters)
@@ -66,7 +66,7 @@ class VideoCacheRepository:
         Method to add the validation data to the table entry and update the status to ether DONE, DOWNLOADING or SUMMARIZING
         """
         try:
-            parameters = (decision, quality_score, topic_match_score, reason, datetime.datetime.now().isoformat(), video_id)
+            parameters: tuple = (decision, quality_score, topic_match_score, reason, datetime.datetime.now().isoformat(), video_id)
             self.cur.execute("""
             UPDATE processed_videos
             SET decision = ?,
@@ -80,48 +80,40 @@ class VideoCacheRepository:
         except IntegrityError as e:
             raise DBWritingError(f"Failed to write to DB while updating the status after validation because a database operand violated a constraint: {str(e)}") from e
 
+    def update_after_done(self,
+                          video_id: str,
+                          decision: Literal["downloaded", "summarized", "discarded"]
+        ):
+        """
+        Method to set the status to DONE and mark the video as processed successfully
+        """
+        try:
+            parameters: tuple = (ProcessingStatus.DONE, decision, video_id)
+            self.cur.execute("""
+            UPDATE processed_videos
+            SET status = ?,
+            decision = ?,
+            WHERE video_id = ?
+            """, parameters)
 
-    def mark_failed(self):
+        except IntegrityError as e:
+            raise DBWritingError(f"Failed to write to DB while updating the status after the video with id {video_id} has been {decision}, because a database operand violated a constraint: {str(e)}") from e
+
+
+    def mark_failed(self, error_msg: str, video_id: str):
         """
         Method to mart a download / summary / validation as failed, updates last_error and sets the status to FAILED
         """
-
-    def save(self,
-                vid: Video, 
-                decision: Literal["downloaded", "summarized", "discarded"],
-                quality_score: float,
-                topic_match_score: float,
-                reason: str
-                ) -> None:
-        """
-        Method to save a video to the processed_videos DB, so that it does not get processed again
-        """
-
-
         try:
-            data_as_dict: dict = {
-                "video_id": vid.video_id,
-                "title": vid.title,
-                "author": vid.author,
-                "channel_id": vid.channel_id,
-                "decision": decision,
-                "quality_score": quality_score,
-                "topic_match_score": topic_match_score,
-                "reason": reason,
-                "processed_at": datetime.datetime.now().isoformat()
-            }
-            try:
-                data = VideoCacheModel.model_validate(data_as_dict)
-            except ValidationError as e:
-                raise VCDataValidationError(f"Data given {data_as_dict} is likely false, validator rejected it: {str(e)}") from e
-
-            parameters = (data.video_id, data.title, data.author, data.channel_id, data.decision, data.quality_score, data.topic_match_score, data.reason, data.processed_at.isoformat())
+            parameters: tuple = (ProcessingStatus.FAILED, error_msg, video_id)
             self.cur.execute("""
-            INSERT INTO processed_videos VALUES
-            (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", parameters)
-            self.conn.commit()
-        except sqlite3.IntegrityError as e:
-            raise DBWritingError(f"Failed to write to DB because a database operand violated a constraint: {str(e)}") from e
+            UPDATA processed_videos
+            SET status = ?,
+            last_error = ?
+            WHERE video_id = ?
+            """, parameters)
+        except IntegrityError as e:
+            raise DBWritingError(f"Failed to write to DB while updating the status after validation because a database operand violated a constraint: {str(e)}")
 
     def get(self, video_id: str) -> VideoCacheModel | None:
         """
