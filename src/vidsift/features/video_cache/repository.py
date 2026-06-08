@@ -13,8 +13,11 @@ from vidsift.models.video_cache_model import ProcessingStatus, VideoCacheModel
 
 
 class VideoCacheRepository:
-    def __init__(self) -> None:
-        self.db_path: Path = Path(Path.home() / ".local" / "share" / "vidsift" / "processed_videos.db")
+    def __init__(self, db_path: Path | None = None) -> None:
+        if db_path is None:
+            self.db_path: Path = Path(Path.home() / ".local" / "share" / "vidsift" / "processed_videos.db")
+        else:
+            self.db_path: Path = db_path
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         self.conn: Connection = sqlite3.connect(str(self.db_path))
         self.conn.row_factory = sqlite3.Row
