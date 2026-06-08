@@ -28,4 +28,5 @@ class VideoCacheModel(BaseModel):
     topic_match_score: float | None = Field(default=None, ge=0)
     reason: str | None
     processed_at: datetime | None
+    last_error: str | None
 
