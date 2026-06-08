@@ -83,6 +83,11 @@ class VideoCacheRepository:
             WHERE video_id = ?
             """, parameters)
             self.conn.commit()
+            if self.cur.rowcount != 1:
+                raise DBWritingError(
+                    f"Expected to update 1 row for {video_id}, "
+                    f"updated {self.cur.rowcount}"
+                )
         except IntegrityError as e:
             raise DBWritingError(f"Failed to write to DB while updating the status after validation because a database operand violated a constraint: {str(e)}") from e
         except OperationalError as e:
@@ -96,7 +101,12 @@ class VideoCacheRepository:
         Method to set the status to DONE and mark the video as processed successfully
         """
         try:
-            parameters: tuple = (ProcessingStatus.DONE.value, decision, video_id, datetime.datetime.now().isoformat())
+            parameters: tuple = (
+                ProcessingStatus.DONE.value,
+                decision,
+                datetime.datetime.now().isoformat(),
+                video_id
+            )
             self.cur.execute("""
             UPDATE processed_videos
             SET status = ?,
@@ -107,6 +117,11 @@ class VideoCacheRepository:
 
             self.conn.commit()
 
+            if self.cur.rowcount != 1:
+                raise DBWritingError(
+                    f"Expected to update 1 row for {video_id}, "
+                    f"updated {self.cur.rowcount}"
+                )
         except IntegrityError as e:
             raise DBWritingError(f"Failed to write to DB while updating the status after the video with id {video_id} has been {decision}, because a database operand violated a constraint: {str(e)}") from e
         except OperationalError as e:
@@ -128,6 +143,11 @@ class VideoCacheRepository:
 
             self.conn.commit()
 
+            if self.cur.rowcount != 1:
+                raise DBWritingError(
+                    f"Expected to update 1 row for {video_id}, "
+                    f"updated {self.cur.rowcount}"
+                )
         except IntegrityError as e:
             raise DBWritingError(f"Failed to write to DB while updating the status after validation because a database operand violated a constraint: {str(e)}")
         except OperationalError as e:
