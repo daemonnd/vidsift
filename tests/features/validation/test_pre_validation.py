@@ -12,14 +12,14 @@ def set_up_validator():
     return PreValidator()
 
 # r = real vid
-rvid1: Video = Video(title='Summer of CCNA - 90 Minute - Session 2', url='https://www.youtube.com/watch?v=GVlq6lATZ2M', author='NetworkChuck', published='2026-05-21T22:48:57+00:00', video_id='GVlq6lATZ2M')
+rvid1: Video = Video(channel_id="UC9x0AN7BWHpCDHSm9NiJFJQ",title='Summer of CCNA - 90 Minute - Session 2', url='https://www.youtube.com/watch?v=GVlq6lATZ2M', author='NetworkChuck', published='2026-05-21T22:48:57+00:00', video_id='GVlq6lATZ2M')
 with open(Path(Path(__file__).parent.parent.parent.parent / "test_data/test_transcript1.txt"), "r") as f:
     rtranscript1: str = f.read()
-rvid2: Video = Video(title='you need to use Hermes RIGHT NOW!! (goodbye OpenClaw!!)', url='https://www.youtube.com/watch?v=QQEgIo4Juxg', author='NetworkChuck', published='2026-05-20T16:20:21+00:00', video_id='QQEgIo4Juxg')
+rvid2: Video = Video(channel_id="UC9x0AN7BWHpCDHSm9NiJFJQ",title='you need to use Hermes RIGHT NOW!! (goodbye OpenClaw!!)', url='https://www.youtube.com/watch?v=QQEgIo4Juxg', author='NetworkChuck', published='2026-05-20T16:20:21+00:00', video_id='QQEgIo4Juxg')
 with open(Path(Path(__file__).parent.parent.parent.parent / "test_data/test_transcript2.txt"), "r") as f:
     rtranscript2: str = f.read()
-rvid3: Video = Video(title="i didn't want to like this....", url='https://www.youtube.com/watch?v=G3jvn7n-68Y', author='NetworkChuck', published='2026-04-09T14:25:50+00:00', video_id='G3jvn7n-68Y')
-rvid4: Video = Video(title='the WORST hack of 2026', url='https://www.youtube.com/watch?v=eGSsoSEppNU', author='NetworkChuck', published='2026-03-31T15:00:51+00:00', video_id='eGSsoSEppNU')
+rvid3: Video = Video(channel_id="UC9x0AN7BWHpCDHSm9NiJFJQ",title="i didn't want to like this....", url='https://www.youtube.com/watch?v=G3jvn7n-68Y', author='NetworkChuck', published='2026-04-09T14:25:50+00:00', video_id='G3jvn7n-68Y')
+rvid4: Video = Video(channel_id="UC9x0AN7BWHpCDHSm9NiJFJQ",title='the WORST hack of 2026', url='https://www.youtube.com/watch?v=eGSsoSEppNU', author='NetworkChuck', published='2026-03-31T15:00:51+00:00', video_id='eGSsoSEppNU')
 
 # =========================================================
 # FAKE TEST VIDEOS
@@ -38,7 +38,7 @@ fvid_clean_1 = Video(
     url=fake,
     author="TechBuilder",
     published=fake,
-    video_id=fake,
+    video_id=fake, channel_id=fake
 )
 
 ftranscript_clean_1 = """
@@ -52,7 +52,7 @@ fvid_clean_2 = Video(
     url=fake,
     author="SysLab",
     published=fake,
-    video_id=fake,
+    video_id=fake, channel_id=fake
 )
 
 ftranscript_clean_2 = """
@@ -69,7 +69,7 @@ fvid_clickbait_1 = Video(
     url=fake,
     author=fake,
     published=fake,
-    video_id=fake,
+    video_id=fake, channel_id=fake
 )
 
 ftranscript_clickbait_1 = """
@@ -82,7 +82,7 @@ fvid_clickbait_2 = Video(
     url=fake,
     author=fake,
     published=fake,
-    video_id=fake,
+    video_id=fake, channel_id=fake
 )
 
 ftranscript_clickbait_2 = """
@@ -94,7 +94,7 @@ fvid_clickbait_3 = Video(
     url=fake,
     author=fake,
     published=fake,
-    video_id=fake,
+    video_id=fake,channel_id=fake
 )
 
 ftranscript_clickbait_3 = """
@@ -110,7 +110,7 @@ fvid_transcript_1 = Video(
     url=fake,
     author=fake,
     published=fake,
-    video_id=fake,
+    video_id=fake,channel_id=fake
 )
 
 ftranscript_transcript_1 = """
@@ -124,7 +124,7 @@ fvid_transcript_2 = Video(
     url=fake,
     author=fake,
     published=fake,
-    video_id=fake,
+    video_id=fake,channel_id=fake
 )
 
 ftranscript_transcript_2 = """
@@ -143,7 +143,7 @@ fvid_emoji_1 = Video(
     url=fake,
     author=fake,
     published=fake,
-    video_id=fake,
+    video_id=fake,channel_id=fake
 )
 
 fvid_emoji_2 = Video(
@@ -151,7 +151,7 @@ fvid_emoji_2 = Video(
     url=fake,
     author=fake,
     published=fake,
-    video_id=fake,
+    video_id=fake,channel_id=fake
 )
 
 fvid_emoji_3 = Video(
@@ -159,7 +159,7 @@ fvid_emoji_3 = Video(
     url=fake,
     author=fake,
     published=fake,
-    video_id=fake,
+    video_id=fake,channel_id=fake
 )
 
 # -------------------------
@@ -171,7 +171,7 @@ fvid_uppercase_1 = Video(
     url=fake,
     author=fake,
     published=fake,
-    video_id=fake,
+    video_id=fake,channel_id=fake
 )
 
 fvid_uppercase_2 = Video(
@@ -179,7 +179,7 @@ fvid_uppercase_2 = Video(
     url=fake,
     author=fake,
     published=fake,
-    video_id=fake,
+    video_id=fake,channel_id=fake
 )
 
 fvid_uppercase_3 = Video(
@@ -187,7 +187,7 @@ fvid_uppercase_3 = Video(
     url=fake,
     author=fake,
     published=fake,
-    video_id=fake,
+    video_id=fake,channel_id=fake
 )
 
 fvid_uppercase_4 = Video(
@@ -195,7 +195,7 @@ fvid_uppercase_4 = Video(
     url=fake,
     author=fake,
     published=fake,
-    video_id=fake,
+    video_id=fake,channel_id=fake
 )
 
 # -------------------------
@@ -207,7 +207,7 @@ fvid_borderline_1 = Video(
     url=fake,
     author=fake,
     published=fake,
-    video_id=fake,
+    video_id=fake,channel_id=fake
 )
 
 # contains "massive update" but is not really clickbait
@@ -221,7 +221,7 @@ fvid_borderline_2 = Video(
     url=fake,
     author=fake,
     published=fake,
-    video_id=fake,
+    video_id=fake,channel_id=fake
 )
 
 # contains "warning"
@@ -239,7 +239,7 @@ fvid_mixed_1 = Video(
     url=fake,
     author=fake,
     published=fake,
-    video_id=fake,
+    video_id=fake,channel_id=fake
 )
 
 ftranscript_mixed_1 = """
@@ -253,7 +253,7 @@ fvid_mixed_2 = Video(
     url=fake,
     author=fake,
     published=fake,
-    video_id=fake,
+    video_id=fake,channel_id=fake
 )
 
 ftranscript_mixed_2 = """
@@ -265,9 +265,9 @@ No clickbait here after the intro.
 # Full of one signal but not the other
 # --------------------------
 fvid_full_signal_1 = Video(
-    title="...!!!?????", url=fake, author=fake, published=fake, video_id=fake)
+    title="...!!!?????", url=fake, author=fake, published=fake, video_id=fake, channel_id=fake)
 fvid_full_signal_2 = Video(
-    title="😀⌛🏘️📅🔥❗", url=fake, author=fake, published=fake, video_id=fake)
+    title="😀⌛🏘️📅🔥❗", url=fake, author=fake, published=fake, video_id=fake, channel_id=fake)
 
 
 

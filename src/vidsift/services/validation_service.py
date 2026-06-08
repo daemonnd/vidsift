@@ -134,8 +134,8 @@ class VideoValidator:
         if not self.pre_validate(vid=vid, transcript=transcript):
             log.log_info(f"The video with id {vid.video_id} contains signs for exessive clickbait, skipping")
             return ValidationResult(
-                content_quality_score=0,
-                topic_match_score=0,
+                content_quality_score=0.1,
+                topic_match_score=0.1,
                 decision="discarded",
                 summary_reason={"reason": "signs of exessive clickbait are present"}
             )
