@@ -60,15 +60,6 @@ class VidsiftOrchestrator:
         # downloading
         self.downloader: VideoDownloader = (downloader or VideoDownloader())
 
-    def _convert_video_cache_to_vid(self, video_db: VideoCacheModel) -> Video:
-        return Video(
-            title=video_db.title,
-            url=video_db.url,
-            author=video_db.author,
-            channel_id=video_db.channel_id,
-            published=video_db.published,
-            video_id=video_db.video_id
-        )
     @log.log
     def run(self) -> None:
         try:
@@ -132,7 +123,7 @@ class VidsiftOrchestrator:
         log.log_debug("Check for videos where the download got interrupted...")
         downloading_vids_generator: Generator[VideoCacheModel, None, None] = self.video_db.get_by_status("downloading")
         for video in downloading_vids_generator:
-            vid: Video = self._convert_video_cache_to_vid(video_db=video)
+            vid: Video = Video.from_cache(video_db_row=video)
             self.download(vid=vid)
             # add it to the video cache
             self.video_db.update_after_done(video_id=vid.video_id, decision="downloaded")
@@ -143,7 +134,7 @@ class VidsiftOrchestrator:
         log.log_debug("Check for videos where the validation got interrupted...")
         validating_vids_generator: Generator[VideoCacheModel, None, None] = self.video_db.get_by_status("validating")
         for video in validating_vids_generator:
-            vid: Video = self._convert_video_cache_to_vid(video_db=video)
+            vid: Video = Video.from_cache(video_db_row=video)
             self.process_validation_pipeline(vid=vid, create_db_entry = False)
         log.log_debug("Check for videos where the validation got interrupted... Done")
 
@@ -152,7 +143,7 @@ class VidsiftOrchestrator:
         log.log_debug("Check for videos where the summarization got interrupted...")
         summarizing_vids_generator: Generator[VideoCacheModel, None, None] = self.video_db.get_by_status("summarizing")
         for video in summarizing_vids_generator:
-            vid: Video = self._convert_video_cache_to_vid(video_db=video)
+            vid: Video = Video.from_cache(video_db_row=video)
             try:
                 transcript: str = self.fetch_transcript(vid=vid)
                 self.summarize(vid=vid, transcript=transcript)
