@@ -1,12 +1,11 @@
-class VideoCacheError(Exception):
+class VideoProcessingError(Exception):
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
 
-class VCDataValidationError(VideoCacheError):
-    """VC = VideoCache"""
+class VideoProcessingDataValidationError(VideoProcessingError):
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
 
-class DBWritingError(VideoCacheError):
+class DBWritingError(VideoProcessingError):
     def __init__(self, *args: object) -> None:
         super().__init__(*args)

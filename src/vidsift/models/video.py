@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from vidsift.models.video_cache_model import VideoCacheModel
+from vidsift.models.video_record import VideoProcessingRecord
 
 
 @dataclass
@@ -13,12 +13,12 @@ class Video:
     video_id: str
 
     @classmethod
-    def from_cache(cls, video_db_row: VideoCacheModel):
+    def from_cache(cls, video_db_row: VideoProcessingRecord):
         return cls(
-            title=cache.title,
-            url=cache.url,
-            author=cache.author,
-            channel_id=cache.channel_id,
-            published=cache.published,
-            video_id=cache.video_id
+            title=video_db_row.title,
+            url=video_db_row.url,
+            author=video_db_row.author,
+            channel_id=video_db_row.channel_id,
+            published=video_db_row.published,
+            video_id=video_db_row.video_id
         )

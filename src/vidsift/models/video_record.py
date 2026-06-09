@@ -5,7 +5,7 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 
-class ProcessingStatus(Enum):
+class VideoProcessingStatus(Enum):
     VALIDATING = "validating"
     DOWNLOADING = "downloading"
     SUMMARIZING = "summarizing"
@@ -15,14 +15,14 @@ class ProcessingStatus(Enum):
 
 
 
-class VideoCacheModel(BaseModel):
+class VideoProcessingRecord(BaseModel):
     video_id: str = Field(max_length=11, min_length=11)
     title: str
     url: str
     author: str
     channel_id: str
     published: str
-    status: ProcessingStatus
+    status: VideoProcessingStatus
     decision: Literal["downloaded", "summarized", "discarded"] | None
     quality_score: float | None = Field(default=None, ge=0) 
     topic_match_score: float | None = Field(default=None, ge=0)

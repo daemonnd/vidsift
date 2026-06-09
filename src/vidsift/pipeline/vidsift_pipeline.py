@@ -23,11 +23,12 @@ from vidsift.features.download.downloader import VideoDownloader
 from vidsift.features.summary.errors import SummaryError
 from vidsift.features.transcript.errors import TranscriptError
 from vidsift.features.validation.errors import VideoValidationError
-from vidsift.features.video_cache.repository import VideoCacheRepository
+from vidsift.features.video_processing.repository import \
+    VideoProcessingRepository
 from vidsift.ingestion.errors import VideoDataCollectionError
 from vidsift.models.validation.validation_result import ValidationResult
 from vidsift.models.video import Video
-from vidsift.models.video_cache_model import VideoCacheModel
+from vidsift.models.video_record import VideoProcessingRecord
 from vidsift.services.summarization_service import SummarizationService
 from vidsift.services.transcript_service import TranscriptService
 from vidsift.services.validation_service import VideoValidator
@@ -44,13 +45,13 @@ class VidsiftOrchestrator:
         transcript_service: TranscriptService | None = None,
         summarizer: SummarizationService | None = None,
         downloader: VideoDownloader | None = None,
-        video_db: VideoCacheRepository | None = None,
+        video_db: VideoProcessingRepository | None = None,
 
     ):
         # video fetching
         self.video_data_collector: VideoDataCollection = VideoDataCollection(channel_id_list=channel_id_list)
         # video cache
-        self.video_db: VideoCacheRepository = (video_db or VideoCacheRepository())
+        self.video_db: VideoProcessingRepository = (video_db or VideoProcessingRepository())
         # validation
         self.video_validator: VideoValidator = (video_validator or VideoValidator())
         # transcript
@@ -121,7 +122,7 @@ class VidsiftOrchestrator:
     def resume_downloads(self):
         # download the videos with an interrupted download
         log.log_debug("Check for videos where the download got interrupted...")
-        downloading_vids_generator: Generator[VideoCacheModel, None, None] = self.video_db.get_by_status("downloading")
+        downloading_vids_generator: Generator[VideoProcessingRecord, None, None] = self.video_db.get_by_status("downloading")
         for video in downloading_vids_generator:
             vid: Video = Video.from_cache(video_db_row=video)
             self.download(vid=vid)
@@ -132,7 +133,7 @@ class VidsiftOrchestrator:
     def resume_validations(self):
         # re-validate the videos where only the metadata is present
         log.log_debug("Check for videos where the validation got interrupted...")
-        validating_vids_generator: Generator[VideoCacheModel, None, None] = self.video_db.get_by_status("validating")
+        validating_vids_generator: Generator[VideoProcessingRecord, None, None] = self.video_db.get_by_status("validating")
         for video in validating_vids_generator:
             vid: Video = Video.from_cache(video_db_row=video)
             self.process_validation_pipeline(vid=vid, create_db_entry = False)
@@ -141,7 +142,7 @@ class VidsiftOrchestrator:
     def resume_summaries(self):
         # restart the summarization action for the videos where the summary got interrupted
         log.log_debug("Check for videos where the summarization got interrupted...")
-        summarizing_vids_generator: Generator[VideoCacheModel, None, None] = self.video_db.get_by_status("summarizing")
+        summarizing_vids_generator: Generator[VideoProcessingRecord, None, None] = self.video_db.get_by_status("summarizing")
         for video in summarizing_vids_generator:
             vid: Video = Video.from_cache(video_db_row=video)
             try:
@@ -226,7 +227,7 @@ class VidsiftOrchestrator:
         self.resume_summaries()
 
         # for another PR
-        #failed_vids_generator: Generator[VideoCacheModel, None, None] = self.video_db.get_by_status("failed")
+        #failed_vids_generator: Generator[VideoProcessingRecord, None, None] = self.video_db.get_by_status("failed")
 
 
 

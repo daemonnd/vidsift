@@ -6,13 +6,14 @@ from typing import Generator, Literal
 
 from pydantic import ValidationError
 
-from vidsift.features.video_cache.errors import (DBWritingError,
-                                                 VCDataValidationError)
+from vidsift.features.video_processing.errors import (
+    DBWritingError, VideoProcessingDataValidationError)
 from vidsift.models.video import Video
-from vidsift.models.video_cache_model import ProcessingStatus, VideoCacheModel
+from vidsift.models.video_record import (VideoProcessingRecord,
+                                         VideoProcessingStatus)
 
 
-class VideoCacheRepository:
+class VideoProcessingRepository:
     def __init__(self, db_path: Path | None = None) -> None:
         if db_path is None:
             self.db_path: Path = Path(Path.home() / ".local" / "share" / "vidsift" / "processed_videos.db")
@@ -52,7 +53,7 @@ class VideoCacheRepository:
         Method for setting the status to VALIDATING after a video got discovered
         """
         try:
-            parameters: tuple = (vid.video_id, vid.title, vid.url, vid.author, vid.channel_id, vid.published, ProcessingStatus.VALIDATING.value, None, None, None, None,  None, None)
+            parameters: tuple = (vid.video_id, vid.title, vid.url, vid.author, vid.channel_id, vid.published, VideoProcessingStatus.VALIDATING.value, None, None, None, None,  None, None)
             self.cur.execute("""
             INSERT INTO processed_videos VALUES
             (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", parameters)
@@ -102,7 +103,7 @@ class VideoCacheRepository:
         """
         try:
             parameters: tuple = (
-                ProcessingStatus.DONE.value,
+                VideoProcessingStatus.DONE.value,
                 decision,
                 datetime.datetime.now().isoformat(),
                 video_id
@@ -133,7 +134,7 @@ class VideoCacheRepository:
         Method to mart a download / summary / validation as failed, updates last_error and sets the status to FAILED
         """
         try:
-            parameters: tuple = (ProcessingStatus.FAILED.value, error_msg, video_id)
+            parameters: tuple = (VideoProcessingStatus.FAILED.value, error_msg, video_id)
             self.cur.execute("""
             UPDATE processed_videos
             SET status = ?,
@@ -153,7 +154,7 @@ class VideoCacheRepository:
         except OperationalError as e:
             raise DBWritingError(f"Failed to write to DB while updating the status after validation because of an operational Error: {str(e)}") from e
 
-    def get(self, video_id: str) -> VideoCacheModel | None:
+    def get(self, video_id: str) -> VideoProcessingRecord | None:
         """
         Method to get the DB entry of the video with the video id video_id.
         """
@@ -163,9 +164,9 @@ class VideoCacheRepository:
         if row is None:
             return None
         try:
-            return VideoCacheModel.model_validate(dict(row))
+            return VideoProcessingRecord.model_validate(dict(row))
         except ValidationError as e:
-            raise VCDataValidationError(f"Failed to return results because of a ValidationError from pydantic: {str(e)}") from e
+            raise VideoProcessingDataValidationError(f"Failed to return results because of a ValidationError from pydantic: {str(e)}") from e
 
 
     def exists(self, video_id: str) -> bool:
@@ -181,7 +182,7 @@ class VideoCacheRepository:
         else:
             return False
 
-    def get_by_status(self, status: Literal["downloading", "summarizing", "done", "failed", "validating"]) -> Generator[VideoCacheModel, None, None]:
+    def get_by_status(self, status: Literal["downloading", "summarizing", "done", "failed", "validating"]) -> Generator[VideoProcessingRecord, None, None]:
         """
         Method to get a list of the videos interrupted
         """
@@ -194,7 +195,7 @@ class VideoCacheRepository:
             return None
         for row in rows:
             try:
-                yield VideoCacheModel.model_validate(dict(row))
+                yield VideoProcessingRecord.model_validate(dict(row))
             except ValidationError as e:
                 raise VCDataValidationError(f"Failed to get the data of a video because of a ValidationError, database seems corrupt: {str(e)}") from e
 
@@ -204,7 +205,7 @@ class VideoCacheRepository:
 
 
 if __name__ == "__main__":
-    vcr = VideoCacheRepository()
+    vcr = VideoProcessingRepository()
     vid: Video = Video(
             title="sometitle", url="someurl", author="randomauthor", published="someday", video_id="ai90a7di7hk", channel_id="somechannelid"
     )
