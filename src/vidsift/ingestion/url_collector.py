@@ -7,10 +7,7 @@ from vidsift.ingestion.errors import (InvalidHTTPStatusError,
                                       NonWellFormattedFeedError,
                                       VideoDataCollectionError)
 from vidsift.models.video import Video
-from vidsift.shared.errorprotocol import logger
 from vidsift.shared.video_id_extractor import VideoIDExtractor
-
-log = logger()
 
 YOUTUBE_BASE_RSS_URL: str = "https://www.youtube.com/feeds/videos.xml?channel_id="
 id_extractor = VideoIDExtractor()

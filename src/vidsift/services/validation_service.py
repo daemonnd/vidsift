@@ -1,8 +1,8 @@
 """
 File for managing the validation process and returning the score of the video
 """
+import logging
 from dataclasses import asdict
-from typing import Literal
 
 from vidsift.features.validation.decision_engine import DecisionEngine
 from vidsift.features.validation.errors import VideoValidationError
@@ -25,10 +25,9 @@ from vidsift.models.validation.validation_result import ValidationResult
 from vidsift.models.video import Video
 from vidsift.shared.AI.errors import AIError
 from vidsift.shared.AI.json_output_manager import AIJsonOutputManager
-from vidsift.shared.errorprotocol import logger
 from vidsift.shared.text_normalizer import TextNormalizer
 
-log: logger = logger()
+logger = logging.getLogger(__name__)
 
 
 class VideoValidator:
@@ -38,7 +37,7 @@ class VideoValidator:
         self.pre_validation_score_calculator: PreValidationScoreCalculator = PreValidationScoreCalculator()
         self.transcript_chunk_provider: TranscriptChunkProvider = TranscriptChunkProvider()
 
-    @log.log
+    
     def pre_validate(self, vid: Video, transcript: str) -> bool:
         """
         Method to run the pre validator, without using AI
@@ -55,14 +54,14 @@ class VideoValidator:
         )
 
         pre_vali_result: PreValidationResult =  self.pre_validator.build_pre_validation_features(vid=new_vid, transcript=transcript)
-        log.log_debug(f"Pre-validation result: {asdict(pre_vali_result)}")
+        logger.debug(f"Pre-validation result: {asdict(pre_vali_result)}")
 
         pre_vali_calc_result, reason = self.pre_validation_score_calculator.calculate_score(result=pre_vali_result)
         if pre_vali_calc_result > 0.5:
-            log.log_info(f"Video with id {vid.video_id} is likely to be clickbait with a score of {pre_vali_calc_result:.2f}. Reason: {reason}")
+            logger.info(f"Video with id {vid.video_id} is likely to be clickbait with a score of {pre_vali_calc_result:.2f}. Reason: {reason}")
             return False
         else:
-            log.log_info(f"Video with id {vid.video_id} is unlikely to be clickbait with a score of {pre_vali_calc_result:.2f}. Reason: {reason}")
+            logger.info(f"Video with id {vid.video_id} is unlikely to be clickbait with a score of {pre_vali_calc_result:.2f}. Reason: {reason}")
             return True
 
 
@@ -90,7 +89,7 @@ class VideoValidator:
                 )
             )
         except AIError as e:
-            log.log_error(f"AIError during metadata validation: {str(e)}")
+            logger.error(f"AIError during metadata validation: {str(e)}")
             raise VideoValidationError(f"Metadata validation failed for video with id {vid.video_id} due to AI error: {str(e)}") from e
 
 
@@ -120,19 +119,19 @@ class VideoValidator:
                 )
             )
         except AIError as e:
-            log.log_error(f"AIError during transcript validation: {str(e)}")
+            logger.error(f"AIError during transcript validation: {str(e)}")
             raise VideoValidationError(f"Transcript validation failed for video with id {vid.video_id} due to AI error: {str(e)}")
 
 
 
-    @log.log
+    
     def validate_video(self, vid: Video, raw_transcript: str) -> ValidationResult:
         # normalize the transcript
         transcript: str = self.text_normalizer.normalize(raw_transcript)
 
         # pre-validate
         if not self.pre_validate(vid=vid, transcript=transcript):
-            log.log_info(f"The video with id {vid.video_id} contains signs for exessive clickbait, skipping")
+            logger.info(f"The video with id {vid.video_id} contains signs for exessive clickbait, skipping")
             return ValidationResult(
                 content_quality_score=0.1,
                 topic_match_score=0.1,
@@ -140,30 +139,30 @@ class VideoValidator:
                 summary_reason={"reason": "signs of exessive clickbait are present"}
             )
         else:
-            log.log_info(f"The video with id {vid.video_id} does not contain strong signs of clickbait, moving to metadata validation")
+            logger.info(f"The video with id {vid.video_id} does not contain strong signs of clickbait, moving to metadata validation")
 
         # metadata validation
-        log.log_info(f"Starting metadata validation for video with id {vid.video_id}")
+        logger.info(f"Starting metadata validation for video with id {vid.video_id}")
         metadata_validation_result: MetadataValidationResult = self.validate_metadata(vid=vid)
         if metadata_validation_result.flags:
-            log.log_info(f"Metadata validation result for video with id {vid.video_id} revealed the following flags: {metadata_validation_result.flags}.")
-        log.log_debug(f"Metadata validation for video with id {vid.video_id} metadata_score: {metadata_validation_result.metadata_score}")
-        log.log_debug(f"Metadata validation for video with id {vid.video_id} topic_match_score: {metadata_validation_result.topic_match_score}")
-        log.log_debug(f"Metadata validation for video with id {vid.video_id} confidence: {metadata_validation_result.confidence}")
-        log.log_debug(f"Metadata validation for video with id {vid.video_id} summary_reason: {metadata_validation_result.summary_reason}")
-        log.log_debug(f"Metadata validation for video with id {vid.video_id} flags: {metadata_validation_result.flags}")
+            logger.info(f"Metadata validation result for video with id {vid.video_id} revealed the following flags: {metadata_validation_result.flags}.")
+        logger.debug(f"Metadata validation for video with id {vid.video_id} metadata_score: {metadata_validation_result.metadata_score}")
+        logger.debug(f"Metadata validation for video with id {vid.video_id} topic_match_score: {metadata_validation_result.topic_match_score}")
+        logger.debug(f"Metadata validation for video with id {vid.video_id} confidence: {metadata_validation_result.confidence}")
+        logger.debug(f"Metadata validation for video with id {vid.video_id} summary_reason: {metadata_validation_result.summary_reason}")
+        logger.debug(f"Metadata validation for video with id {vid.video_id} flags: {metadata_validation_result.flags}")
 
 
         # transcript validation
-        log.log_info(f"Starting transcript validation for video with id {vid.video_id}")
+        logger.info(f"Starting transcript validation for video with id {vid.video_id}")
         transcript_validation_result: TranscriptValidationResult = self.validate_transcript(vid=vid, transcript=transcript)
         if transcript_validation_result.flags:
-            log.log_info(f"Transcript validation result for video with id {vid.video_id} revealed the following flags: {transcript_validation_result.flags}.")
-        log.log_debug(f"Transcript validation for video with id {vid.video_id} content_quality_score: {transcript_validation_result.content_quality_score}")
-        log.log_debug(f"Transcript validation for video with id {vid.video_id} topic_match_score: {transcript_validation_result.topic_match_score}")
-        log.log_debug(f"Transcript validation for video with id {vid.video_id} confidence: {transcript_validation_result.confidence}")
-        log.log_debug(f"Transcript validation for video with id {vid.video_id} summary_reason: {transcript_validation_result.summary_reason}")
-        log.log_debug(f"Transcript validation for video with id {vid.video_id} flags: {transcript_validation_result.flags}")
+            logger.info(f"Transcript validation result for video with id {vid.video_id} revealed the following flags: {transcript_validation_result.flags}.")
+        logger.debug(f"Transcript validation for video with id {vid.video_id} content_quality_score: {transcript_validation_result.content_quality_score}")
+        logger.debug(f"Transcript validation for video with id {vid.video_id} topic_match_score: {transcript_validation_result.topic_match_score}")
+        logger.debug(f"Transcript validation for video with id {vid.video_id} confidence: {transcript_validation_result.confidence}")
+        logger.debug(f"Transcript validation for video with id {vid.video_id} summary_reason: {transcript_validation_result.summary_reason}")
+        logger.debug(f"Transcript validation for video with id {vid.video_id} flags: {transcript_validation_result.flags}")
 
         # decision engine
         decision_engine: DecisionEngine = DecisionEngine(metadata_result=metadata_validation_result, transcript_result=transcript_validation_result)

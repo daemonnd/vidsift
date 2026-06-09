@@ -5,6 +5,7 @@
     - known clickbait phrases
 """
 
+import logging
 import re
 
 import emoji
@@ -13,9 +14,10 @@ from vidsift.features.validation.known_clickbait_phrases import (
     CLICKBAIT_TITLE_PHRASES, CLICKBAIT_TRANSCRIPT_PHRASES)
 from vidsift.models.validation.pre_validation_result import PreValidationResult
 from vidsift.models.video import Video
-from vidsift.shared.errorprotocol import logger
 
-log: logger = logger()
+logger = logging.getLogger(__name__)
+
+
 
 
 class PreValidator:
@@ -58,7 +60,7 @@ class PreValidator:
         Returns:
         - ratio of emojis per title characters
         """
-        log.log_debug(f"Emoji list of title {title}: {emoji.emoji_list(title)}")
+        logger.debug(f"Emoji list of title {title}: {emoji.emoji_list(title)}")
         return emoji.emoji_count(title) / max(len(title), 1)
 
     def get_title_clickbait_phrase_ratio(self, title: str):

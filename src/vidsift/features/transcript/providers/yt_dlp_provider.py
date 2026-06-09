@@ -1,3 +1,4 @@
+import logging
 import re
 from pathlib import Path
 from typing import Any
@@ -11,10 +12,8 @@ from vidsift.features.transcript.errors import (TranscriptDownloadError,
                                                 VTTFileReadingError)
 from vidsift.features.transcript.providers.base import TranscriptProvider
 from vidsift.models.video import Video
-from vidsift.shared.errorprotocol import logger
 
-log = logger()
-
+logger = logging.getLogger(__name__)
 
 class YtDlpTranscriptProvider(TranscriptProvider):
     def __init__(self) -> None:
@@ -108,24 +107,24 @@ class YtDlpTranscriptProvider(TranscriptProvider):
             - TranscriptError on failure
         """
         try:
-            log.log_debug(f"Fetching the transcript of video with id {video.video_id} with provider yt-dlp...")
+            logger.debug(f"Fetching the transcript of video with id {video.video_id} with provider yt-dlp...")
             self.fetch_transcript(video.url)
-            log.log_debug(f"Parsing the .vtt transcript file of video id {video.video_id} to a string...")
+            logger.debug(f"Parsing the .vtt transcript file of video id {video.video_id} to a string...")
             return self.convert_vtt_to_str(vtt_file=self.find_vtt_file(video_id=video.video_id))
         except TranscriptNotFoundError as e:
-            log.log_warning(f"TranscriptNotFoundError: {str(e)}")
+            logger.warning(f"TranscriptNotFoundError: {str(e)}")
             raise TranscriptError(f"Failed to get the transcript of {video.video_id} with yt-dlp")
         except TranscriptDownloadError as e:
-            log.log_warning(f"TranscriptDownloadError: Failed to download the transcript of {video.video_id}: {str(e)}")
+            logger.warning(f"TranscriptDownloadError: Failed to download the transcript of {video.video_id}: {str(e)}")
             raise TranscriptError(f"Failed to get the transcript of {video.video_id} with yt-dlp")
         except VTTFileReadingError as e:
-            log.log_warning(f"VTTFileReadingError: Failed to read .vtt file of transcript of {video.video_id}: {str(e)}")
+            logger.warning(f"VTTFileReadingError: Failed to read .vtt file of transcript of {video.video_id}: {str(e)}")
             raise TranscriptError(f"TranscriptError: Failed to download the transcript of {video.video_id}: {str(e)}")
         except TranscriptError as e:
-            log.log_warning(f"TranscriptError: Failed to fetch and download the transcript of {video.video_id}: {str(e)}")
+            logger.warning(f"TranscriptError: Failed to fetch and download the transcript of {video.video_id}: {str(e)}")
             raise TranscriptError(f"TranscriptError: Failed to download the transcript of {video.video_id}: {str(e)}")
         except Exception as e:
-            log.log_warning(f"Exception: Failed to fetch and download the transcript of {video.video_id}: {str(e)}")
+            logger.warning(f"Exception: Failed to fetch and download the transcript of {video.video_id}: {str(e)}")
             raise TranscriptError(f"TranscriptError: Failed to download the transcript of {video.video_id}: {str(e)}")
 
     def get_provider_name(self) -> str:

@@ -10,9 +10,6 @@ from vidsift.config.errors import (ConfigFileNotFoundError,
                                    ConfigFilePermissionError,
                                    ConfigValidationError)
 from vidsift.config.models import AppConfig
-from vidsift.shared.errorprotocol import logger
-
-log = logger()
 
 CONFIG_FILE_PATH: Path = Path(Path.home() / ".config" / "vidsift" / "config.toml")
 

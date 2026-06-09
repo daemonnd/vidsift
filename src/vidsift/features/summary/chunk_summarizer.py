@@ -1,13 +1,14 @@
+import logging
+
 from vidsift.config import CONFIG
 from vidsift.features.summary.errors import SummaryError
 from vidsift.shared.AI.errors import AIError
 from vidsift.shared.AI.run_model import AIUsageManager
-from vidsift.shared.errorprotocol import logger
 from vidsift.shared.one_retry import retry_once
 from vidsift.shared.text_normalizer import TextNormalizer
 from vidsift.shared.transcript_chunk_generator import TranscriptChunkGenerator
 
-log: logger = logger()
+logger = logging.getLogger(__name__)
 
 
 class ChunkSummaryManager:
@@ -49,11 +50,11 @@ class ChunkSummaryManager:
         summaries: list[str] = []
         summary: str = ""
         for chunk, chunk_index in self.transcript_chunks:
-            log.log_debug(f"Summarizing chunk {chunk_index + 1} with length {len(chunk)} characters...")
+            logger.debug(f"Summarizing chunk {chunk_index + 1} with length {len(chunk)} characters...")
             try:
                 summary = self.summarize_chunk(chunk)
             except SummaryError as e:
-                log.log_warning(f"SummaryError: Failed to summarized one transcript chunk, some important information in the final summary may be missing: {str(e)}")
+                logger.warning(f"SummaryError: Failed to summarized one transcript chunk, some important information in the final summary may be missing: {str(e)}")
                 continue
             if summary.strip() == "NO_IMPORTANT_INFORMATION":
                 continue

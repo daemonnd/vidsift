@@ -13,6 +13,7 @@ What it does:
 """
 
 
+import logging
 from dataclasses import asdict
 from pathlib import Path
 from sys import exit
@@ -33,9 +34,8 @@ from vidsift.services.summarization_service import SummarizationService
 from vidsift.services.transcript_service import TranscriptService
 from vidsift.services.validation_service import VideoValidator
 from vidsift.services.video_data_collection_service import VideoDataCollection
-from vidsift.shared.errorprotocol import logger
 
-log: logger = logger()
+logger = logging.getLogger(__name__)
 
 class VidsiftOrchestrator:
     def __init__(
@@ -61,7 +61,6 @@ class VidsiftOrchestrator:
         # downloading
         self.downloader: VideoDownloader = (downloader or VideoDownloader())
 
-    @log.log
     def run(self) -> None:
         try:
             # before fetching and processing any new videos, process the interrupted / failed ones
@@ -71,10 +70,10 @@ class VidsiftOrchestrator:
             try:
                 video_generator: Generator[Video, None, None] = self.video_data_collector.get_videos_to_process()
             except VideoDataCollectionError as e:
-                log.log_critical(f"VideoDataCollectionError: Failed to collect the necessary data about the videos to process: {str(e)}")
-                log.log_info("Exiting because no data exist...")
+                logger.critical(f"VideoDataCollectionError: Failed to collect the necessary data about the videos to process: {str(e)}")
+                logger.info("Exiting because no data exist...")
                 exit(1)
-            log.log_debug("Starting to iterate over each video and perform the validation action...")
+            logger.debug("Starting to iterate over each video and perform the validation action...")
 
             for vid in video_generator:
                 self.process_validation_pipeline(vid=vid, create_db_entry=True)
@@ -86,15 +85,15 @@ class VidsiftOrchestrator:
         # validate the video and get the action to perform
         video_validation_result: ValidationResult = self.video_validator.validate_video(vid=vid, raw_transcript=raw_transcript)
 
-        log.log_debug(f"current status: {self.video_db.get(vid.video_id)}")
+        logger.debug(f"current status: {self.video_db.get(vid.video_id)}")
         return video_validation_result
 
     def download(self, vid: Video):
-        log.log_info(f"Downloading video {asdict(vid)} with id {vid.video_id}...")
+        logger.info(f"Downloading video {asdict(vid)} with id {vid.video_id}...")
         self.downloader.download(vid.url, output_path=Path(CONFIG.downloads.output_dir))
 
     def summarize(self, vid: Video, transcript: str):
-        log.log_info(f"Video {asdict(vid)} with id {vid.video_id} will be summarized.")
+        logger.info(f"Video {asdict(vid)} with id {vid.video_id} will be summarized.")
         self.summarizer.summarize(raw_transcript=transcript)
 
     def take_action_on_video(self, video_validation_result: ValidationResult, transcript: str, vid: Video):
@@ -109,39 +108,39 @@ class VidsiftOrchestrator:
                 # add it to the video cache
                 self.video_db.update_after_done(video_id=vid.video_id, decision="summarized")
             case "discarded":
-                log.log_info(f"Video {asdict(vid)} with id {vid.video_id} will be discarded.")
+                logger.info(f"Video {asdict(vid)} with id {vid.video_id} will be discarded.")
                 # add it to the video cache
                 self.video_db.update_after_done(video_id=vid.video_id, decision="discarded")
 
 
     def fetch_transcript(self, vid: Video):
         # fetch the transcript
-        log.log_debug(f"Fetching the transcript of {vid.video_id}...")
+        logger.debug(f"Fetching the transcript of {vid.video_id}...")
         return self.transcript_service.get_transcript(vid)
 
     def resume_downloads(self):
         # download the videos with an interrupted download
-        log.log_debug("Check for videos where the download got interrupted...")
+        logger.debug("Check for videos where the download got interrupted...")
         downloading_vids_generator: Generator[VideoProcessingRecord, None, None] = self.video_db.get_by_status("downloading")
         for video in downloading_vids_generator:
             vid: Video = Video.from_cache(video_db_row=video)
             self.download(vid=vid)
             # add it to the video cache
             self.video_db.update_after_done(video_id=vid.video_id, decision="downloaded")
-        log.log_debug("Check for videos where the download got interrupted... Done")
+        logger.debug("Check for videos where the download got interrupted... Done")
 
     def resume_validations(self):
         # re-validate the videos where only the metadata is present
-        log.log_debug("Check for videos where the validation got interrupted...")
+        logger.debug("Check for videos where the validation got interrupted...")
         validating_vids_generator: Generator[VideoProcessingRecord, None, None] = self.video_db.get_by_status("validating")
         for video in validating_vids_generator:
             vid: Video = Video.from_cache(video_db_row=video)
             self.process_validation_pipeline(vid=vid, create_db_entry = False)
-        log.log_debug("Check for videos where the validation got interrupted... Done")
+        logger.debug("Check for videos where the validation got interrupted... Done")
 
     def resume_summaries(self):
         # restart the summarization action for the videos where the summary got interrupted
-        log.log_debug("Check for videos where the summarization got interrupted...")
+        logger.debug("Check for videos where the summarization got interrupted...")
         summarizing_vids_generator: Generator[VideoProcessingRecord, None, None] = self.video_db.get_by_status("summarizing")
         for video in summarizing_vids_generator:
             vid: Video = Video.from_cache(video_db_row=video)
@@ -152,19 +151,19 @@ class VidsiftOrchestrator:
                 self.video_db.update_after_done(video_id=vid.video_id, decision="summarized")
             except TranscriptError as e:
                 error_msg: str = f"TranscriptError: Each transcript fetching provider failed: {str(e)}"
-                log.log_error(error_msg)
+                logger.error(error_msg)
                 # add the failure to the video database
                 self.video_db.mark_failed(error_msg=error_msg, video_id=vid.video_id)
-                log.log_info("Moving on to the next video because of the previous TranscriptError...")
+                logger.info("Moving on to the next video because of the previous TranscriptError...")
                 continue
             except SummaryError as e:
                 error_msg: str = f"SummaryError: Failed to summarize the video with id {vid.video_id} because of the following error: {str(e)}"
-                log.log_error(error_msg)
+                logger.error(error_msg)
                 # add the failure to the video database
                 self.video_db.mark_failed(error_msg=error_msg, video_id=vid.video_id)
-                log.log_info("Moving on to the next video because of the previous SummaryError...")
+                logger.info("Moving on to the next video because of the previous SummaryError...")
                 continue
-        log.log_debug("Check for videos where the summarization got interrupted... Done")
+        logger.debug("Check for videos where the summarization got interrupted... Done")
 
 
     def process_validation_pipeline(self, vid: Video, create_db_entry: bool):
@@ -178,7 +177,7 @@ class VidsiftOrchestrator:
                 # update the database, set the status to VALIDATING
                 # only do that for new videos
                 self.video_db.create(vid=vid)
-                log.log_debug(f"current status: {self.video_db.get(vid.video_id)}")
+                logger.debug(f"current status: {self.video_db.get(vid.video_id)}")
 
             # fetch the transcript
             transcript: str = self.fetch_transcript(vid=vid)
@@ -200,27 +199,26 @@ class VidsiftOrchestrator:
 
         except TranscriptError as e:
             error_msg: str = f"TranscriptError: Each transcript fetching provider failed: {str(e)}"
-            log.log_error(error_msg)
+            logger.error(error_msg)
             # add the failure to the video database
             self.video_db.mark_failed(error_msg=error_msg, video_id=vid.video_id)
-            log.log_info("Moving on to the next video because of the previous TranscriptError...")
+            logger.info("Moving on to the next video because of the previous TranscriptError...")
             return
         except VideoValidationError as e:
             error_msg: str = f"VideoValidationError: Failed to validate the video with id {vid.video_id} because of the following error: {str(e)}"
-            log.log_error(error_msg)
+            logger.error(error_msg)
             # add the failure to the video database
             self.video_db.mark_failed(error_msg=error_msg, video_id=vid.video_id)
-            log.log_info("Moving on to the next video because of the previous VideoValidationError...")
+            logger.info("Moving on to the next video because of the previous VideoValidationError...")
             return
         except SummaryError as e:
             error_msg: str = f"SummaryError: Failed to summarize the video with id {vid.video_id} because of the following error: {str(e)}"
-            log.log_error(error_msg)
+            logger.error(error_msg)
             # add the failure to the video database
             self.video_db.mark_failed(error_msg=error_msg, video_id=vid.video_id)
-            log.log_info("Moving on to the next video because of the previous SummaryError...")
+            logger.info("Moving on to the next video because of the previous SummaryError...")
             return
 
-    @log.log
     def process_interrupted_videos(self):
         self.resume_validations()
         self.resume_downloads()
