@@ -1,5 +1,5 @@
 import logging
-from logging import FileHandler
+from logging import FileHandler, Filter, LogRecord
 from pathlib import Path
 
 from platformdirs import user_log_dir
@@ -26,8 +26,30 @@ class RichConsoleHandler(logging.Handler):
         self.console = Console()
     def emit(self, record):
         message = self.format(record)
-        style: str = get_style(message=message, levelname=record.levelname)
+        style: str = get_style(levelname=record.levelname)
         self.console.print(message, style=style)
+
+class DependencyFilter(Filter):
+    def __init__(self, name: str = "", debug_mode: bool = False) -> None:
+        super().__init__(name)
+        self.debug_mode: bool = debug_mode
+
+    def filter(self, record: LogRecord) -> bool | LogRecord:
+        """
+        Method to filter logs.
+        For vidsift logs
+        """
+        if self.debug_mode:
+            return True
+        if record.name.startswith("vidsift"):
+            if record.levelno < logging.INFO:
+                return False
+            else:
+                return True
+        if record.levelno >= logging.WARNING:
+            return True
+        return False
+
 
 
 def configure_logging():
@@ -37,7 +59,7 @@ def configure_logging():
     # remove existing handlers
     if logger.hasHandlers():
         logger.handlers.clear()
-    logger.propagate = False
+    #logger.propagate = False
         
     # define the logger, once with a console handler and once with a file handler
     console_handler = RichConsoleHandler()
@@ -57,15 +79,21 @@ def configure_logging():
         style="{"
     )
 
+    # get filter instance
+    depencendy_filter = DependencyFilter()
+
     # set formatters on handlers
     #file_handler.setFormatter(formatter)
     console_handler.setFormatter(consoleformatter)
+    # add dependency filter to console handler
+    console_handler.addFilter(depencendy_filter)
 
     # add handler and level to root logger
     logger.addHandler(console_handler)
     #logger.addHandler(file_handler)
 
     logger.setLevel(logging.DEBUG)
+
 
 
 if __name__ == "__main__":
