@@ -63,10 +63,11 @@ def configure_logging():
         
     # define the logger, once with a console handler and once with a file handler
     console_handler = RichConsoleHandler()
-    #Path(user_log_path(appname="vidsift")).parent.mkdir(parents=True, exist_ok=True)
-    #Path(user_log_path(appname="vidsift")).touch(exist_ok=True)
-    #file_handler = FileHandler(str(Path(user_log_path(appname="vidsift"))))
-        
+    Path(user_log_dir(appname="vidsift")).mkdir(parents=True, exist_ok=True)
+    user_log_file: Path = Path(f"{user_log_dir(appname="vidsift")}/vidsift.jsonl")
+    Path(user_log_file).touch(exist_ok=True)
+    file_handler = FileHandler(str(user_log_file))
+ 
     # def formatter for file logging handler
     formatter = logging.Formatter(
         "{asctime} - {levelname} - {message}",
@@ -80,25 +81,31 @@ def configure_logging():
     )
 
     # get filter instance
-    depencendy_filter = DependencyFilter()
+    depencendy_filter = DependencyFilter(debug_mode=True)
 
-    # set formatters on handlers
-    #file_handler.setFormatter(formatter)
+    # console handler
     console_handler.setFormatter(consoleformatter)
-    # add dependency filter to console handler
     console_handler.addFilter(depencendy_filter)
+    console_handler.setLevel(logging.DEBUG)
+
+    # file handler
+    file_handler.setFormatter(formatter)
+    file_handler.addFilter(depencendy_filter)
+    file_handler.setLevel(logging.DEBUG)
 
     # add handler and level to root logger
     logger.addHandler(console_handler)
+    logger.setLevel(logging.DEBUG)
     #logger.addHandler(file_handler)
 
-    logger.setLevel(logging.DEBUG)
 
 
 
 if __name__ == "__main__":
     configure_logging()
-    logger = logging.getLogger(__name__)
+    logger = logging.getLogger("vidsift")
+    logger.debug("this is a debug statement")
     logger.info("this is an info")
     logger.warning("this is a regular warning")
     logger.error("oh no, this failed :(")
+    logger.critical("this is a critical error, oh no")
