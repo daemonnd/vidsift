@@ -10,7 +10,7 @@ Tasks:
 #import argparse
 
 from vidsift.pipeline.vidsift_pipeline import VidsiftOrchestrator
-from vidsift.shared.logging_config import configure_logging
+from vidsift.shared.logging.config import configure_logging
 
 
 class VidsiftCLI:
