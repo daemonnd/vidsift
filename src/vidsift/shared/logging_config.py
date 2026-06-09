@@ -2,13 +2,11 @@ import logging
 from logging import FileHandler
 from pathlib import Path
 
-from platformdirs import user_log_path
+from platformdirs import user_log_dir
 from rich.console import Console
 
 
-def get_style(message: str, levelname: str) -> str:
-    if levelname == "INFO" and "SUCCESS: " in message:
-        return "bold green"
+def get_style(levelname: str) -> str:
     level_styles: dict = {
                 "DEBUG": "blue",
                 "INFO": "green",
