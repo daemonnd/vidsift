@@ -1,5 +1,5 @@
 import logging
-from logging import FileHandler
+from logging.handlers import TimedRotatingFileHandler
 from pathlib import Path
 
 from platformdirs import user_log_dir
@@ -26,14 +26,8 @@ def configure_logging():
  
     # define the logger, once with a console handler and once with a file handler
     console_handler = RichConsoleHandler()
-    file_handler = FileHandler(str(get_log_file_path()))
  
-    # def formatter for file logging handler
-    formatter = logging.Formatter(
-        "{asctime} - {levelname} - {message}",
-        style="{",
-        datefmt="%Y-%m-%d %H:%M:%S",
-    )
+    file_handler = TimedRotatingFileHandler(filename=str(get_log_file_path()), when="D", backupCount=14, utc=False)
 
     # get filter instance
     depencendy_filter = DependencyFilter(debug_mode=True)
