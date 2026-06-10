@@ -13,10 +13,6 @@ class RichConsoleHandler(logging.Handler):
         super().__init__()
         self.console = Console()
     def emit(self, record):
-        print("type")
-        print(type(record.exc_info))
-        print("exc_info")
-        print(record.exc_info)
         message = self.format(record)
         style: str = get_style(levelname=record.levelname)
         self.console.print(message, style=style)
