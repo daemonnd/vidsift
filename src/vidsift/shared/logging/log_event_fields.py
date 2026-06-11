@@ -9,6 +9,7 @@ class LogEvent:
     SUMMARIZATION_RESUME_STARTED = "summarization_resume_started"
 
     VIDEO_DISCOVERED = "video_discovered"
+    VIDEO_DISCOVERY_FAILED = "video_discovery_failed"
     VIDEO_SKIPPED_EXISTING = "video_skipped_existing"
 
     VIDEO_PROCESSING_STARTED = "video_processing_started"
@@ -18,6 +19,7 @@ class LogEvent:
     VIDEO_VALIDATED = "video_validated"
     VIDEO_VALIDATION_FAILED = "video_validation_failed"
 
+    TRANSCRIPT_FETCH_STARTED = "transcript_fetch_started"
     TRANSCRIPT_FETCH_FAILED = "transcript_fetch_failed"
 
     VIDEO_DOWNLOAD_STARTED = "video_download_started"
