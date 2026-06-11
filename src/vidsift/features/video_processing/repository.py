@@ -197,7 +197,7 @@ class VideoProcessingRepository:
             try:
                 yield VideoProcessingRecord.model_validate(dict(row))
             except ValidationError as e:
-                raise VCDataValidationError(f"Failed to get the data of a video because of a ValidationError, database seems corrupt: {str(e)}") from e
+                raise VideoProcessingDataValidationError(f"Failed to get the data of a video because of a ValidationError, database seems corrupt: {str(e)}") from e
 
 
     def close(self) -> None:
