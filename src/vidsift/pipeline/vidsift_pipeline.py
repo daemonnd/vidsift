@@ -73,16 +73,20 @@ class VidsiftOrchestrator:
 
             # new videos
             try:
+                logger.debug("RSS Fetch completed",
+                    extra={
+                        "event": LogEvent.RSS_FETCH_STARTED,
+                    }
+                )
                 video_generator: Generator[Video, None, None] = self.video_data_collector.get_videos_to_process()
             except VideoDataCollectionError as e:
                 logger.exception(
                     f"VideoDataCollectionError: Failed to collect the necessary data about the videos to process: {str(e)}",
-                    extra={"event": LogEvent.VIDEO_DISCOVERY_FAILED},
+                    extra={"event": LogEvent.RSS_FETCH_FAILED},
                 )
                 logger.info("Exiting because no data exist...")
                 exit(1)
 
-            logger.debug("Starting to iterate over each video and perform the validation action...")
 
             for vid in video_generator:
                 self.process_validation_pipeline(vid=vid, create_db_entry=True)
