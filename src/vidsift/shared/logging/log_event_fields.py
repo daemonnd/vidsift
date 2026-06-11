@@ -20,6 +20,7 @@ class LogEvent:
     # rss fetching events
     RSS_FETCH_STARTED = "rss_fetch_started"
     RSS_FETCH_FAILED = "rss_fetch_failed"
+    RSS_FETCH_COMPLETED = "rss_fetch_completed"
 
     # video validation events
     VIDEO_VALIDATED = "video_validated"
