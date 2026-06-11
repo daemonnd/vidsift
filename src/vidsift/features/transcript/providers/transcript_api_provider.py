@@ -35,64 +35,16 @@ class YoutubeTranscriptApiProvider(TranscriptProvider):
         try:
             fetched_transcript: FetchedTranscript = self.transcript_api.fetch(video_id=video_id)
         except CookieError as e:
-            logger.warning(
-                "Transcript fetching failed due to cookie error.",
-                extra={
-                    "event": LogEvent.TRANSCRIPT_FETCH_FAILED,
-                    "video_id": video_id,
-                    "error": str(e),
-                },
-            )
             raise TranscriptFetchingError(str(e))
         except InvalidVideoId as e:
-            logger.warning(
-                "Transcript fetching failed due to invalid video ID.",
-                extra={
-                    "event": LogEvent.TRANSCRIPT_FETCH_FAILED,
-                    "video_id": video_id,
-                    "error": str(e),
-                },
-            )
             raise TranscriptNotAvailibleError(str(e))
         except VideoUnavailable as e:
-            logger.warning(
-                "Transcript fetching failed because video is unavailable.",
-                extra={
-                    "event": LogEvent.TRANSCRIPT_FETCH_FAILED,
-                    "video_id": video_id,
-                    "error": str(e),
-                },
-            )
             raise TranscriptNotAvailibleError(str(e))
         except IpBlocked as e:
-            logger.warning(
-                "Transcript fetching blocked due to IP restriction.",
-                extra={
-                    "event": LogEvent.TRANSCRIPT_FETCH_FAILED,
-                    "video_id": video_id,
-                    "error": str(e),
-                },
-            )
             raise TranscriptFetchingBlockedError(str(e))
         except RequestBlocked as e:
-            logger.warning(
-                "Transcript fetching blocked due to request restriction.",
-                extra={
-                    "event": LogEvent.TRANSCRIPT_FETCH_FAILED,
-                    "video_id": video_id,
-                    "error": str(e),
-                },
-            )
             raise TranscriptFetchingBlockedError(str(e))
         except Exception as e:
-            logger.warning(
-                "Unexpected exception while fetching transcript.",
-                extra={
-                    "event": LogEvent.TRANSCRIPT_FETCH_FAILED,
-                    "video_id": video_id,
-                    "error": str(e),
-                },
-            )
             raise TranscriptError(str(e))
         else:
             full_transcript: list = []
