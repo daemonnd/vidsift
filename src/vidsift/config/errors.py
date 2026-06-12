@@ -13,3 +13,7 @@ class ConfigFilePermissionError(ConfigError):
 class ConfigValidationError(ConfigError):
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
+
+class InvalidConfigError(ConfigError):
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)

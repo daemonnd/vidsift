@@ -1,4 +1,5 @@
 import logging
+from logging import StreamHandler
 from logging.handlers import TimedRotatingFileHandler
 from pathlib import Path
 
@@ -51,6 +52,9 @@ def configure_logging():
 
 
 if __name__ == "__main__":
+    setup_bootstrap_logging()
+    logger = logging.getLogger(__name__)
+    logger.error("SUPERCODE")
     configure_logging()
     logger = logging.getLogger("vidsift")
     logger.debug("this is a debug statement")
