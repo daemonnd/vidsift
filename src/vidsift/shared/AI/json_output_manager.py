@@ -29,7 +29,7 @@ class AIJsonOutputManager:
         ai_executor: AIUsageManager = AIUsageManager("")
         use_full_validate: bool = True
 
-        logger.info(
+        logger.debug(
             "AI JSON output generation started.",
             extra={
                 "event": LogEvent.AI_JSON_OUTPUT_STARTED,
@@ -111,7 +111,7 @@ class AIJsonOutputManager:
 
                 continue
             else:
-                logger.info(
+                logger.debug(
                     "AI JSON output generation completed.",
                     extra={
                         "event": LogEvent.AI_JSON_OUTPUT_COMPLETED,
