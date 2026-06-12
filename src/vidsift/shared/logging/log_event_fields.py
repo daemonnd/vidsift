@@ -22,6 +22,11 @@ class LogEvent:
     RSS_FETCH_FAILED = "rss_fetch_failed"
     RSS_FETCH_COMPLETED = "rss_fetch_completed"
 
+    # pre-validation events
+    PRE_VALIDATION_STARTED = "pre_validation_started"
+    PRE_VALIDATION_COMPLETED = "pre_validation_completed"
+    PRE_VALIDATION_FAILED = "pre_validation_failed"
+
     # video validation events
     VIDEO_VALIDATION_STARTED = "video_validation_started"
     VIDEO_VALIDATION_FAILED = "video_validation_failed"
@@ -35,6 +40,22 @@ class LogEvent:
     TRANSCRIPT_PROVIDER_STARTED = "transcript_provider_attempt"
     TRANSCRIPT_PROVIDER_FAILED = "transcript_provider_failed"
     TRANSCRIPT_PROVIDER_COMPLETED = "transcript_provider_completed"
+
+    # transcript summarization events
+    TRANSCRIPT_SUMMARIZATION_STARTED = "transcript_summarization_started"
+    TRANSCRIPT_SUMMARIZATION_COMPLETED = "transcript_summarization_completed"
+    TRANSCRIPT_SUMMARIZATION_FAILED = "transcript_summarization_failed"
+    CHUNK_SUMMARIZATION_STARTED = "chunk_summarization_started"
+    CHUNK_SUMMARIZATION_COMPLETED = "chunk_summarization_completed"
+    CHUNK_SUMMARIZATION_FAILED = "chunk_summarization_failed"
+
+    # AI JSON output events
+    AI_JSON_OUTPUT_STARTED = "ai_json_output_started"
+    AI_JSON_OUTPUT_COMPLETED = "ai_json_output_completed"
+    AI_JSON_OUTPUT_FAILED = "ai_json_output_failed"
+    AI_RESPONSE_VALIDATION_STARTED = "ai_response_validation_started"
+    AI_RESPONSE_VALIDATION_COMPLETED = "ai_response_validation_completed"
+    AI_RESPONSE_VALIDATION_FAILED = "ai_response_validation_failed"
 
     # video download events
     VIDEO_DOWNLOAD_STARTED = "video_download_started"
