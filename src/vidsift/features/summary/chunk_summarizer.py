@@ -49,7 +49,7 @@ class ChunkSummaryManager:
 
 
         except AIError as e:
-            logger.error(
+            logger.exception(
                 "Chunk summarization failed.",
                 extra={
                     "event": LogEvent.CHUNK_SUMMARIZATION_FAILED,
