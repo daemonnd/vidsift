@@ -1,13 +1,18 @@
 import logging
-from logging import StreamHandler
+from logging import StreamHandler, log
 from logging.handlers import TimedRotatingFileHandler
 from pathlib import Path
 
 from platformdirs import user_log_dir
 
-from vidsift.shared.logging.filters import DependencyFilter
+from vidsift.config import CONFIG
+from vidsift.shared.logging.filters import (ConsoleDependencyFilter,
+                                            FileDependencyFilter)
 from vidsift.shared.logging.formatters import JSONFormatter, consoleformatter
 from vidsift.shared.logging.handlers import RichConsoleHandler
+
+console_config = CONFIG.logging.console
+file_config = CONFIG.logging.file
 
 
 def get_log_file_path() -> Path:
@@ -28,19 +33,25 @@ def configure_logging():
     # define the logger, once with a console handler and once with a file handler
     console_handler = RichConsoleHandler()
  
-    file_handler = TimedRotatingFileHandler(filename=str(get_log_file_path()), when="D", backupCount=14, utc=False)
+    file_handler = TimedRotatingFileHandler(
+        filename=str(get_log_file_path()),
+        when=file_config.rotation,
+        backupCount=file_config.retain_days,
+        utc=file_config.utc_time
+    )
 
-    # get filter instance
-    depencendy_filter = DependencyFilter(debug_mode=True)
+    # get filter instances
+    console_dependeny_filter: ConsoleDependencyFilter = ConsoleDependencyFilter()
+    file_dependency_filter: FileDependencyFilter = FileDependencyFilter()
 
     # console handler config
     console_handler.setFormatter(consoleformatter)
-    console_handler.addFilter(depencendy_filter)
+    console_handler.addFilter(console_dependeny_filter)
     console_handler.setLevel(logging.DEBUG)
 
     # file handler config
     file_handler.setFormatter(JSONFormatter())
-    file_handler.addFilter(depencendy_filter)
+    file_handler.addFilter(file_dependency_filter)
     file_handler.setLevel(logging.DEBUG)
 
     # add handler and level to root logger
@@ -52,9 +63,6 @@ def configure_logging():
 
 
 if __name__ == "__main__":
-    setup_bootstrap_logging()
-    logger = logging.getLogger(__name__)
-    logger.error("SUPERCODE")
     configure_logging()
     logger = logging.getLogger("vidsift")
     logger.debug("this is a debug statement")
@@ -62,3 +70,10 @@ if __name__ == "__main__":
     logger.warning("this is a regular warning")
     logger.error("oh no, this failed :(")
     logger.critical("this is a critical error, oh no")
+    logger = logging.getLogger("dependency")
+    print("SWICHTED LOGGER")
+    logger.debug("this should not be printed")
+    logger.info("this nether")
+    logger.warning("this should be printed")
+    logger.error("this is an error")
+    logger.critical("oh, no! this error is so bad!")

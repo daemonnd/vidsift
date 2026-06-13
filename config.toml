@@ -6,17 +6,17 @@
 # DEBUG, INFO, WARNING, ERROR, CRITICAL
 [logging]
 [logging.console]
-enabled = true            # currently not possible to disable
+enabled = true               # currently not possible to disable
 level = "DEBUG"
-dependency_level = "INFO"
+dependency_level = "WARNING"
 
 [logging.file]
-enabled = true            # currently not possible to disable
+enabled = true               # currently not possible to disable
 level = "DEBUG"
-dependency_level = "INFO"
-rotation = "D"            # D: Daily, H: Hourly, M: every minute, S: every second
-retain_days = 14          # for how many days the logs should be kept
-utc_time = false          # true: UTC time, false: local time
+dependency_level = "WARNING"
+rotation = "D"               # D: Daily, H: Hourly, M: every minute, S: every second
+retain_days = 14             # for how many days the logs should be kept
+utc_time = false             # true: UTC time, false: local time
 
 
 # ============================================================
