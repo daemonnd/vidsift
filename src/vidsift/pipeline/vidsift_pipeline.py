@@ -339,7 +339,7 @@ class VidsiftOrchestrator:
             logger.info(
                 f"Video validation completed with decision '{video_validation_result.decision}'.",
                 extra={
-                    "event": LogEvent.VIDEO_VALIDATED,
+                    "event": LogEvent.VIDEO_VALIDATION_COMPLETED,
                     "video_id": vid.video_id,
                     "channel_id": vid.channel_id,
                     "decision": video_validation_result.decision,
