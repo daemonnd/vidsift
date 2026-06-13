@@ -1,10 +1,9 @@
 """
-    File for a one retry decorator for the AI usage manager.
+File for a one retry decorator for the AI usage manager.
 """
+import logging
 
-from vidsift.shared.errorprotocol import logger
-
-log: logger = logger()
+logger = logging.getLogger(__name__)
 
 def retry_once(func):
     """
@@ -14,6 +13,6 @@ def retry_once(func):
         try:
             return func(*args, **kwargs)
         except Exception as e:
-            log.log_warning(f"Error occurred: {e}. Retrying once...")
+            logger.warning(f"Error occurred: {e}. Retrying once...")
             return func(*args, **kwargs)
     return wrapper

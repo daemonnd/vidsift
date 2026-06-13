@@ -1,13 +1,12 @@
+
 from vidsift.config import CONFIG
 from vidsift.features.summary.chunk_summarizer import ChunkSummaryManager
 from vidsift.features.summary.errors import SummaryError
 from vidsift.features.summary.final_summarizer import FinalSummarizer
 from vidsift.features.validation.errors import EmptyTranscriptError
 from vidsift.shared.AI.errors import AIError
-from vidsift.shared.errorprotocol import logger
 from vidsift.shared.text_normalizer import TextNormalizer
 
-log: logger = logger()
 
 class SummarizationService:
     def __init__(self, ai_model: str = CONFIG.ai.summary_model) -> None:

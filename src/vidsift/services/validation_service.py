@@ -1,9 +1,10 @@
 """
 File for managing the validation process and returning the score of the video
 """
+import logging
 from dataclasses import asdict
-from typing import Literal
 
+from vidsift.config import CONFIG
 from vidsift.features.validation.decision_engine import DecisionEngine
 from vidsift.features.validation.errors import VideoValidationError
 from vidsift.features.validation.instruction_provider import \
@@ -25,10 +26,10 @@ from vidsift.models.validation.validation_result import ValidationResult
 from vidsift.models.video import Video
 from vidsift.shared.AI.errors import AIError
 from vidsift.shared.AI.json_output_manager import AIJsonOutputManager
-from vidsift.shared.errorprotocol import logger
+from vidsift.shared.logging.log_event_fields import LogEvent
 from vidsift.shared.text_normalizer import TextNormalizer
 
-log: logger = logger()
+logger = logging.getLogger(__name__)
 
 
 class VideoValidator:
@@ -38,7 +39,6 @@ class VideoValidator:
         self.pre_validation_score_calculator: PreValidationScoreCalculator = PreValidationScoreCalculator()
         self.transcript_chunk_provider: TranscriptChunkProvider = TranscriptChunkProvider()
 
-    @log.log
     def pre_validate(self, vid: Video, transcript: str) -> bool:
         """
         Method to run the pre validator, without using AI
@@ -46,26 +46,52 @@ class VideoValidator:
         """
         title: str = self.text_normalizer.normalize(vid.title)
         new_vid: Video = Video(
-                title=title,
-                url=vid.url,
-                author=vid.author,
-                published=vid.published,
-                video_id=vid.video_id,
-                channel_id=vid.channel_id
+            title=title,
+            url=vid.url,
+            author=vid.author,
+            published=vid.published,
+            video_id=vid.video_id,
+            channel_id=vid.channel_id,
         )
 
-        pre_vali_result: PreValidationResult =  self.pre_validator.build_pre_validation_features(vid=new_vid, transcript=transcript)
-        log.log_debug(f"Pre-validation result: {asdict(pre_vali_result)}")
+        pre_vali_result: PreValidationResult = self.pre_validator.build_pre_validation_features(
+            vid=new_vid, transcript=transcript
+        )
+
+        logger.debug(
+            "Pre-validation completed.",
+            extra={
+                "video_id": vid.video_id,
+                "channel_id": vid.channel_id,
+                "pre_validation": asdict(pre_vali_result),
+            },
+        )
 
         pre_vali_calc_result, reason = self.pre_validation_score_calculator.calculate_score(result=pre_vali_result)
         if pre_vali_calc_result > 0.5:
-            log.log_info(f"Video with id {vid.video_id} is likely to be clickbait with a score of {pre_vali_calc_result:.2f}. Reason: {reason}")
+            logger.info(
+                f"Video {vid.video_id} classified as likely clickbait.",
+                extra={
+                    "event": LogEvent.VIDEO_VALIDATION_COMPLETED,
+                    "video_id": vid.video_id,
+                    "channel_id": vid.channel_id,
+                    "decision": "discarded",
+                    "pre_validation_score": round(pre_vali_calc_result, 2),
+                    "reason": reason,
+                },
+            )
             return False
         else:
-            log.log_info(f"Video with id {vid.video_id} is unlikely to be clickbait with a score of {pre_vali_calc_result:.2f}. Reason: {reason}")
+            logger.info(
+                f"Video {vid.video_id} passed pre-validation.",
+                extra={
+                    "video_id": vid.video_id,
+                    "channel_id": vid.channel_id,
+                    "pre_validation_score": round(pre_vali_calc_result, 2),
+                    "reason": reason,
+                },
+            )
             return True
-
-
 
     def validate_metadata(self, vid: Video) -> MetadataValidationResult:
         """
@@ -77,22 +103,29 @@ class VideoValidator:
             requirements=AIJSONBaseRequirements(
                 system_prompt_filename="metadata_validation.md",
                 retry_system_filename="metadata_retry.md",
-                output_format_instance=MetadataValidationResult
+                output_format_instance=MetadataValidationResult,
             )
         )
         try:
             return ai_manager.run_ai_pipeline(
                 AIJSONRuntimeRequirements(
-                    ai_model="qwen3.5:9b",
+                    ai_model=CONFIG.ai.validation_model,
                     first_attempt_pattern="$CUSTOM_CHANNEL_INSTRUCTIONS",
                     first_attempt_replacement=get_custom_instructions(vid.author),
                     first_attempt_append=f"title: {vid.title}\nauthor: {vid.author}\nurl: {vid.url}\nvideo ID: {vid.video_id}",
                 )
             )
-        except AIError as e:
-            log.log_error(f"AIError during metadata validation: {str(e)}")
-            raise VideoValidationError(f"Metadata validation failed for video with id {vid.video_id} due to AI error: {str(e)}") from e
-
+        except AIError:
+            logger.exception(
+                f"Metadata validation failed for video {vid.video_id}.",
+                extra={
+                    "event": LogEvent.VIDEO_VALIDATION_FAILED,
+                    "video_id": vid.video_id,
+                    "channel_id": vid.channel_id,
+                    "validation_stage": "metadata",
+                },
+            )
+            raise VideoValidationError(f"Metadata validation failed for video {vid.video_id} due to AI error")
 
     def validate_transcript(self, vid: Video, transcript: str) -> TranscriptValidationResult:
         """
@@ -100,14 +133,13 @@ class VideoValidator:
         Raises:
         VideoValidationError: If the AI fails to validate the transcript after the maximum number of retries, or if any unexpected error occurs during the validation process.
         """
-
         chunks: str = self.transcript_chunk_provider.get_necessary_chunks(transcript=transcript)
 
         ai_manager: AIJsonOutputManager = AIJsonOutputManager(
             requirements=AIJSONBaseRequirements(
                 system_prompt_filename="transcript_validation.md",
                 retry_system_filename="transcript_retry.md",
-                output_format_instance=TranscriptValidationResult
+                output_format_instance=TranscriptValidationResult,
             )
         )
         try:
@@ -120,60 +152,159 @@ class VideoValidator:
                 )
             )
         except AIError as e:
-            log.log_error(f"AIError during transcript validation: {str(e)}")
-            raise VideoValidationError(f"Transcript validation failed for video with id {vid.video_id} due to AI error: {str(e)}")
+            logger.exception(
+                f"Transcript validation failed for video {vid.video_id}.",
+                extra={
+                    "event": LogEvent.VIDEO_VALIDATION_FAILED,
+                    "video_id": vid.video_id,
+                    "channel_id": vid.channel_id,
+                    "validation_stage": "transcript",
+                },
+            )
+            raise VideoValidationError(f"Transcript validation failed for video {vid.video_id} due to AI error: {str(e)}")
 
-
-
-    @log.log
     def validate_video(self, vid: Video, raw_transcript: str) -> ValidationResult:
-        # normalize the transcript
+        logger.info(
+            f"Starting validation for video {vid.video_id}.",
+            extra={
+                "event": LogEvent.VIDEO_VALIDATION_STARTED,
+                "video_id": vid.video_id,
+                "channel_id": vid.channel_id,
+            },
+        )
+
         transcript: str = self.text_normalizer.normalize(raw_transcript)
 
-        # pre-validate
         if not self.pre_validate(vid=vid, transcript=transcript):
-            log.log_info(f"The video with id {vid.video_id} contains signs for exessive clickbait, skipping")
+            logger.info(
+                f"Video {vid.video_id} discarded because of excessive clickbait indicators.",
+                extra={
+                    "event": LogEvent.VIDEO_VALIDATION_COMPLETED,
+                    "video_id": vid.video_id,
+                    "channel_id": vid.channel_id,
+                    "decision": "discarded",
+                },
+            )
             return ValidationResult(
                 content_quality_score=0.1,
                 topic_match_score=0.1,
                 decision="discarded",
-                summary_reason={"reason": "signs of exessive clickbait are present"}
+                summary_reason={"reason": "signs of exessive clickbait are present"},
             )
         else:
-            log.log_info(f"The video with id {vid.video_id} does not contain strong signs of clickbait, moving to metadata validation")
+            logger.info(
+                f"Video {vid.video_id} passed pre-validation.",
+                extra={
+                    "video_id": vid.video_id,
+                    "channel_id": vid.channel_id,
+                },
+            )
 
-        # metadata validation
-        log.log_info(f"Starting metadata validation for video with id {vid.video_id}")
+        logger.info(
+            f"Starting metadata validation for video {vid.video_id}.",
+            extra={
+                "event": LogEvent.VIDEO_VALIDATION_STARTED,
+                "video_id": vid.video_id,
+                "channel_id": vid.channel_id,
+                "validation_stage": "metadata",
+            },
+        )
         metadata_validation_result: MetadataValidationResult = self.validate_metadata(vid=vid)
         if metadata_validation_result.flags:
-            log.log_info(f"Metadata validation result for video with id {vid.video_id} revealed the following flags: {metadata_validation_result.flags}.")
-        log.log_debug(f"Metadata validation for video with id {vid.video_id} metadata_score: {metadata_validation_result.metadata_score}")
-        log.log_debug(f"Metadata validation for video with id {vid.video_id} topic_match_score: {metadata_validation_result.topic_match_score}")
-        log.log_debug(f"Metadata validation for video with id {vid.video_id} confidence: {metadata_validation_result.confidence}")
-        log.log_debug(f"Metadata validation for video with id {vid.video_id} summary_reason: {metadata_validation_result.summary_reason}")
-        log.log_debug(f"Metadata validation for video with id {vid.video_id} flags: {metadata_validation_result.flags}")
-
+            logger.info(
+                f"Metadata validation detected flags for video {vid.video_id}.",
+                extra={
+                    "video_id": vid.video_id,
+                    "channel_id": vid.channel_id,
+                    "validation_stage": "metadata",
+                    "metadata_score": metadata_validation_result.metadata_score,
+                    "topic_match_score": metadata_validation_result.topic_match_score,
+                    "confidence": metadata_validation_result.confidence,
+                    "flags": sorted(metadata_validation_result.flags),
+                    "reason": metadata_validation_result.summary_reason
+                },
+            )
+        logger.debug(
+            "Metadata validation completed.",
+            extra={
+                "video_id": vid.video_id,
+                "channel_id": vid.channel_id,
+                "metadata_score": metadata_validation_result.metadata_score,
+                "topic_match_score": metadata_validation_result.topic_match_score,
+                "confidence": metadata_validation_result.confidence,
+                "flags": sorted(metadata_validation_result.flags),
+                "reason": metadata_validation_result.summary_reason,
+            },
+        )
 
         # transcript validation
-        log.log_info(f"Starting transcript validation for video with id {vid.video_id}")
+        logger.info(
+            f"Starting transcript validation for video {vid.video_id}.",
+            extra={
+                "video_id": vid.video_id,
+                "channel_id": vid.channel_id,
+                "validation_stage": "transcript",
+            },
+        )
         transcript_validation_result: TranscriptValidationResult = self.validate_transcript(vid=vid, transcript=transcript)
         if transcript_validation_result.flags:
-            log.log_info(f"Transcript validation result for video with id {vid.video_id} revealed the following flags: {transcript_validation_result.flags}.")
-        log.log_debug(f"Transcript validation for video with id {vid.video_id} content_quality_score: {transcript_validation_result.content_quality_score}")
-        log.log_debug(f"Transcript validation for video with id {vid.video_id} topic_match_score: {transcript_validation_result.topic_match_score}")
-        log.log_debug(f"Transcript validation for video with id {vid.video_id} confidence: {transcript_validation_result.confidence}")
-        log.log_debug(f"Transcript validation for video with id {vid.video_id} summary_reason: {transcript_validation_result.summary_reason}")
-        log.log_debug(f"Transcript validation for video with id {vid.video_id} flags: {transcript_validation_result.flags}")
+            logger.info(
+                f"Transcript validation detected flags for video {vid.video_id}.",
+                extra={
+                    "video_id": vid.video_id,
+                    "channel_id": vid.channel_id,
+                    "validation_stage": "transcript",
+                    "score": transcript_validation_result.content_quality_score,
+                    "topic_match_score": transcript_validation_result.topic_match_score,
+                    "confidence": transcript_validation_result.confidence,
+                    "flags": sorted(transcript_validation_result.flags),
+                    "reason": transcript_validation_result.summary_reason
+                },
+            )
+        logger.debug(
+            "Transcript validation completed.",
+            extra={
+                "video_id": vid.video_id,
+                "channel_id": vid.channel_id,
+                "score": transcript_validation_result.content_quality_score,
+                "topic_match_score": transcript_validation_result.topic_match_score,
+                "confidence": transcript_validation_result.confidence,
+                "reason": transcript_validation_result.summary_reason,
+                "flags": sorted(transcript_validation_result.flags),
+            },
+        )
 
-        # decision engine
-        decision_engine: DecisionEngine = DecisionEngine(metadata_result=metadata_validation_result, transcript_result=transcript_validation_result)
-        return decision_engine.make_decision(decision_engine.calculate_decision_scores())
+        decision_engine: DecisionEngine = DecisionEngine(
+            metadata_result=metadata_validation_result, transcript_result=transcript_validation_result
+        )
+        validation_result = decision_engine.make_decision(decision_engine.calculate_decision_scores())
 
+        logger.info(
+            f"Validation completed for video {vid.video_id}.",
+            extra={
+                "event": LogEvent.VIDEO_VALIDATION_COMPLETED,
+                "video_id": vid.video_id,
+                "channel_id": vid.channel_id,
+                "decision": validation_result.decision,
+                "score": validation_result.content_quality_score,
+                "topic_match_score": validation_result.topic_match_score,
+                "reason": validation_result.summary_reason,
+            },
+        )
+
+        return validation_result
 
 
 if __name__ == "__main__":
     vv = VideoValidator()
-    vid = Video(title="i didn't want to like this", url="https://www.youtube.com/watch?v=G3jvn7n-68Y", author="NetworkChuck", published="32497954", video_id="G3jvn7n-68Y", channel_id="alsdjöasdjf")
+    vid = Video(
+        title="i didn't want to like this",
+        url="https://www.youtube.com/watch?v=G3jvn7n-68Y",
+        author="NetworkChuck",
+        published="32497954",
+        video_id="G3jvn7n-68Y",
+        channel_id="alsdjöasdjf",
+    )
     with open("/home/user/projects/python/vidsift/fake-transcript.txt", "r") as f:
         transcript = f.read()
     with open("/home/user/projects/python/vidsift/test_data/test_transcript2.txt", "r") as f:
@@ -181,8 +312,14 @@ if __name__ == "__main__":
     result = vv.validate_video(vid=vid, raw_transcript=transcript)
     print("RESULT:")
     print(result)
-    vid = Video(title="i didn't want to like this", url="https://www.youtube.com/watch?v=G3jvn7n-68Y", author="NetworkChuck", published="32497954", video_id="G3jvn7n-68Y", channel_id="asdojlöasdjlöaslödf")
+    vid = Video(
+        title="i didn't want to like this",
+        url="https://www.youtube.com/watch?v=G3jvn7n-68Y",
+        author="NetworkChuck",
+        published="32497954",
+        video_id="G3jvn7n-68Y",
+        channel_id="asdojlöasdjlöaslödf",
+    )
     result2 = vv.validate_video(vid=vid, raw_transcript=transcript2)
     print("RESULT2:")
     print(result2)
-

@@ -1,4 +1,5 @@
 import json
+import logging
 
 from pydantic import ValidationError
 
@@ -8,9 +9,9 @@ from vidsift.models.ai_json_requirements import (AIJSONBaseRequirements,
 from vidsift.shared.AI.errors import (AIError, EmptyAIResponseError,
                                       InvalidAIResponseFormatError)
 from vidsift.shared.AI.run_model import AIUsageManager
-from vidsift.shared.errorprotocol import logger
+from vidsift.shared.logging.log_event_fields import LogEvent
 
-log: logger = logger()
+logger = logging.getLogger(__name__)
 
 
 class AIJsonOutputManager:
@@ -18,6 +19,7 @@ class AIJsonOutputManager:
         self.output_format_instance = requirements.output_format_instance
         self.system_prompt_filename: str = requirements.system_prompt_filename
         self.retry_system_filename: str = requirements.retry_system_filename
+
     def run_ai_pipeline(self, requirements: AIJSONRuntimeRequirements):
         """
         Method to run the AI pipeline to get a valid JSON output from the AI, with retries if the output is not valid.
@@ -26,46 +28,109 @@ class AIJsonOutputManager:
         retry_system_ai: AIUsageManager = AIUsageManager(self.retry_system_filename)
         ai_executor: AIUsageManager = AIUsageManager("")
         use_full_validate: bool = True
+
+        logger.debug(
+            "AI JSON output generation started.",
+            extra={
+                "event": LogEvent.AI_JSON_OUTPUT_STARTED,
+                "model": requirements.ai_model,
+                "max_attempts": CONFIG.ai.max_allowed_json_output_runs,
+            },
+        )
+
         for i in range(CONFIG.ai.max_allowed_json_output_runs):
-            log.log_info(f"Starting attempt {i+1} of {CONFIG.ai.max_allowed_json_output_runs}")
+            logger.debug(
+                f"Starting attempt {i+1} of {CONFIG.ai.max_allowed_json_output_runs}",
+                extra={
+                    "event": LogEvent.AI_JSON_OUTPUT_STARTED,
+                    "model": requirements.ai_model,
+                    "attempt": i + 1,
+                    "max_attempts": CONFIG.ai.max_allowed_json_output_runs,
+                    "use_full_validation": use_full_validate,
+                },
+            )
 
             # on the first attempt or if the ai response is empty (use_full_validate is true)
             if use_full_validate:
-                log.log_info("Using full validation for this attempt")
                 # get the prompt
                 prompt: str = validation_ai.generate_prompt(
-                    pattern=requirements.first_attempt_pattern, 
+                    pattern=requirements.first_attempt_pattern,
                     replacement=requirements.first_attempt_replacement,
                     append=requirements.first_attempt_append,
                 )
 
             # for the attempts that come after, when response and error message exist
             else:
-                log.log_info("Using retry validation for this attempt")
                 # get the prompt
                 prompt: str = retry_system_ai.generate_prompt(
-                            system_prompt=retry_system_ai.generate_prompt(
-                            pattern="$ERROR_MESSAGE",
-                            replacement=error_msg,
-                        ),
-                        pattern="$PREVIOUS_AI_OUTPUT",
-                        replacement=response,
-                    )
+                    system_prompt=retry_system_ai.generate_prompt(
+                        pattern="$ERROR_MESSAGE",
+                        replacement=error_msg,
+                    ),
+                    pattern="$PREVIOUS_AI_OUTPUT",
+                    replacement=response,
+                )
+
             try:
                 response: str = ai_executor.run_ai(prompt=prompt, model=requirements.ai_model)
-                log.log_debug(f"response: {response}")
-                return self.validate_ai_response(ai_response=response)
+                validated_response = self.validate_ai_response(ai_response=response)
+
+
             except EmptyAIResponseError as e:
                 error_msg: str = str(e)
                 response: str = ""
-                log.log_warning(f"EmptyAIResponseError: {str(e)}")
+
+                logger.warning(
+                    "AI returned an empty response.",
+                    extra={
+                        "event": LogEvent.AI_JSON_OUTPUT_FAILED,
+                        "model": requirements.ai_model,
+                        "attempt": i + 1,
+                        "max_attempts": CONFIG.ai.max_allowed_json_output_runs,
+                        "failure_reason": "empty_response",
+                    },
+                )
+
                 use_full_validate: bool = True
                 continue
+
             except InvalidAIResponseFormatError as e:
                 use_full_validate: bool = False
                 error_msg: str = str(e)
-                log.log_warning(f"The AI did output invalid JSON: {str(e)}")
+
+                logger.warning(
+                    "AI returned invalid JSON output.",
+                    extra={
+                        "event": LogEvent.AI_JSON_OUTPUT_FAILED,
+                        "model": requirements.ai_model,
+                        "attempt": i + 1,
+                        "max_attempts": CONFIG.ai.max_allowed_json_output_runs,
+                        "failure_reason": "invalid_json_output",
+                    },
+                )
+
                 continue
+            else:
+                logger.debug(
+                    "AI JSON output generation completed.",
+                    extra={
+                        "event": LogEvent.AI_JSON_OUTPUT_COMPLETED,
+                        "model": requirements.ai_model,
+                        "attempt": i + 1,
+                    },
+                )
+
+                return validated_response
+
+        logger.error(
+            "AI JSON output generation failed after all attempts.",
+            extra={
+                "event": LogEvent.AI_JSON_OUTPUT_FAILED,
+                "model": requirements.ai_model,
+                "max_attempts": CONFIG.ai.max_allowed_json_output_runs,
+            },
+        )
+
         raise AIError("After 3 attempts, the AI output does not match the required JSON")
 
     def validate_ai_response(self, ai_response: str):
@@ -78,14 +143,48 @@ class AIJsonOutputManager:
         InvalidAIResponseFormatError if JSON is invalid or JSON output structure is broken
         """
 
+        logger.debug(
+            "AI response validation started.",
+            extra={
+                "event": LogEvent.AI_RESPONSE_VALIDATION_STARTED,
+                "response": ai_response,
+            },
+        )
+
         try:
             parsed_json = json.loads(ai_response)
-            log.log_debug(f"parsed json: {parsed_json}")
             validate_response = self.output_format_instance.model_validate(parsed_json)
-            log.log_debug(f"Model JSON Schema: \n{self.output_format_instance.model_json_schema()}")
-            return validate_response
-        except json.JSONDecodeError as e:
-            raise InvalidAIResponseFormatError(f"AI output invalid, invalid JSON syntax: {str(e)}")
-        except ValidationError as e:
-            raise InvalidAIResponseFormatError(f"Wrong JSON output structure: {str(e)}")
 
+            logger.debug(
+                "AI response validation completed.",
+                extra={
+                    "event": LogEvent.AI_RESPONSE_VALIDATION_COMPLETED,
+                    "response": ai_response,
+                },
+            )
+
+            return validate_response
+
+        except json.JSONDecodeError as e:
+            logger.warning(
+                "AI response validation failed due to invalid JSON syntax.",
+                extra={
+                    "event": LogEvent.AI_RESPONSE_VALIDATION_FAILED,
+                    "response": ai_response,
+                    "failure_reason": "json_decode_error",
+                },
+            )
+
+            raise InvalidAIResponseFormatError(f"AI output invalid, invalid JSON syntax: {str(e)}")
+
+        except ValidationError as e:
+            logger.warning(
+                "AI response validation failed due to invalid JSON structure.",
+                extra={
+                    "event": LogEvent.AI_RESPONSE_VALIDATION_FAILED,
+                    "response": ai_response,
+                    "failure_reason": "schema_validation_error",
+                },
+            )
+
+            raise InvalidAIResponseFormatError(f"Wrong JSON output structure: {str(e)}")

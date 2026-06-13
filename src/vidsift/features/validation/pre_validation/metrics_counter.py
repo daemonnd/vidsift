@@ -5,6 +5,7 @@
     - known clickbait phrases
 """
 
+import logging
 import re
 
 import emoji
@@ -13,9 +14,11 @@ from vidsift.features.validation.known_clickbait_phrases import (
     CLICKBAIT_TITLE_PHRASES, CLICKBAIT_TRANSCRIPT_PHRASES)
 from vidsift.models.validation.pre_validation_result import PreValidationResult
 from vidsift.models.video import Video
-from vidsift.shared.errorprotocol import logger
+from vidsift.shared.logging.log_event_fields import LogEvent
 
-log: logger = logger()
+logger = logging.getLogger(__name__)
+
+
 
 
 class PreValidator:
@@ -58,7 +61,15 @@ class PreValidator:
         Returns:
         - ratio of emojis per title characters
         """
-        log.log_debug(f"Emoji list of title {title}: {emoji.emoji_list(title)}")
+        logger.debug(
+            "Calculated title emoji ratio.",
+            extra={
+                "emoji_count": emoji.emoji_count(title),
+                "title_length": len(title),
+                "emoji_ratio": emoji.emoji_count(title) / max(len(title), 1),
+                "emoji_list": emoji.emoji_list(title),
+            },
+        )
         return emoji.emoji_count(title) / max(len(title), 1)
 
     def get_title_clickbait_phrase_ratio(self, title: str):
@@ -76,7 +87,14 @@ class PreValidator:
             if compiled_pattern.search(lower_title):
                 clickbait_count += 1
 
-        print(f"Title clickbait count: {clickbait_count}, title word count: {len(title.split())}, ratio: {clickbait_count / max(len(title.split()), 1)}")
+        logger.debug(
+            "Calculated title clickbait phrase ratio.",
+            extra={
+                "title_clickbait_count": clickbait_count,
+                "title_word_count": len(title.split()),
+                "title_clickbait_ratio": clickbait_count / max(len(title.split()), 1),
+            },
+        )
         return clickbait_count / max(len(title.split()), 1)
 
     def get_transcript_clickbait_phrase_ratio(self, transcript: str) -> float:
@@ -94,7 +112,14 @@ class PreValidator:
             if compiled_pattern.search(lower_transcript):
                 clickbait_count += 1
 
-        print(f"Transcript clickbait count: {clickbait_count}, transcript word count: {len(transcript.split())}, ratio: {clickbait_count / max(len(transcript.split()), 1)}")
+        logger.debug(
+            "Calculated transcript clickbait phrase ratio.",
+            extra={
+                "transcript_clickbait_count": clickbait_count,
+                "transcript_word_count": len(transcript.split()),
+                "transcript_clickbait_ratio": clickbait_count / max(len(transcript.split()), 1),
+            },
+        )
         return clickbait_count / max(len(transcript.split()), 1)
 
     def build_pre_validation_features(self, vid: Video, transcript: str) -> PreValidationResult:
@@ -104,13 +129,29 @@ class PreValidator:
         a PreValidationResult object containing the pre validation features for the video
         """
 
-        return PreValidationResult(
+        pre_validation_result = PreValidationResult(
             title_uppercase_ratio=self.get_title_uppercase_ratio(vid.title),
             title_punctuation_ratio=self.get_title_punctuation_ratio(vid.title),
             title_emoji_ratio=self.get_emoji_ratio(vid.title),
             title_clickbait_ratio=self.get_title_clickbait_phrase_ratio(vid.title),
             transcript_clickbait_ratio=self.get_transcript_clickbait_phrase_ratio(transcript)
         )
+
+        logger.debug(
+            "Pre-validation feature extraction completed.",
+            extra={
+                "event": LogEvent.PRE_VALIDATION_COMPLETED,
+                "video_id": vid.video_id,
+                "channel_id": vid.channel_id,
+                "title_emoji_ratio": pre_validation_result.title_emoji_ratio,
+                "title_uppercase_ratio": pre_validation_result.title_uppercase_ratio,
+                "title_punctuation_ratio": pre_validation_result.title_punctuation_ratio,
+                "title_clickbait_ratio": pre_validation_result.title_clickbait_ratio,
+                "transcript_clickbait_ratio": pre_validation_result.transcript_clickbait_ratio,
+            },
+        )
+
+        return pre_validation_result
 
 
 
@@ -123,5 +164,3 @@ if __name__ == "__main__":
     transcript: str = "This is a transcript with clickbait phrases like you won't believe what happened next and this is not clickbait"
     pv = PreValidator()
     print(pv.build_pre_validation_features(vid, transcript))
-
-

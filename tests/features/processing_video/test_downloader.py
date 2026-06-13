@@ -5,9 +5,11 @@ from tests.fakes.fake_pipeline import (FailingSummarizer,
                                        FailingTranscriptService,
                                        FakeDownloader, FakeSummarizer,
                                        FakeTranscriptService, FakeValidator)
-from vidsift.features.video_cache.repository import VideoCacheRepository
+from vidsift.features.video_processing.repository import \
+    VideoProcessingRepository
 from vidsift.models.video import Video
-from vidsift.models.video_cache_model import ProcessingStatus, VideoCacheModel
+from vidsift.models.video_record import (VideoProcessingRecord,
+                                         VideoProcessingStatus)
 from vidsift.pipeline.vidsift_pipeline import VidsiftOrchestrator
 
 
@@ -22,7 +24,7 @@ def vid_downloader():
     return FakeDownloader()
 @pytest.fixture()
 def db(tmp_path):
-    return VideoCacheRepository(db_path=tmp_path / "test.db")
+    return VideoProcessingRepository(db_path=tmp_path / "test.db")
 @pytest.fixture()
 def summarization_service():
     return FakeSummarizer()
@@ -37,7 +39,7 @@ def test_download_video_marks_done(db, validator, vid_downloader, set_up_transcr
     downloader: FakeDownloader = vid_downloader
     summarizer: FakeSummarizer = summarization_service
     transcript_service = set_up_transcript_service
-    db: VideoCacheRepository = db
+    db: VideoProcessingRepository = db
 
     orchestrator = VidsiftOrchestrator(
             channel_id_list=["somechannelid"],
@@ -53,14 +55,14 @@ def test_download_video_marks_done(db, validator, vid_downloader, set_up_transcr
     cached = db.get(vid.video_id)
     assert cached is not None
     assert cached.decision == "downloaded"
-    assert cached.status == ProcessingStatus.DONE
+    assert cached.status == VideoProcessingStatus.DONE
 
 
 def test_summary(db, set_up_transcript_service,  summarization_service, vid_downloader, vid):
     vid: Video = vid
     validator: FakeValidator = FakeValidator(decision="summarized")
     transcript_service: FakeTranscriptService = set_up_transcript_service
-    db: VideoCacheRepository = db
+    db: VideoProcessingRepository = db
     summarizer: FakeSummarizer = summarization_service
     downloader: FakeDownloader = vid_downloader
     orchestrator = VidsiftOrchestrator(
@@ -77,7 +79,7 @@ def test_summary(db, set_up_transcript_service,  summarization_service, vid_down
     cached = db.get(vid.video_id)
     assert cached is not None
     assert cached.decision == "summarized"
-    assert cached.status == ProcessingStatus.DONE
+    assert cached.status == VideoProcessingStatus.DONE
 
 def test_discard(db, summarization_service, vid_downloader, set_up_transcript_service, vid):
     vid: Video = vid
@@ -85,7 +87,7 @@ def test_discard(db, summarization_service, vid_downloader, set_up_transcript_se
     summarizer: FakeSummarizer = summarization_service
     downloader: FakeDownloader = vid_downloader
     transcript_service: FakeTranscriptService = set_up_transcript_service
-    db: VideoCacheRepository = db
+    db: VideoProcessingRepository = db
     orchestrator = VidsiftOrchestrator(
         channel_id_list=["somechannelid"],
         video_db=db,
@@ -101,12 +103,12 @@ def test_discard(db, summarization_service, vid_downloader, set_up_transcript_se
     cached = db.get(vid.video_id)
     assert cached is not None
     assert cached.decision == "discarded"
-    assert cached.status == ProcessingStatus.DONE
+    assert cached.status == VideoProcessingStatus.DONE
 
 def test_failing_get_transcript(db, summarization_service, vid_downloader, vid, validator):
     vid: Video = vid
     validator: FakeValidator = validator
-    db: VideoCacheRepository = db
+    db: VideoProcessingRepository = db
     summarizer: FakeSummarizer = summarization_service
     downloader: FakeDownloader = vid_downloader
     transcript_service: FailingTranscriptService = FailingTranscriptService()
@@ -129,7 +131,7 @@ def test_failing_get_transcript(db, summarization_service, vid_downloader, vid, 
     assert cached is not None
     assert "TranscriptError" in cached.last_error
     assert cached.decision is None
-    assert cached.status == ProcessingStatus.FAILED
+    assert cached.status == VideoProcessingStatus.FAILED
 
 
 def test_failing_validate_video(
@@ -171,7 +173,7 @@ def test_failing_validate_video(
     cached = db.get(vid.video_id)
 
     assert cached is not None
-    assert cached.status == ProcessingStatus.FAILED
+    assert cached.status == VideoProcessingStatus.FAILED
     assert cached.decision is None
     assert "VideoValidationError" in cached.last_error
 
@@ -212,10 +214,10 @@ def test_failing_summary(
     assert summarizer.was_called
     assert not downloader.was_called
 
-    cached: VideoCacheModel = db.get(vid.video_id)
+    cached: VideoProcessingRecord = db.get(vid.video_id)
 
     assert cached is not None
-    assert cached.status == ProcessingStatus.FAILED
+    assert cached.status == VideoProcessingStatus.FAILED
 
     # validation completed successfully
     assert cached.decision == "summarized"
