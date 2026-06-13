@@ -1,4 +1,25 @@
 # ============================================================
+# Logging
+# ============================================================
+
+# Log levels
+# DEBUG, INFO, WARNING, ERROR, CRITICAL
+[logging]
+[logging.console]
+enabled = true            # currently not possible to disable
+level = "DEBUG"
+dependency_level = "INFO"
+
+[logging.file]
+enabled = true            # currently not possible to disable
+level = "DEBUG"
+dependency_level = "INFO"
+rotation = "D"            # D: Daily, H: Hourly, M: every minute, S: every second
+retain_days = 14          # for how many days the logs should be kept
+utc_time = false          # true: UTC time, false: local time
+
+
+# ============================================================
 # AI
 # ============================================================
 
