@@ -1,5 +1,6 @@
 import datetime
 import sqlite3
+from os import stat
 from pathlib import Path
 from sqlite3 import Connection, Cursor, IntegrityError, OperationalError
 from typing import Generator, Literal
@@ -191,13 +192,53 @@ class VideoProcessingRepository:
         SELECT * FROM processed_videos
         WHERE status = ?
         """, parameters).fetchall()
-        if rows is None:
+        if not rows:
             return None
         for row in rows:
             try:
                 yield VideoProcessingRecord.model_validate(dict(row))
             except ValidationError as e:
                 raise VideoProcessingDataValidationError(f"Failed to get the data of a video because of a ValidationError, database seems corrupt: {str(e)}") from e
+
+    def get_all(self) -> Generator[VideoProcessingRecord, None, None]:
+        rows = self.cur.execute("""
+        SELECT * FROM processed_videos
+        """).fetchall()
+        if not rows:
+            return None
+        for row in rows:
+            try:
+                yield VideoProcessingRecord.model_validate(dict(row))
+            except ValidationError as e:
+                raise VideoProcessingDataValidationError(f"Failed to get the data of a video because of a ValidationError, database seems corrupt: {str(e)}") from e
+
+    def set_status(self, video_id: str, status: Literal["downloading", "summarizing", "done", "failed", "validating"]) -> None:
+        """
+        Method to edit the status of a video 
+        """
+        match status:
+            case "downloading":
+                target_status = VideoProcessingStatus.DOWNLOADING.value
+            case "summarizing":
+                target_status = VideoProcessingStatus.SUMMARIZING.value
+            case "done":
+                target_status = VideoProcessingStatus.DONE.value
+            case "failed":
+                target_status = VideoProcessingStatus.FAILED.value
+            case "validating":
+                target_status = VideoProcessingStatus.VALIDATING.value
+        try:
+            parameters: tuple = (target_status, video_id)
+            self.cur.execute("""
+            UPDATE processed_videos
+            SET status = ?
+            WHERE video_id = ?;
+            """, parameters)
+        except IntegrityError as e:
+            raise DBWritingError(f"Failed to write to DB while updating the status to {status} for {video_id} because a database operand violated a constraint: {str(e)}")
+        except OperationalError as e:
+            raise DBWritingError(f"Failed to write to DB while updating the status to {status} for {video_id} because of an operational Error: {str(e)}") from e
+
 
 
     def close(self) -> None:
