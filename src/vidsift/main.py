@@ -75,7 +75,6 @@ class VidsiftCLI:
 
     def handle_videos_set_status(self, args):
         repo = VideoProcessingRepository()
-        print(args)
         try:
             if args.video_id and args.status:
                 repo.set_status(args.video_id, args.status)
@@ -83,7 +82,6 @@ class VidsiftCLI:
             repo.close()
 
     def run(self):
-
         args = self.parse_args()
 
 

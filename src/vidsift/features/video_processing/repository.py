@@ -1,6 +1,5 @@
 import datetime
 import sqlite3
-from os import stat
 from pathlib import Path
 from sqlite3 import Connection, Cursor, IntegrityError, OperationalError
 from typing import Generator, Literal
@@ -214,7 +213,7 @@ class VideoProcessingRepository:
 
     def set_status(self, video_id: str, status: Literal["downloading", "summarizing", "done", "failed", "validating"]) -> None:
         """
-        Method to edit the status of a video 
+        Method to edit the status of a video
         """
         match status:
             case "downloading":
@@ -234,6 +233,7 @@ class VideoProcessingRepository:
             SET status = ?
             WHERE video_id = ?;
             """, parameters)
+            self.conn.commit()
         except IntegrityError as e:
             raise DBWritingError(f"Failed to write to DB while updating the status to {status} for {video_id} because a database operand violated a constraint: {str(e)}")
         except OperationalError as e:
