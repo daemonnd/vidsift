@@ -9,6 +9,7 @@ Tasks:
 """
 import argparse
 import logging
+from pathlib import Path
 
 from rich import print
 from rich.console import Console
@@ -16,6 +17,8 @@ from rich.console import Console
 from vidsift.config.errors import (ConfigError, ConfigFileNotFoundError,
                                    ConfigFilePermissionError,
                                    ConfigValidationError, InvalidConfigError)
+from vidsift.config.loader import load_config
+from vidsift.config.models import AppConfig
 from vidsift.features.video_processing.repository import \
     VideoProcessingRepository
 from vidsift.pipeline.vidsift_pipeline import VidsiftOrchestrator
@@ -25,11 +28,30 @@ from vidsift.shared.logging.config import configure_logging
 
 class VidsiftCLI:
     def __init__(self) -> None:
+        """
+        Manages vidsift bootstraping flow:
+        1. setup bootstrap logging
+        2. parse CLI flags
+        3. load config.toml
+        4. apply CLI overrides
+        5. validate final config
+        6. configure logging
+        7. build application
+        8. execute command
+        """
+        # setup bootstrap logging
         setup_bootstrap_logging()
         logger = logging.getLogger(__name__)
+
+        # parse CLI flags
+        args = self.parse_args()
+
+        # load config.toml
+
+
         try:
-            from vidsift.config import \
-                CONFIG  # make the config run after bootstrap logger setup
+            # load config.toml
+            config = load_config()
         except InvalidConfigError as e:
             logger.exception(f"InvalidConfigError: {str(e)}")
             exit(1)
@@ -38,29 +60,50 @@ class VidsiftCLI:
             exit(1)
         except ConfigFilePermissionError as e:
             logger.exception(f"ConfigFilePermissionError: {str(e)}")
+            exit(1)
         except ConfigValidationError as e:
             logger.exception(f"ConfigValidationError: {str(e)}")
+            exit(1)
         except ConfigError as e:
             logger.exception(f"ConfigError: {str(e)}")
-        configure_logging()  # configure logger after app and logger config is loaded
+            exit(1)
+
+        updates = {}
+ 
+        if args.loglevel is not None:
+            updates["level"] = args.loglevel
+
+        config = config.model_copy(update=updates)
+        self.config: AppConfig = config
+ 
+
+
+        configure_logging(self.config)  # configure logger after app and logger config is loaded
+
+
+        # execute command
+        if hasattr(args, "func"):
+            args.func(args)
 
 
     def handle_pipeline_run(self, args):
         channel_id_list = ["UCo71RUe6DX4w-Vd47rFLXPg", ]
 
-        self.orchestrator = VidsiftOrchestrator(channel_id_list)
+        self.orchestrator = VidsiftOrchestrator(channel_id_list, config=self.config)
 
         self.orchestrator.run()
 
     def handle_config_show(self, args):
-        print("/home/user/.config/vidsift/config.toml")
+        CONFIG_FILE_PATH: Path = Path(Path.home() / ".config" / "vidsift" / "config.toml")
+        print(f"Config file: {CONFIG_FILE_PATH}\n")
+        with open(file=CONFIG_FILE_PATH, mode="r") as f:
+            print(f.read())
 
 
 
     def handle_videos_list(self, args):
         repo = VideoProcessingRepository()
         try:
-
             if args.status:
                 videos = repo.get_by_status(args.status)
             else:
@@ -81,13 +124,7 @@ class VidsiftCLI:
         finally:
             repo.close()
 
-    def run(self):
-        args = self.parse_args()
-
-
-        if hasattr(args, "func"):
-            args.func(args)
-
+    #    def run(self):
 
             #if args.version:
             #print("VERSION")
@@ -126,6 +163,7 @@ class VidsiftCLI:
 
  
         run_parser = subparsers.add_parser("run", help="Run the vidsift pipeline")
+        run_parser.add_argument("--loglevel", help="Set the loglevel for file and console for one run")
 
 
         process_parser = subparsers.add_parser("process", help="Process a certain URL")
@@ -173,4 +211,4 @@ class VidsiftCLI:
 
 if __name__ == "__main__":
     vidsift_app: VidsiftCLI = VidsiftCLI()
-    vidsift_app.run()
+    #vidsift_app.run()

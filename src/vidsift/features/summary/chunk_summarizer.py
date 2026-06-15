@@ -1,6 +1,6 @@
 import logging
 
-from vidsift.config import CONFIG
+from vidsift.config.models import AppConfig
 from vidsift.features.summary.errors import SummaryError
 from vidsift.shared.AI.errors import AIError
 from vidsift.shared.AI.run_model import AIUsageManager
@@ -13,10 +13,11 @@ logger = logging.getLogger(__name__)
 
 
 class ChunkSummaryManager:
-    def __init__(self, ai_model: str = CONFIG.ai.summary_model):
+    def __init__(self, config: AppConfig):
+        self.config: AppConfig = config
         self.chunk_summary_ai: AIUsageManager = AIUsageManager(system_prompt_file_name="chunk_summary.md")
-        self.ai_model: str = ai_model
-        self.transcript_chunk_generator: TranscriptChunkGenerator = TranscriptChunkGenerator(char_chunk_size=CONFIG.summarization.char_chunk_size)
+        self.ai_model: str = config.ai.summary_model
+        self.transcript_chunk_generator: TranscriptChunkGenerator = TranscriptChunkGenerator(char_chunk_size=self.config.summarization.char_chunk_size)
         self.text_normalizer: TextNormalizer = TextNormalizer()
 
     @retry_once

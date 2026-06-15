@@ -5,17 +5,11 @@ file regarding the loglevel for dependencies
 import logging
 from logging import Filter, LogRecord
 
-from vidsift.config import CONFIG
-
-console_config = CONFIG.logging.console
-file_config = CONFIG.logging.file
-
-
-
 
 class ConsoleDependencyFilter(Filter):
-    def __init__(self, name: str = "", debug_mode: bool = False) -> None:
+    def __init__(self, console_config, name: str = "", debug_mode: bool = False) -> None:
         super().__init__(name)
+        self.console_config = console_config
         self.debug_mode: bool = debug_mode
 
     def filter(self, record: LogRecord) -> bool | LogRecord:
@@ -27,19 +21,20 @@ class ConsoleDependencyFilter(Filter):
             return True
         if record.name.startswith("vidsift"):
             # if it is from vidsift
-            if record.levelno < logging.getLevelNamesMapping()[console_config.level]:
+            if record.levelno < logging.getLevelNamesMapping()[self.console_config.level]:
                 return False
             else:
                 return True
         # if it is from a dependency
-        if record.levelno >= logging.getLevelNamesMapping()[console_config.dependency_level]:
+        if record.levelno >= logging.getLevelNamesMapping()[self.console_config.dependency_level]:
             return True
         return False
 
 
 class FileDependencyFilter(Filter):
-    def __init__(self, name: str = "", debug_mode: bool = False) -> None:
+    def __init__(self, file_config, name: str = "", debug_mode: bool = False) -> None:
         super().__init__(name)
+        self.file_config = file_config
         self.debug_mode: bool = debug_mode
 
     def filter(self, record: LogRecord) -> bool | LogRecord:
@@ -51,11 +46,11 @@ class FileDependencyFilter(Filter):
             return True
         if record.name.startswith("vidsift"):
             # if it is from vidsift
-            if record.levelno < logging.getLevelNamesMapping()[file_config.level]:
+            if record.levelno < logging.getLevelNamesMapping()[self.file_config.level]:
                 return False
             else:
                 return True
         # if it is from a dependency
-        if record.levelno >= logging.getLevelNamesMapping()[file_config.dependency_level]:
+        if record.levelno >= logging.getLevelNamesMapping()[self.file_config.dependency_level]:
             return True
         return False

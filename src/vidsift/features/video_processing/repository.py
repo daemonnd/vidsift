@@ -14,7 +14,7 @@ from vidsift.models.video_record import (VideoProcessingRecord,
 
 
 class VideoProcessingRepository:
-    def __init__(self, db_path: Path | None = None) -> None:
+    def __init__(self,  db_path: Path | None = None) -> None:
         if db_path is None:
             self.db_path: Path = Path(Path.home() / ".local" / "share" / "vidsift" / "processed_videos.db")
         else:
