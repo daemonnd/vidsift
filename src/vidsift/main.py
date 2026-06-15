@@ -95,9 +95,6 @@ class VidsiftCLI:
             )
 
         self.config: AppConfig = config
-        print(config.ai.default_model, config.ai.summary_model, config.ai.validation_model)
-        print(config.logging.console.level)
- 
 
 
         configure_logging(self.config)  # configure logger after app and logger config is loaded
@@ -116,10 +113,17 @@ class VidsiftCLI:
         self.orchestrator.run()
 
     def handle_config_show(self, args):
-        CONFIG_FILE_PATH: Path = Path(Path.home() / ".config" / "vidsift" / "config.toml")
-        print(f"Config file: {CONFIG_FILE_PATH}\n")
-        with open(file=CONFIG_FILE_PATH, mode="r") as f:
-            print(f.read())
+        if args.file:
+            CONFIG_FILE_PATH: Path = Path(Path.home() / ".config" / "vidsift" / "config.toml")
+            print(f"Config file: {CONFIG_FILE_PATH}\n")
+            with open(file=CONFIG_FILE_PATH, mode="r") as f:
+                print(f.read())
+
+
+        else:
+            console = Console()
+
+            console.print(self.config)
 
 
 
@@ -203,6 +207,11 @@ class VidsiftCLI:
         config_parser = subparsers.add_parser("config", help="Edit or show the vidsift config")
         config_subparsers = config_parser.add_subparsers(dest="config_command")
         show_parser = config_subparsers.add_parser("show", help="Show config path")
+        show_parser.add_argument(
+            "--file", 
+            help="Show contents of config file instead of current loaded config",
+            action="store_true"
+        )
 
         videos_parser = subparsers.add_parser("videos", help="Edit view or video processed videos")
         videos_subparsers = videos_parser.add_subparsers(dest="videos_command")
