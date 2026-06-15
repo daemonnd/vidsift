@@ -68,13 +68,35 @@ class VidsiftCLI:
             logger.exception(f"ConfigError: {str(e)}")
             exit(1)
 
-        updates = {}
  
         if args.loglevel is not None:
-            updates["level"] = args.loglevel
+            console_config = config.logging.console.model_copy(
+                update={"level": args.loglevel}
+            )
 
-        config = config.model_copy(update=updates)
+            logging_config = config.logging.model_copy(
+                update={"console": console_config}
+            )
+
+            config = config.model_copy(
+                update={"logging": logging_config}
+            )
+
+        if args.global_ai_model is not None:
+            ai_config = config.ai.model_copy(
+                update={
+                    "default_model": args.global_ai_model,
+                    "validation_model": args.global_ai_model,
+                    "summary_model": args.global_ai_model
+                }
+            )
+            config = config.model_copy(
+                update={"ai": ai_config}
+            )
+
         self.config: AppConfig = config
+        print(config.ai.default_model, config.ai.summary_model, config.ai.validation_model)
+        print(config.logging.console.level)
  
 
 
@@ -154,6 +176,15 @@ class VidsiftCLI:
                             help="Print version", 
                             action="version",
                             version="vidsift v0.0.1")
+        parser.add_argument(
+            "--loglevel", 
+            help="Set the loglevel console logging for one run",
+            choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
+        )
+        parser.add_argument(
+            "--global-ai-model",
+            help="Set the AI model for all AI usages"
+        )
  
         subparsers = parser.add_subparsers(
             dest="command",
@@ -163,7 +194,6 @@ class VidsiftCLI:
 
  
         run_parser = subparsers.add_parser("run", help="Run the vidsift pipeline")
-        run_parser.add_argument("--loglevel", help="Set the loglevel for file and console for one run")
 
 
         process_parser = subparsers.add_parser("process", help="Process a certain URL")
