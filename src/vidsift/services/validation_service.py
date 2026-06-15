@@ -117,7 +117,7 @@ class VideoValidator:
                     first_attempt_append=f"title: {vid.title}\nauthor: {vid.author}\nurl: {vid.url}\nvideo ID: {vid.video_id}",
                 )
             )
-        except AIError:
+        except AIError as e:
             logger.exception(
                 f"Metadata validation failed for video {vid.video_id}.",
                 extra={
@@ -127,7 +127,7 @@ class VideoValidator:
                     "validation_stage": "metadata",
                 },
             )
-            raise VideoValidationError(f"Metadata validation failed for video {vid.video_id} due to AI error")
+            raise VideoValidationError(f"Metadata validation failed for video {vid.video_id} due to AI error: {str(e)}")
 
     def validate_transcript(self, vid: Video, transcript: str) -> TranscriptValidationResult:
         """
