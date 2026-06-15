@@ -10,6 +10,7 @@ Tasks:
 import argparse
 import logging
 from pathlib import Path
+from re import M
 
 from rich import print
 from rich.console import Console
@@ -21,6 +22,9 @@ from vidsift.config.loader import load_config
 from vidsift.config.models import AppConfig
 from vidsift.features.video_processing.repository import \
     VideoProcessingRepository
+from vidsift.ingestion.errors import MetadataCollectionError
+from vidsift.ingestion.metadata_collector import MetadataCollector
+from vidsift.models.video import Video
 from vidsift.pipeline.vidsift_pipeline import VidsiftOrchestrator
 from vidsift.shared.logging.bootstrap_logger import setup_bootstrap_logging
 from vidsift.shared.logging.config import configure_logging
@@ -162,6 +166,17 @@ class VidsiftCLI:
         finally:
             repo.close()
 
+    def handle_process_download(self, args):
+        if args.url:
+            metadata_collector = MetadataCollector()
+            orchestrator = VidsiftOrchestrator(
+                channel_id_list=[""],
+                config=self.config
+            )
+            vid: Video = metadata_collector.fetch_metadata(args.url)
+            orchestrator.download(vid=vid)
+
+
     #    def run(self):
 
             #if args.version:
@@ -257,6 +272,9 @@ class VidsiftCLI:
             choices=["downloading", "summarizing", "done", "failed", "validating"]
         )
 
+        download_parser = subparsers.add_parser("download", help="Download a video")
+        download_parser.add_argument("--url", help="The URL of the video to download")
+
 
 
 
@@ -264,6 +282,7 @@ class VidsiftCLI:
         show_parser.set_defaults(func=self.handle_config_show)
         video_set_status.set_defaults(func=self.handle_videos_set_status)
         video_list.set_defaults(func=self.handle_videos_list)
+        download_parser.set_defaults(func=self.handle_process_download)
 
         return parser.parse_args()
 
