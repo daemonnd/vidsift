@@ -48,10 +48,14 @@ class VidsiftCLI:
 
         # load config.toml
 
-
         try:
             # load config.toml
-            config = load_config()
+            if args.config:
+                config = load_config(
+                    config_path=args.config
+                )
+            else:
+                config = load_config()
         except InvalidConfigError as e:
             logger.exception(f"InvalidConfigError: {str(e)}")
             exit(1)
@@ -115,9 +119,17 @@ class VidsiftCLI:
     def handle_config_show(self, args):
         if args.file:
             CONFIG_FILE_PATH: Path = Path(Path.home() / ".config" / "vidsift" / "config.toml")
+            if args.config:
+                CONFIG_FILE_PATH = args.config
             print(f"Config file: {CONFIG_FILE_PATH}\n")
             with open(file=CONFIG_FILE_PATH, mode="r") as f:
                 print(f.read())
+
+        elif args.filepath:
+            CONFIG_FILE_PATH: Path = Path(Path.home() / ".config" / "vidsift" / "config.toml")
+            if args.config:
+                CONFIG_FILE_PATH = args.config
+            print(f"Config file: {CONFIG_FILE_PATH}")
 
 
         else:
@@ -181,6 +193,10 @@ class VidsiftCLI:
                             action="version",
                             version="vidsift v0.0.1")
         parser.add_argument(
+            "--config",
+            help="Use custom config for this run",
+            )
+        parser.add_argument(
             "--loglevel", 
             help="Set the loglevel console logging for one run",
             choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
@@ -210,6 +226,11 @@ class VidsiftCLI:
         show_parser.add_argument(
             "--file", 
             help="Show contents of config file instead of current loaded config",
+            action="store_true"
+        )
+        show_parser.add_argument(
+            "--filepath",
+            help="Only show the file path of the current config file instead of the loaded config",
             action="store_true"
         )
 
