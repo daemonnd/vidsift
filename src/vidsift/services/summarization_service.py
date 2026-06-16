@@ -1,9 +1,12 @@
 
+from pathlib import Path
+
 from vidsift.config.models import AppConfig
 from vidsift.features.summary.chunk_summarizer import ChunkSummaryManager
 from vidsift.features.summary.errors import SummaryError
 from vidsift.features.summary.final_summarizer import FinalSummarizer
 from vidsift.features.validation.errors import EmptyTranscriptError
+from vidsift.models.video import Video
 from vidsift.shared.AI.errors import AIError
 from vidsift.shared.text_normalizer import TextNormalizer
 
@@ -23,9 +26,21 @@ class SummarizationService:
         # a SummaryError can propagate, cause if will be caught later, in the vidsift pipeline
 
 
-    def store_summaries(self, summaries: list[str]) -> None:
-        # Placeholder for storing summaries in a database or file system
-        pass
+    def store_summary(self, summary: str, vid: Video) -> None:
+        try:
+            Path(self.config.summarization.output_dir).mkdir(parents=True, exist_ok=True)
+        except OSError as e:
+            raise SummaryError(f"OSError: Failed to create directory at {self.config.summarization.output_dir}: {str(e)}") from e
+        else:
+            dest_file = Path(f"{self.config.summarization.output_dir}/{vid.title}.md")
+            try:
+                dest_file.touch()
+            except FileExistsError as e:
+                raise SummaryError(f"FileExistsError: Failed to store the summary at {dest_file}")
+            with open(str(dest_file), "w") as f:
+                f.write(summary)
+
+
 
     def summarize_overall(self, summaries: list[str]) -> str:
         """
@@ -40,7 +55,7 @@ class SummarizationService:
         except AIError as e:
             raise SummaryError(f"An error occured while summarizing the short summaries of the chunks: {e}") from e
 
-    def summarize(self, raw_transcript: str) -> str:
+    def summarize(self, raw_transcript: str, vid: Video) -> str:
         """
         Method to summarize the whole transcript. 
         It calls summarize, store_summaries and summarize_overall and returns the final result
@@ -51,8 +66,12 @@ class SummarizationService:
         """
         transcript: str = self.text_normalizer.normalize(raw_transcript)
         summaries: list[str] = self.summarize_all_chunks(transcript=transcript)
-        self.store_summaries(summaries=summaries)
-        return self.summarize_overall(summaries=summaries)
+        final_summary: str = self.summarize_overall(summaries=summaries)
+        self.store_summary(
+            summary=final_summary,
+            vid=vid
+        )
+        return final_summary
 
 if __name__ == "__main__":
     summarization_service = SummarizationService(ai_model="qwen3.5:9b")

@@ -65,6 +65,7 @@ class SummarizationConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
     enabled: bool
     char_chunk_size: int = Field(ge=100)
+    output_dir: str
 
 class DownloadsConfig(BaseModel):
     model_config = ConfigDict(frozen=True)

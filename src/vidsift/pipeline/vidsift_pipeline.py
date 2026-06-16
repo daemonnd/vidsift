@@ -136,7 +136,7 @@ class VidsiftOrchestrator:
                 "channel_id": vid.channel_id,
             },
         )
-        self.summarizer.summarize(raw_transcript=transcript)
+        self.summarizer.summarize(raw_transcript=transcript, vid=vid)
         logger.info(
             "Video summarization completed.",
             extra={

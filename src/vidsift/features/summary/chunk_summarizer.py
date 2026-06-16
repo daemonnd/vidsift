@@ -96,7 +96,7 @@ class ChunkSummaryManager:
 
         for chunk, chunk_index in transcript_chunks:
             logger.debug(
-                "Chunk summarization processing.",
+                f"Processing  chunk {chunk_index}...",
                 extra={
                     "event": LogEvent.CHUNK_SUMMARIZATION_STARTED,
                     "chunk_index": chunk_index,
