@@ -166,15 +166,38 @@ class VidsiftCLI:
         finally:
             repo.close()
 
-    def handle_process_download(self, args):
-        if args.url:
-            metadata_collector = MetadataCollector()
-            orchestrator = VidsiftOrchestrator(
-                channel_id_list=[""],
-                config=self.config
+    def handle_process(self, args):
+        metadata_collector = MetadataCollector()
+        orchestrator = VidsiftOrchestrator(
+            channel_id_list=[""],
+            config=self.config
+        )
+        vid: Video = metadata_collector.fetch_metadata(args.url)
+        if args.download:
+            orchestrator.download(
+                vid=vid
             )
-            vid: Video = metadata_collector.fetch_metadata(args.url)
-            orchestrator.download(vid=vid)
+        else:
+            transcript = orchestrator.fetch_transcript(
+                vid=vid
+            )
+            if args.summarize:
+                orchestrator.summarize(
+                    vid=vid,
+                    transcript=transcript
+                )
+            elif args.fetch_transcript:
+                print(transcript)
+            else:
+                validation_result = orchestrator.validate_video(
+                    vid=vid,
+                    raw_transcript=transcript
+                )
+                orchestrator.take_action_on_video(
+                    vid=vid,
+                    video_validation_result=validation_result,
+                    transcript=transcript
+                )
 
 
     #    def run(self):
@@ -231,8 +254,33 @@ class VidsiftCLI:
         run_parser = subparsers.add_parser("run", help="Run the vidsift pipeline")
 
 
-        process_parser = subparsers.add_parser("process", help="Process a certain URL")
-        process_parser.add_argument("--url", help="Process a specific video")
+        process_parser = subparsers.add_parser(
+            "process",
+            help="Process a certain URL ",
+            usage="--url is required. \nIf only --url is selected, the video will be validated + discarded / summarized / downloaded"
+            )
+        process_parser.add_argument(
+            "--url",
+            help="Process a specific video",
+            required=True
+        )
+        process_parser.add_argument(
+            "--download",
+            help="Download the selected video",
+            action="store_true"
+
+        )
+        process_parser.add_argument(
+            "--summarize",
+            help="Summarize the selected video",
+            action="store_true"
+        )
+        process_parser.add_argument(
+            "--fetch-transcript",
+            help="Fetch the transcript of the selected video",
+            action="store_true"
+        )
+
 
 
         config_parser = subparsers.add_parser("config", help="Edit or show the vidsift config")
@@ -272,8 +320,6 @@ class VidsiftCLI:
             choices=["downloading", "summarizing", "done", "failed", "validating"]
         )
 
-        download_parser = subparsers.add_parser("download", help="Download a video")
-        download_parser.add_argument("--url", help="The URL of the video to download")
 
 
 
@@ -282,7 +328,7 @@ class VidsiftCLI:
         show_parser.set_defaults(func=self.handle_config_show)
         video_set_status.set_defaults(func=self.handle_videos_set_status)
         video_list.set_defaults(func=self.handle_videos_list)
-        download_parser.set_defaults(func=self.handle_process_download)
+        process_parser.set_defaults(func=self.handle_process)
 
         return parser.parse_args()
 
