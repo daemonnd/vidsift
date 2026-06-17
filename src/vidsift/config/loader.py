@@ -21,6 +21,10 @@ def load_config(config_path: Path = CONFIG_FILE_PATH) -> AppConfig:
             return AppConfig.model_validate(tomllib.load(f))
     except TOMLDecodeError as e:
         raise InvalidConfigError(f"Unable to decode TOML in {config_path}: {str(e)}") from e
+    except UnicodeDecodeError as e:
+        raise InvalidConfigError(f"Unable to decode TOML in {config_path}: {str(e)}")
+    except IsADirectoryError as e:
+        raise ConfigFileNotFoundError(f"The config file is a directory: {str(e)}") from e
     except FileNotFoundError as e:
         raise ConfigFileNotFoundError(f"The config file has not been found at {config_path}: {str(e)}") from e
     except PermissionError as e:
