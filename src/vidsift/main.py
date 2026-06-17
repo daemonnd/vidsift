@@ -10,7 +10,6 @@ Tasks:
 import argparse
 import logging
 from pathlib import Path
-from re import M
 
 from rich import print
 from rich.console import Console
@@ -22,7 +21,6 @@ from vidsift.config.loader import load_config
 from vidsift.config.models import AppConfig
 from vidsift.features.video_processing.repository import \
     VideoProcessingRepository
-from vidsift.ingestion.errors import MetadataCollectionError
 from vidsift.ingestion.metadata_collector import MetadataCollector
 from vidsift.models.video import Video
 from vidsift.pipeline.vidsift_pipeline import VidsiftOrchestrator
@@ -284,7 +282,7 @@ class VidsiftCLI:
 
 
         config_parser = subparsers.add_parser("config", help="Edit or show the vidsift config")
-        config_subparsers = config_parser.add_subparsers(dest="config_command")
+        config_subparsers = config_parser.add_subparsers(dest="config_command", required=True)
         show_parser = config_subparsers.add_parser("show", help="Show config path")
         exclusive_show_parser_group = show_parser.add_mutually_exclusive_group()
         exclusive_show_parser_group.add_argument(
@@ -298,18 +296,27 @@ class VidsiftCLI:
             action="store_true"
         )
 
-        videos_parser = subparsers.add_parser("videos", help="Edit view or video processed videos")
-        videos_subparsers = videos_parser.add_subparsers(dest="videos_command")
-        video_list = videos_subparsers.add_parser("list", help="list already processed videos")
+        videos_parser = subparsers.add_parser(
+            "videos",
+            help="Edit view or video processed videos",
+        )
+        videos_subparsers = videos_parser.add_subparsers(
+            dest="videos_command",
+            required=True
+        )
+        video_list = videos_subparsers.add_parser(
+            "list",
+            help="list already processed videos",
+        )
         video_list.add_argument(
-            "-s", "--status", 
+            "-s", "--status",
             help="filter by processing status ('downloading', 'summarizing', 'done', 'failed', 'validating'",
             choices=["downloading", "summarizing", "done", "failed", "validating"]
         )
 
         video_set_status = videos_subparsers.add_parser(
             "set-status",
-            help="Set the status of <video id> to <status>",
+            help="Set the status of <video id> to <status>"
         )
         video_set_status.add_argument(
             "--video-id",
