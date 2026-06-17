@@ -259,23 +259,23 @@ class VidsiftCLI:
             help="Process a certain URL ",
             usage="--url is required. \nIf only --url is selected, the video will be validated + discarded / summarized / downloaded"
             )
+        exclusive_process_parser_group = process_parser.add_mutually_exclusive_group()
         process_parser.add_argument(
             "--url",
             help="Process a specific video",
             required=True
         )
-        process_parser.add_argument(
+        exclusive_process_parser_group.add_argument(
             "--download",
             help="Download the selected video",
-            action="store_true"
-
+            action="store_true",
         )
-        process_parser.add_argument(
+        exclusive_process_parser_group.add_argument(
             "--summarize",
             help="Summarize the selected video",
             action="store_true"
         )
-        process_parser.add_argument(
+        exclusive_process_parser_group.add_argument(
             "--fetch-transcript",
             help="Fetch the transcript of the selected video",
             action="store_true"
@@ -286,12 +286,13 @@ class VidsiftCLI:
         config_parser = subparsers.add_parser("config", help="Edit or show the vidsift config")
         config_subparsers = config_parser.add_subparsers(dest="config_command")
         show_parser = config_subparsers.add_parser("show", help="Show config path")
-        show_parser.add_argument(
-            "--file", 
+        exclusive_show_parser_group = show_parser.add_mutually_exclusive_group()
+        exclusive_show_parser_group.add_argument(
+            "--file",
             help="Show contents of config file instead of current loaded config",
             action="store_true"
         )
-        show_parser.add_argument(
+        exclusive_show_parser_group.add_argument(
             "--filepath",
             help="Only show the file path of the current config file instead of the loaded config",
             action="store_true"
