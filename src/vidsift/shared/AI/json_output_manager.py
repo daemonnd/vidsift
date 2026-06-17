@@ -3,7 +3,7 @@ import logging
 
 from pydantic import ValidationError
 
-from vidsift.config import CONFIG
+from vidsift.config.models import AppConfig
 from vidsift.models.ai_json_requirements import (AIJSONBaseRequirements,
                                                  AIJSONRuntimeRequirements)
 from vidsift.shared.AI.errors import (AIError, EmptyAIResponseError,
@@ -15,7 +15,8 @@ logger = logging.getLogger(__name__)
 
 
 class AIJsonOutputManager:
-    def __init__(self, requirements: AIJSONBaseRequirements) -> None:
+    def __init__(self, config: AppConfig, requirements: AIJSONBaseRequirements) -> None:
+        self.config: AppConfig = config
         self.output_format_instance = requirements.output_format_instance
         self.system_prompt_filename: str = requirements.system_prompt_filename
         self.retry_system_filename: str = requirements.retry_system_filename
@@ -34,18 +35,18 @@ class AIJsonOutputManager:
             extra={
                 "event": LogEvent.AI_JSON_OUTPUT_STARTED,
                 "model": requirements.ai_model,
-                "max_attempts": CONFIG.ai.max_allowed_json_output_runs,
+                "max_attempts": self.config.ai.max_allowed_json_output_runs,
             },
         )
 
-        for i in range(CONFIG.ai.max_allowed_json_output_runs):
+        for i in range(self.config.ai.max_allowed_json_output_runs):
             logger.debug(
-                f"Starting attempt {i+1} of {CONFIG.ai.max_allowed_json_output_runs}",
+                f"Starting attempt {i+1} of {self.config.ai.max_allowed_json_output_runs}",
                 extra={
                     "event": LogEvent.AI_JSON_OUTPUT_STARTED,
                     "model": requirements.ai_model,
                     "attempt": i + 1,
-                    "max_attempts": CONFIG.ai.max_allowed_json_output_runs,
+                    "max_attempts": self.config.ai.max_allowed_json_output_runs,
                     "use_full_validation": use_full_validate,
                 },
             )
@@ -86,7 +87,7 @@ class AIJsonOutputManager:
                         "event": LogEvent.AI_JSON_OUTPUT_FAILED,
                         "model": requirements.ai_model,
                         "attempt": i + 1,
-                        "max_attempts": CONFIG.ai.max_allowed_json_output_runs,
+                        "max_attempts": self.config.ai.max_allowed_json_output_runs,
                         "failure_reason": "empty_response",
                     },
                 )
@@ -104,7 +105,7 @@ class AIJsonOutputManager:
                         "event": LogEvent.AI_JSON_OUTPUT_FAILED,
                         "model": requirements.ai_model,
                         "attempt": i + 1,
-                        "max_attempts": CONFIG.ai.max_allowed_json_output_runs,
+                        "max_attempts": self.config.ai.max_allowed_json_output_runs,
                         "failure_reason": "invalid_json_output",
                     },
                 )
@@ -127,7 +128,7 @@ class AIJsonOutputManager:
             extra={
                 "event": LogEvent.AI_JSON_OUTPUT_FAILED,
                 "model": requirements.ai_model,
-                "max_attempts": CONFIG.ai.max_allowed_json_output_runs,
+                "max_attempts": self.config.ai.max_allowed_json_output_runs,
             },
         )
 

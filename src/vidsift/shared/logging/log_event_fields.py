@@ -32,6 +32,10 @@ class LogEvent:
     VIDEO_VALIDATION_FAILED = "video_validation_failed"
     VIDEO_VALIDATION_COMPLETED = "video_validation_completed"
 
+    # metadate fetching events
+    METADATA_FETCH_STARTED = "metadata_fetch_strarted"
+    METADATA_FETCH_COMPLETED = "metadata_fetch_completed"
+    METADATA_FETCH_FAILED = "metadata_fetch_failed"
 
     # transcript fetching events
     TRANSCRIPT_FETCH_STARTED = "transcript_fetch_started"

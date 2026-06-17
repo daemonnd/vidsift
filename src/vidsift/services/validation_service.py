@@ -4,7 +4,7 @@ File for managing the validation process and returning the score of the video
 import logging
 from dataclasses import asdict
 
-from vidsift.config import CONFIG
+from vidsift.config.models import AppConfig
 from vidsift.features.validation.decision_engine import DecisionEngine
 from vidsift.features.validation.errors import VideoValidationError
 from vidsift.features.validation.instruction_provider import \
@@ -33,11 +33,12 @@ logger = logging.getLogger(__name__)
 
 
 class VideoValidator:
-    def __init__(self) -> None:
+    def __init__(self, config: AppConfig) -> None:
+        self.config: AppConfig = config
         self.pre_validator: PreValidator = PreValidator()
         self.text_normalizer: TextNormalizer = TextNormalizer()
-        self.pre_validation_score_calculator: PreValidationScoreCalculator = PreValidationScoreCalculator()
-        self.transcript_chunk_provider: TranscriptChunkProvider = TranscriptChunkProvider()
+        self.pre_validation_score_calculator: PreValidationScoreCalculator = PreValidationScoreCalculator(config=self.config)
+        self.transcript_chunk_provider: TranscriptChunkProvider = TranscriptChunkProvider(config=self.config)
 
     def pre_validate(self, vid: Video, transcript: str) -> bool:
         """
@@ -100,6 +101,7 @@ class VideoValidator:
         VideoValidationError: If the AI fails to validate the metadata after the maximum number of retries, or if any unexpected error occurs during the validation process.
         """
         ai_manager: AIJsonOutputManager = AIJsonOutputManager(
+            config=self.config,
             requirements=AIJSONBaseRequirements(
                 system_prompt_filename="metadata_validation.md",
                 retry_system_filename="metadata_retry.md",
@@ -109,13 +111,13 @@ class VideoValidator:
         try:
             return ai_manager.run_ai_pipeline(
                 AIJSONRuntimeRequirements(
-                    ai_model=CONFIG.ai.validation_model,
+                    ai_model=self.config.ai.validation_model,
                     first_attempt_pattern="$CUSTOM_CHANNEL_INSTRUCTIONS",
                     first_attempt_replacement=get_custom_instructions(vid.author),
                     first_attempt_append=f"title: {vid.title}\nauthor: {vid.author}\nurl: {vid.url}\nvideo ID: {vid.video_id}",
                 )
             )
-        except AIError:
+        except AIError as e:
             logger.exception(
                 f"Metadata validation failed for video {vid.video_id}.",
                 extra={
@@ -125,7 +127,7 @@ class VideoValidator:
                     "validation_stage": "metadata",
                 },
             )
-            raise VideoValidationError(f"Metadata validation failed for video {vid.video_id} due to AI error")
+            raise VideoValidationError(f"Metadata validation failed for video {vid.video_id} due to AI error: {str(e)}")
 
     def validate_transcript(self, vid: Video, transcript: str) -> TranscriptValidationResult:
         """

@@ -74,6 +74,7 @@ transcript_clickbait_weight = 2.5
 [summarization]
 enabled = true
 char_chunk_size = 10000
+output_dir = "~/Documents/vidsift/"
 
 
 # ============================================================

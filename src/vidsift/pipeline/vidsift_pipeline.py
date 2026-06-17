@@ -17,7 +17,7 @@ from pathlib import Path
 from sys import exit
 from typing import Generator
 
-from vidsift.config import CONFIG
+from vidsift.config.models import AppConfig
 from vidsift.features.download.downloader import VideoDownloader
 from vidsift.features.summary.errors import SummaryError
 from vidsift.features.transcript.errors import TranscriptError
@@ -41,6 +41,7 @@ class VidsiftOrchestrator:
     def __init__(
         self,
         channel_id_list: list[str],
+        config: AppConfig,
         video_validator: VideoValidator | None = None,
         transcript_service: TranscriptService | None = None,
         summarizer: SummarizationService | None = None,
@@ -48,16 +49,17 @@ class VidsiftOrchestrator:
         video_db: VideoProcessingRepository | None = None,
 
     ):
+        self.config: AppConfig = config
         # video fetching
         self.video_data_collector: VideoDataCollection = VideoDataCollection(channel_id_list=channel_id_list)
         # video cache
         self.video_db: VideoProcessingRepository = (video_db or VideoProcessingRepository())
         # validation
-        self.video_validator: VideoValidator = (video_validator or VideoValidator())
+        self.video_validator: VideoValidator = (video_validator or VideoValidator(config))
         # transcript
         self.transcript_service: TranscriptService = (transcript_service or TranscriptService())
         # summarization
-        self.summarizer: SummarizationService = (summarizer or SummarizationService())
+        self.summarizer: SummarizationService = (summarizer or SummarizationService(config))
         # downloading
         self.downloader: VideoDownloader = (downloader or VideoDownloader())
 
@@ -115,7 +117,7 @@ class VidsiftOrchestrator:
                 "channel_id": vid.channel_id,
             },
         )
-        self.downloader.download(vid.url, output_path=Path(CONFIG.downloads.output_dir))
+        self.downloader.download(vid.url, output_path=Path(self.config.downloads.output_dir))
         logger.info(
             "Video download completed.",
             extra={
@@ -134,7 +136,7 @@ class VidsiftOrchestrator:
                 "channel_id": vid.channel_id,
             },
         )
-        self.summarizer.summarize(raw_transcript=transcript)
+        self.summarizer.summarize(raw_transcript=transcript, vid=vid)
         logger.info(
             "Video summarization completed.",
             extra={

@@ -1,18 +1,14 @@
 import logging
-from logging import StreamHandler, log
 from logging.handlers import TimedRotatingFileHandler
 from pathlib import Path
 
 from platformdirs import user_log_dir
 
-from vidsift.config import CONFIG
+from vidsift.config.models import AppConfig
 from vidsift.shared.logging.filters import (ConsoleDependencyFilter,
                                             FileDependencyFilter)
 from vidsift.shared.logging.formatters import JSONFormatter, consoleformatter
 from vidsift.shared.logging.handlers import RichConsoleHandler
-
-console_config = CONFIG.logging.console
-file_config = CONFIG.logging.file
 
 
 def get_log_file_path() -> Path:
@@ -21,7 +17,10 @@ def get_log_file_path() -> Path:
     Path(user_log_file).touch(exist_ok=True)
     return user_log_file
 
-def configure_logging():
+def configure_logging(config: AppConfig):
+    file_config = config.logging.file
+    console_config = config.logging.console
+
     # get root logger
     logger = logging.getLogger()
 
@@ -41,8 +40,8 @@ def configure_logging():
     )
 
     # get filter instances
-    console_dependeny_filter: ConsoleDependencyFilter = ConsoleDependencyFilter()
-    file_dependency_filter: FileDependencyFilter = FileDependencyFilter()
+    console_dependeny_filter: ConsoleDependencyFilter = ConsoleDependencyFilter(console_config=console_config)
+    file_dependency_filter: FileDependencyFilter = FileDependencyFilter(file_config=file_config)
 
     # console handler config
     console_handler.setFormatter(consoleformatter)
