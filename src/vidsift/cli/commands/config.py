@@ -3,7 +3,27 @@ from pathlib import Path
 from rich.console import Console
 
 
-def handle_config_show(self, args):
+def register_config(subparsers):
+    config_parser = subparsers.add_parser("config", help="Edit or show the vidsift config")
+    config_subparsers = config_parser.add_subparsers(dest="config_command", required=True)
+    show_parser = config_subparsers.add_parser("show", help="Show config path")
+    exclusive_show_parser_group = show_parser.add_mutually_exclusive_group()
+    exclusive_show_parser_group.add_argument(
+        "--file",
+        help="Show contents of config file instead of current loaded config",
+        action="store_true"
+    )
+    exclusive_show_parser_group.add_argument(
+        "--filepath",
+        help="Only show the file path of the current config file instead of the loaded config",
+        action="store_true"
+    )
+
+    config_parser.set_defaults(func=handle_config)
+
+    return config_parser
+
+def handle_config(args, config):
     if args.file:
         CONFIG_FILE_PATH: Path = Path(Path.home() / ".config" / "vidsift" / "config.toml")
         if args.config:
@@ -22,5 +42,5 @@ def handle_config_show(self, args):
     else:
         console = Console()
 
-        console.print(self.config)
+        console.print(config)
 

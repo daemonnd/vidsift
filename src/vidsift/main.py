@@ -7,25 +7,19 @@ Tasks:
 - call one orchestrator (vidsift_pipeline.py)
 
 """
-import argparse
 import logging
-from pathlib import Path
 
-from rich import print
-from rich.console import Console
+from pydantic import ValidationError
 
+from vidsift.cli.main import parse_args
 from vidsift.config.errors import (ConfigError, ConfigFileNotFoundError,
                                    ConfigFilePermissionError,
                                    ConfigValidationError, InvalidConfigError)
 from vidsift.config.loader import load_config
 from vidsift.config.models import AppConfig
-from vidsift.features.video_processing.repository import \
-    VideoProcessingRepository
-from vidsift.ingestion.metadata_collector import MetadataCollector
-from vidsift.models.video import Video
-from vidsift.pipeline.vidsift_pipeline import VidsiftOrchestrator
 from vidsift.shared.logging.bootstrap_logger import setup_bootstrap_logging
 from vidsift.shared.logging.config import configure_logging
+from vidsift.shared.logging.log_event_fields import LogEvent
 
 
 class VidsiftCLI:
@@ -38,16 +32,14 @@ class VidsiftCLI:
         4. apply CLI overrides
         5. validate final config
         6. configure logging
-        7. build application
-        8. execute command
+        7. execute command
         """
         # setup bootstrap logging
         setup_bootstrap_logging()
         logger = logging.getLogger(__name__)
 
         # parse CLI flags
-        args = self.parse_args()
-
+        args = parse_args()
         # load config.toml
 
         try:
@@ -74,7 +66,7 @@ class VidsiftCLI:
             logger.exception(f"ConfigError: {str(e)}")
             exit(1)
 
- 
+        # config override applying + validate it
         if args.loglevel is not None:
             console_config = config.logging.console.model_copy(
                 update={"level": args.loglevel}
@@ -101,163 +93,21 @@ class VidsiftCLI:
             )
 
         self.config: AppConfig = config
+        try:
+            AppConfig.model_validate(self.config)
+        except ValidationError as e:
+            logger.exception(
+                f"ConfigValidationError: Failed to load the config overrides into vidsift: {str(e)}",
+            )
+            exit(1)
 
 
         configure_logging(self.config)  # configure logger after app and logger config is loaded
 
 
-        # execute command
+        # execute args command
         if hasattr(args, "func"):
-            args.func(args)
-
-
-
-
-
-
-
-    #    def run(self):
-
-            #if args.version:
-            #print("VERSION")
-            #elif args.command == "run":
-            #print("RUN")
-            #self.orchestrator.run()
-            #elif args.command == "config":
-            #print("CONFIG")
-            #exit(0)
-            #elif args.command == "process":
-            #print("PROCESS")
-            #exit(0)
-
-
-
-#        self.config_parser: ConfigParser = ConfigParser()
-
-
-    def parse_args(self):
-        parser = argparse.ArgumentParser(
-            prog="vidsift",
-            description="AI-powered YouTube feed filtering and transcript-based video validation and processing",
-            suggest_on_error=True,
-        )
-
-        parser.add_argument("-V", "--version", 
-                            help="Print version", 
-                            action="version",
-                            version="vidsift v0.0.1")
-        parser.add_argument(
-            "--config",
-            help="Use custom config for this run",
-            )
-        parser.add_argument(
-            "--loglevel", 
-            help="Set the loglevel console logging for one run",
-            choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
-        )
-        parser.add_argument(
-            "--global-ai-model",
-            help="Set the AI model for all AI usages"
-        )
- 
-        subparsers = parser.add_subparsers(
-            dest="command",
-            required=True,
-            help="use vidsift <command> --help for more details about the commands"
-        )
-
- 
-        run_parser = subparsers.add_parser("run", help="Run the vidsift pipeline")
-
-
-        process_parser = subparsers.add_parser(
-            "process",
-            help="Process a certain URL ",
-            usage="--url is required. \nIf only --url is selected, the video will be validated + discarded / summarized / downloaded"
-            )
-        exclusive_process_parser_group = process_parser.add_mutually_exclusive_group()
-        process_parser.add_argument(
-            "--url",
-            help="Process a specific video",
-            required=True
-        )
-        exclusive_process_parser_group.add_argument(
-            "--download",
-            help="Download the selected video",
-            action="store_true",
-        )
-        exclusive_process_parser_group.add_argument(
-            "--summarize",
-            help="Summarize the selected video",
-            action="store_true"
-        )
-        exclusive_process_parser_group.add_argument(
-            "--fetch-transcript",
-            help="Fetch the transcript of the selected video",
-            action="store_true"
-        )
-
-
-
-        config_parser = subparsers.add_parser("config", help="Edit or show the vidsift config")
-        config_subparsers = config_parser.add_subparsers(dest="config_command", required=True)
-        show_parser = config_subparsers.add_parser("show", help="Show config path")
-        exclusive_show_parser_group = show_parser.add_mutually_exclusive_group()
-        exclusive_show_parser_group.add_argument(
-            "--file",
-            help="Show contents of config file instead of current loaded config",
-            action="store_true"
-        )
-        exclusive_show_parser_group.add_argument(
-            "--filepath",
-            help="Only show the file path of the current config file instead of the loaded config",
-            action="store_true"
-        )
-
-        videos_parser = subparsers.add_parser(
-            "videos",
-            help="Edit view or video processed videos",
-        )
-        videos_subparsers = videos_parser.add_subparsers(
-            dest="videos_command",
-            required=True
-        )
-        video_list = videos_subparsers.add_parser(
-            "list",
-            help="list already processed videos",
-        )
-        video_list.add_argument(
-            "-s", "--status",
-            help="filter by processing status ('downloading', 'summarizing', 'done', 'failed', 'validating'",
-            choices=["downloading", "summarizing", "done", "failed", "validating"]
-        )
-
-        video_set_status = videos_subparsers.add_parser(
-            "set-status",
-            help="Set the status of <video id> to <status>"
-        )
-        video_set_status.add_argument(
-            "--video-id",
-            help="ID of the target video"
-        )
-        video_set_status.add_argument(
-            "--status",
-            help="Target status of video",
-            choices=["downloading", "summarizing", "done", "failed", "validating"]
-        )
-
-
-
-
-
-        run_parser.set_defaults(func=self.handle_pipeline_run)
-        show_parser.set_defaults(func=self.handle_config_show)
-        video_set_status.set_defaults(func=self.handle_videos_set_status)
-        video_list.set_defaults(func=self.handle_videos_list)
-        process_parser.set_defaults(func=self.handle_process)
-
-        return parser.parse_args()
-
+            args.func(args, config)
 
 
 if __name__ == "__main__":

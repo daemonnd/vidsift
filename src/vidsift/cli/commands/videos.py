@@ -4,7 +4,50 @@ from vidsift.features.video_processing.repository import \
     VideoProcessingRepository
 
 
-def handle_videos_list(self, args):
+def register_videos(subparsers):
+    videos_parser = subparsers.add_parser(
+        "videos",
+        help="Edit view or video processed videos",
+    )
+    videos_subparsers = videos_parser.add_subparsers(
+        dest="videos_command",
+        required=True
+    )
+    video_list = videos_subparsers.add_parser(
+        "list",
+        help="list already processed videos",
+    )
+    video_list.add_argument(
+        "-s", "--status",
+        help="filter by processing status ('downloading', 'summarizing', 'done', 'failed', 'validating'",
+        choices=["downloading", "summarizing", "done", "failed", "validating"]
+    )
+
+    video_list.set_defaults(
+        func=handle_videos_list
+    )
+
+    video_set_status = videos_subparsers.add_parser(
+        "set-status",
+        help="Set the status of <video id> to <status>"
+    )
+    video_set_status.add_argument(
+        "--video-id",
+        help="ID of the target video"
+    )
+    video_set_status.add_argument(
+        "--status",
+        help="Target status of video",
+        choices=["downloading", "summarizing", "done", "failed", "validating"]
+    )
+
+    video_set_status.set_defaults(
+        func=handle_videos_set_status
+    )
+
+    return videos_parser
+
+def handle_videos_list(args, config):
     repo = VideoProcessingRepository()
     try:
         if args.status:
@@ -19,7 +62,7 @@ def handle_videos_list(self, args):
     finally:
         repo.close()
 
-def handle_videos_set_status(self, args):
+def handle_videos_set_status(args, config):
     repo = VideoProcessingRepository()
     try:
         if args.video_id and args.status:
