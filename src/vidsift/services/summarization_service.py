@@ -1,4 +1,5 @@
 
+import logging
 from pathlib import Path
 
 from vidsift.config.models import AppConfig
@@ -8,7 +9,10 @@ from vidsift.features.summary.final_summarizer import FinalSummarizer
 from vidsift.features.validation.errors import EmptyTranscriptError
 from vidsift.models.video import Video
 from vidsift.shared.AI.errors import AIError
+from vidsift.shared.logging.log_event_fields import LogEvent
 from vidsift.shared.text_normalizer import TextNormalizer
+
+logger = logging.getLogger(__name__)
 
 
 class SummarizationService:
@@ -26,19 +30,21 @@ class SummarizationService:
         # a SummaryError can propagate, cause if will be caught later, in the vidsift pipeline
 
 
-    def store_summary(self, summary: str, vid: Video) -> None:
+    def store_summary(self, summary: str, vid: Video) -> Path:
         try:
             Path(self.config.summarization.output_dir).mkdir(parents=True, exist_ok=True)
         except OSError as e:
             raise SummaryError(f"OSError: Failed to create directory at {self.config.summarization.output_dir}: {str(e)}") from e
         else:
-            dest_file = Path(f"{self.config.summarization.output_dir}/{vid.title}.md")
+            dest_file = Path(f"{self.config.summarization.output_dir}/{vid.title.replace}.md")
             try:
                 dest_file.touch()
             except FileExistsError as e:
-                raise SummaryError(f"FileExistsError: Failed to store the summary at {dest_file}")
-            with open(str(dest_file), "w") as f:
-                f.write(summary)
+                raise SummaryError(f"FileExistsError: Failed to store the summary at {dest_file}: {str(e)}")
+            else:
+                with open(str(dest_file), "w") as f:
+                    f.write(summary)
+                return dest_file
 
 
 
@@ -67,9 +73,17 @@ class SummarizationService:
         transcript: str = self.text_normalizer.normalize(raw_transcript)
         summaries: list[str] = self.summarize_all_chunks(transcript=transcript)
         final_summary: str = self.summarize_overall(summaries=summaries)
-        self.store_summary(
+        dest_path: Path = self.store_summary(
             summary=final_summary,
             vid=vid
+        )
+        logger.info(
+            f"Finished summarizing video with video id {vid.video_id}, the summary got saved to {dest_path}",
+            extra={
+                "event": LogEvent.VIDEO_SUMMARIZATION_COMPLETED,
+                "video_id": vid.video_id,
+                "output_file": str(dest_path)
+            }
         )
         return final_summary
 
