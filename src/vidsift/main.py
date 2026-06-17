@@ -111,91 +111,9 @@ class VidsiftCLI:
             args.func(args)
 
 
-    def handle_pipeline_run(self, args):
-        channel_id_list = ["UCo71RUe6DX4w-Vd47rFLXPg", ]
-
-        self.orchestrator = VidsiftOrchestrator(channel_id_list, config=self.config)
-
-        self.orchestrator.run()
-
-    def handle_config_show(self, args):
-        if args.file:
-            CONFIG_FILE_PATH: Path = Path(Path.home() / ".config" / "vidsift" / "config.toml")
-            if args.config:
-                CONFIG_FILE_PATH = args.config
-            print(f"Config file: {CONFIG_FILE_PATH}\n")
-            with open(file=CONFIG_FILE_PATH, mode="r") as f:
-                print(f.read())
-
-        elif args.filepath:
-            CONFIG_FILE_PATH: Path = Path(Path.home() / ".config" / "vidsift" / "config.toml")
-            if args.config:
-                CONFIG_FILE_PATH = args.config
-            print(f"Config file: {CONFIG_FILE_PATH}")
-
-
-        else:
-            console = Console()
-
-            console.print(self.config)
 
 
 
-    def handle_videos_list(self, args):
-        repo = VideoProcessingRepository()
-        try:
-            if args.status:
-                videos = repo.get_by_status(args.status)
-            else:
-                videos = repo.get_all()
-
-            console = Console()
-
-            for video in videos:
-                console.print(video)
-        finally:
-            repo.close()
-
-    def handle_videos_set_status(self, args):
-        repo = VideoProcessingRepository()
-        try:
-            if args.video_id and args.status:
-                repo.set_status(args.video_id, args.status)
-        finally:
-            repo.close()
-
-    def handle_process(self, args):
-        metadata_collector = MetadataCollector()
-        orchestrator = VidsiftOrchestrator(
-            channel_id_list=[""],
-            config=self.config
-        )
-        vid: Video = metadata_collector.fetch_metadata(args.url)
-        if args.download:
-            orchestrator.download(
-                vid=vid
-            )
-        else:
-            transcript = orchestrator.fetch_transcript(
-                vid=vid
-            )
-            if args.summarize:
-                orchestrator.summarize(
-                    vid=vid,
-                    transcript=transcript
-                )
-            elif args.fetch_transcript:
-                print(transcript)
-            else:
-                validation_result = orchestrator.validate_video(
-                    vid=vid,
-                    raw_transcript=transcript
-                )
-                orchestrator.take_action_on_video(
-                    vid=vid,
-                    video_validation_result=validation_result,
-                    transcript=transcript
-                )
 
 
     #    def run(self):
