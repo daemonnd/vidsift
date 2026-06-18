@@ -1,0 +1,101 @@
+# ============================================================
+# Logging
+# ============================================================
+
+# Log levels
+# DEBUG, INFO, WARNING, ERROR, CRITICAL
+[logging]
+[logging.console]
+enabled = true               # currently not possible to disable
+level = "DEBUG"
+dependency_level = "WARNING"
+
+[logging.file]
+enabled = true               # currently not possible to disable
+level = "DEBUG"
+dependency_level = "WARNING"
+rotation = "D"               # D: Daily, H: Hourly, M: every minute, S: every second
+retain_days = 14             # for how many days the logs should be kept
+utc_time = false             # true: UTC time, false: local time
+
+
+# ============================================================
+# AI
+# ============================================================
+
+[ai]
+default_model = "qwen3.5:9b"
+validation_model = "qwen3.5:9b"
+summary_model = "qwen3.5:9b"
+
+max_allowed_json_output_runs = 3
+
+
+# ============================================================
+# Validation
+# ============================================================
+
+[validation]
+enabled = true
+
+transcript_chunk_char_size = 500
+
+
+# ============================================================
+# Validation - Pre Validation
+# ============================================================
+
+[validation.pre_validation.max_allowed]
+title_punctuation_ratio = 0.07
+title_uppercase_ratio = 0.4
+title_emoji_ratio = 0.15
+title_clickbait_ratio = 0.15
+transcript_clickbait_ratio = 0.1
+
+[validation.pre_validation.weak]
+title_uppercase_ratio = 0.2
+title_emoji_ratio = 0.03
+title_punctuation_ratio = 0.04
+title_clickbait_ratio = 0.05
+transcript_clickbait_ratio = 0.02
+
+[validation.pre_validation.weights]
+title_uppercase_weight = 1.0
+title_emoji_weight = 1.0
+title_punctuation_weight = 0.5
+title_clickbait_weight = 1.5
+transcript_clickbait_weight = 2.5
+
+
+# ============================================================
+# Summarization
+# ============================================================
+
+[summarization]
+enabled = true
+char_chunk_size = 10000
+output_dir = "/home/user/Documents/vidsift/"
+
+
+# ============================================================
+# Downloads
+# ============================================================
+
+[downloads]
+enabled = true
+output_dir = "/home/user/Videos/.vidsift/"
+
+
+# ============================================================
+# Channels
+# ============================================================
+
+[[channels]]
+id = "UC9x0AN7BWHpCDHSm9NiJFJQ"
+name = "NetworkChuck"
+# action = "validate"
+
+[[channels]]
+id = "UCo71RUe6DX4w-Vd47rFLXPg"
+name = "typecraft_dev"
+# action = "validate"
