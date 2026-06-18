@@ -1,11 +1,10 @@
 import json
 import sys
-from logging import Logger, LogRecord, getLogger
+from logging import LogRecord, getLogger
 from pathlib import Path
 
 import pytest
 
-from src.vidsift.shared.logging.config import configure_logging
 from src.vidsift.shared.logging.formatters import JSONFormatter
 
 
@@ -15,7 +14,6 @@ def json_formatter():
 
 @pytest.fixture()
 def log():
-    configure_logging()
     return getLogger(__name__)
 
 def test_no_extra_format(log, json_formatter):

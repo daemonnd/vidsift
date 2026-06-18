@@ -1,10 +1,13 @@
 
+from pathlib import Path
+
 import pytest
 
 from tests.fakes.fake_pipeline import (FailingSummarizer,
                                        FailingTranscriptService,
                                        FakeDownloader, FakeSummarizer,
                                        FakeTranscriptService, FakeValidator)
+from vidsift.config.loader import load_config
 from vidsift.features.video_processing.repository import \
     VideoProcessingRepository
 from vidsift.models.video import Video
@@ -31,9 +34,12 @@ def summarization_service():
 @pytest.fixture()
 def vid():
     return Video("sometitle", "someurl", "someauthor", "somechannelid", "somepubdate", "uuuuuuuuuuu")
+@pytest.fixture()
+def fake_config():
+        return load_config(Path(f"{Path(__file__).parent.parent}fakes/fake_config.toml"))
 
 
-def test_download_video_marks_done(db, validator, vid_downloader, set_up_transcript_service, summarization_service, vid):
+def test_download_video_marks_done(db, validator, vid_downloader, set_up_transcript_service, summarization_service, vid, fake_config):
     vid: Video = vid
     validator = validator
     downloader: FakeDownloader = vid_downloader
@@ -46,7 +52,8 @@ def test_download_video_marks_done(db, validator, vid_downloader, set_up_transcr
             video_validator=validator,
             transcript_service=transcript_service,
             downloader=downloader,
-            video_db=db
+            video_db=db,
+            config=fake_config
         )
     orchestrator.process_validation_pipeline(vid=vid, create_db_entry=True)
     assert downloader.was_called is True
@@ -58,7 +65,7 @@ def test_download_video_marks_done(db, validator, vid_downloader, set_up_transcr
     assert cached.status == VideoProcessingStatus.DONE
 
 
-def test_summary(db, set_up_transcript_service,  summarization_service, vid_downloader, vid):
+def test_summary(db, set_up_transcript_service,  summarization_service, vid_downloader, vid, fake_config):
     vid: Video = vid
     validator: FakeValidator = FakeValidator(decision="summarized")
     transcript_service: FakeTranscriptService = set_up_transcript_service
@@ -70,7 +77,8 @@ def test_summary(db, set_up_transcript_service,  summarization_service, vid_down
         video_validator=validator,
         summarizer=summarization_service,
         video_db=db,
-        transcript_service=transcript_service
+        transcript_service=transcript_service,
+        config=fake_config
     )
     orchestrator.process_validation_pipeline(vid=vid, create_db_entry=True)
 
@@ -81,7 +89,7 @@ def test_summary(db, set_up_transcript_service,  summarization_service, vid_down
     assert cached.decision == "summarized"
     assert cached.status == VideoProcessingStatus.DONE
 
-def test_discard(db, summarization_service, vid_downloader, set_up_transcript_service, vid):
+def test_discard(db, summarization_service, vid_downloader, set_up_transcript_service, vid, fake_config):
     vid: Video = vid
     validator: FakeValidator = FakeValidator(decision="discarded")
     summarizer: FakeSummarizer = summarization_service
@@ -94,7 +102,8 @@ def test_discard(db, summarization_service, vid_downloader, set_up_transcript_se
         video_validator=validator,
         summarizer=summarizer,
         downloader=downloader,
-        transcript_service=transcript_service
+        transcript_service=transcript_service,
+        config=fake_config
     )
     orchestrator.process_validation_pipeline(vid=vid, create_db_entry=True)
 
@@ -105,7 +114,7 @@ def test_discard(db, summarization_service, vid_downloader, set_up_transcript_se
     assert cached.decision == "discarded"
     assert cached.status == VideoProcessingStatus.DONE
 
-def test_failing_get_transcript(db, summarization_service, vid_downloader, vid, validator):
+def test_failing_get_transcript(db, summarization_service, vid_downloader, vid, validator, fake_config):
     vid: Video = vid
     validator: FakeValidator = validator
     db: VideoProcessingRepository = db
@@ -119,7 +128,8 @@ def test_failing_get_transcript(db, summarization_service, vid_downloader, vid, 
         video_validator=validator,
         summarizer=summarizer,
         downloader=downloader,
-        transcript_service=transcript_service
+        transcript_service=transcript_service,
+        config=fake_config
     )
 
     orchestrator.process_validation_pipeline(vid=vid, create_db_entry=True)
@@ -139,7 +149,8 @@ def test_failing_validate_video(
     summarization_service,
     vid_downloader,
     vid,
-    set_up_transcript_service
+    set_up_transcript_service,
+    fake_config
 ):
     vid = vid
     validator = FakeValidator(
@@ -159,6 +170,7 @@ def test_failing_validate_video(
         summarizer=summarizer,
         downloader=downloader,
         transcript_service=transcript_service,
+        config=fake_config
     )
 
     orchestrator.process_validation_pipeline(
@@ -182,7 +194,8 @@ def test_failing_summary(
     db,
     vid_downloader,
     vid,
-    set_up_transcript_service
+    set_up_transcript_service,
+    fake_config
 ):
     vid = vid
 
@@ -203,6 +216,7 @@ def test_failing_summary(
         summarizer=summarizer,
         downloader=downloader,
         transcript_service=transcript_service,
+        config=fake_config
     )
 
     orchestrator.process_validation_pipeline(
@@ -231,6 +245,7 @@ def test_existing_video_is_skipped(
     set_up_transcript_service,
     vid_downloader,
     summarization_service,
+    fake_config
 ):
     vid = vid
 
@@ -252,6 +267,7 @@ def test_existing_video_is_skipped(
         summarizer=summarizer,
         downloader=downloader,
         transcript_service=transcript_service,
+        config=fake_config
     )
 
     orchestrator.process_validation_pipeline(
