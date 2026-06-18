@@ -131,7 +131,7 @@ class VideoProcessingRepository:
             self.cur.execute("""
             UPDATE processed_videos
             SET status = ?,
-            retry_count = ?
+            retry_count = ?,
             decision = ?,
             processed_at = ?
             WHERE video_id = ?
