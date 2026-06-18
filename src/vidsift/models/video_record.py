@@ -23,6 +23,7 @@ class VideoProcessingRecord(BaseModel):
     channel_id: str
     published: str
     status: VideoProcessingStatus
+    retry_count: int
     decision: Literal["downloaded", "summarized", "discarded"] | None
     quality_score: float | None = Field(default=None, ge=0) 
     topic_match_score: float | None = Field(default=None, ge=0)
