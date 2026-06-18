@@ -10,6 +10,10 @@ class LogEvent:
     DOWNLOAD_RESUME_STARTED = "download_resume_started"
     SUMMARIZATION_RESUME_STARTED = "summarization_resume_started"
 
+    # video delay events
+    VIDEO_DELAY_STARTED = "video_delay_started"
+    VIDEO_DELAY_COMPLETED = "video_delay_completed"
+
     # new video events
     VIDEO_SKIPPED_EXISTING = "video_skipped_existing"
 
