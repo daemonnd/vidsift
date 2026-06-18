@@ -15,7 +15,6 @@ What it does:
 import logging
 from pathlib import Path
 from sys import exit
-from time import sleep
 from typing import Generator
 
 from vidsift.config.models import AppConfig
@@ -49,7 +48,7 @@ class VidsiftOrchestrator:
         summarizer: SummarizationService | None = None,
         downloader: VideoDownloader | None = None,
         video_db: VideoProcessingRepository | None = None,
-
+        should_sleep: bool = True
     ):
         self.config: AppConfig = config
         # video fetching
@@ -64,6 +63,9 @@ class VidsiftOrchestrator:
         self.summarizer: SummarizationService = (summarizer or SummarizationService(config))
         # downloading
         self.downloader: VideoDownloader = (downloader or VideoDownloader())
+
+        # delay 
+        self.should_sleep: bool = should_sleep
 
     def run(self) -> None:
         try:
@@ -233,7 +235,8 @@ class VidsiftOrchestrator:
                 calculate_delay(
                     min_delay=self.config.video_processing.min_vid_delay,
                     random_delay=self.config.video_processing.random_vid_delay
-                )
+                ),
+                should_sleep=self.should_sleep
             )
         logger.debug("Check for videos where the download got interrupted... Done")
 
@@ -315,7 +318,8 @@ class VidsiftOrchestrator:
                     calculate_delay(
                         min_delay=self.config.video_processing.min_vid_delay,
                         random_delay=self.config.video_processing.random_vid_delay
-                    )
+                    ),
+                    should_sleep=self.should_sleep
                 )
         logger.debug("Check for videos where the summarization got interrupted... Done")
 
@@ -429,7 +433,8 @@ class VidsiftOrchestrator:
                 calculate_delay(
                     min_delay=self.config.video_processing.min_vid_delay,
                     random_delay=self.config.video_processing.random_vid_delay
-                )
+                ),
+                should_sleep=self.should_sleep
             )
 
     def process_interrupted_videos(self):

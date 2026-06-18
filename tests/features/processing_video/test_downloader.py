@@ -48,6 +48,7 @@ def test_download_video_marks_done(db, validator, vid_downloader, set_up_transcr
     db: VideoProcessingRepository = db
 
     orchestrator = VidsiftOrchestrator(
+            should_sleep=False,
             channel_id_list=["somechannelid"],
             video_validator=validator,
             transcript_service=transcript_service,
@@ -73,6 +74,7 @@ def test_summary(db, set_up_transcript_service,  summarization_service, vid_down
     summarizer: FakeSummarizer = summarization_service
     downloader: FakeDownloader = vid_downloader
     orchestrator = VidsiftOrchestrator(
+        should_sleep=False,
         channel_id_list=["somechannelid"],
         video_validator=validator,
         summarizer=summarization_service,
@@ -97,6 +99,7 @@ def test_discard(db, summarization_service, vid_downloader, set_up_transcript_se
     transcript_service: FakeTranscriptService = set_up_transcript_service
     db: VideoProcessingRepository = db
     orchestrator = VidsiftOrchestrator(
+        should_sleep=False,
         channel_id_list=["somechannelid"],
         video_db=db,
         video_validator=validator,
@@ -123,6 +126,7 @@ def test_failing_get_transcript(db, summarization_service, vid_downloader, vid, 
     transcript_service: FailingTranscriptService = FailingTranscriptService()
 
     orchestrator = VidsiftOrchestrator(
+        should_sleep=False,
         channel_id_list=["somechannelid"],
         video_db=db,
         video_validator=validator,
@@ -165,6 +169,7 @@ def test_failing_validate_video(
     transcript_service = set_up_transcript_service
 
     orchestrator = VidsiftOrchestrator(
+        should_sleep=False,
         channel_id_list=["somechannelid"],
         video_db=db,
         video_validator=validator,
@@ -212,6 +217,7 @@ def test_failing_summary(
     db = db
 
     orchestrator = VidsiftOrchestrator(
+        should_sleep=False,
         channel_id_list=["somechannelid"],
         video_db=db,
         video_validator=validator,
@@ -264,6 +270,7 @@ def test_existing_video_is_skipped(
     summarizer = summarization_service
 
     orchestrator = VidsiftOrchestrator(
+        should_sleep=False,
         channel_id_list=["somechannelid"],
         video_db=db,
         video_validator=validator,
