@@ -26,9 +26,6 @@ def set_up_transcript_service():
 def vid_downloader():
     return FakeDownloader()
 @pytest.fixture()
-def db(tmp_path):
-    return VideoProcessingRepository(db_path=tmp_path / "test.db")
-@pytest.fixture()
 def summarization_service():
     return FakeSummarizer()
 @pytest.fixture()
@@ -38,6 +35,9 @@ def vid():
 def fake_config():
         return load_config(Path(f"{Path(__file__).parent.parent.parent}/fakes/fake_config.toml"))
 
+@pytest.fixture()
+def db(tmp_path, fake_config):
+    return VideoProcessingRepository(db_path=tmp_path / "test.db", config=fake_config)
 
 def test_download_video_marks_done(db, validator, vid_downloader, set_up_transcript_service, summarization_service, vid, fake_config):
     vid: Video = vid
@@ -141,7 +141,8 @@ def test_failing_get_transcript(db, summarization_service, vid_downloader, vid, 
     assert cached is not None
     assert "TranscriptError" in cached.last_error
     assert cached.decision is None
-    assert cached.status == VideoProcessingStatus.FAILED
+    assert cached.status == VideoProcessingStatus.VALIDATING
+    assert cached.retry_count > 0
 
 
 def test_failing_validate_video(
@@ -185,7 +186,8 @@ def test_failing_validate_video(
     cached = db.get(vid.video_id)
 
     assert cached is not None
-    assert cached.status == VideoProcessingStatus.FAILED
+    assert cached.status == VideoProcessingStatus.VALIDATING
+    assert cached.retry_count > 0
     assert cached.decision is None
     assert "VideoValidationError" in cached.last_error
 
@@ -231,7 +233,8 @@ def test_failing_summary(
     cached: VideoProcessingRecord = db.get(vid.video_id)
 
     assert cached is not None
-    assert cached.status == VideoProcessingStatus.FAILED
+    assert cached.status == VideoProcessingStatus.VALIDATING
+    assert cached.retry_count > 0
 
     # validation completed successfully
     assert cached.decision == "summarized"
