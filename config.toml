@@ -112,9 +112,14 @@ output_dir = "/home/user/Videos/.vidsift/"
 [[channels]]
 id = "UC9x0AN7BWHpCDHSm9NiJFJQ"
 name = "NetworkChuck"
-# action = "validate"
+action = "validate"
 
 [[channels]]
 id = "UCo71RUe6DX4w-Vd47rFLXPg"
 name = "typecraft_dev"
-# action = "validate"
+action = "download"
+
+[[channels]]
+id = "UC4JX40jDee_tINbkjycV4Sg"
+name = "TechWithTim"
+action = "summarize"
