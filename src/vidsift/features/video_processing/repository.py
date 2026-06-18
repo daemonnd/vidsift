@@ -160,7 +160,7 @@ class VideoProcessingRepository:
             retry_count = self.cur.execute("""
             SELECT retry_count FROM processed_videos
             WHERE video_id = ?
-            """, (video_id,)).fetchone()
+            """, (video_id,)).fetchone()[0]
             if int(retry_count) >= self.config.video_processing.max_retry_attempts:
                 # if it exeeds / is equal to the max allowed attempts
                 parameters: tuple = (VideoProcessingStatus.FAILED.value, error_msg, video_id)
@@ -265,7 +265,7 @@ class VideoProcessingRepository:
             retry_count = self.cur.execute("""
             SELECT retry_count FROM processed_videos
             WHERE video_id = ?
-            """, (video_id,)).fetchone()
+            """, (video_id,)).fetchone()[0]
 
         match status:
             case "downloading":
