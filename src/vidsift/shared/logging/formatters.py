@@ -41,7 +41,6 @@ class JSONFormatter(Formatter):
             "exc_text",
         }
     def format(self, record: LogRecord) -> str:
-        print(record.__dict__.keys())
         output: dict = {
                 "timestamp": self.formatTime(record=record),
                 "level": record.levelname,
