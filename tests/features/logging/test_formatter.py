@@ -1,11 +1,10 @@
 import json
 import sys
-from logging import Logger, LogRecord, getLogger
+from logging import LogRecord, getLogger
 from pathlib import Path
 
 import pytest
 
-from src.vidsift.shared.logging.config import configure_logging
 from src.vidsift.shared.logging.formatters import JSONFormatter
 
 
@@ -15,7 +14,6 @@ def json_formatter():
 
 @pytest.fixture()
 def log():
-    configure_logging()
     return getLogger(__name__)
 
 def test_no_extra_format(log, json_formatter):
@@ -79,12 +77,12 @@ def test_exception_formatting(log, json_formatter):
     assert parsed["level"] == "INFO"
 
 def test_loggint(log):
-    logger = getLogger("vidsift.")
+
 
     with pytest.raises(KeyError):
-        logger.info(
+        log.critical(
             "hello",
-            extra={"message": "abc"}
+            extra={"message": "abc", "msg": "test"}
         )
     
 

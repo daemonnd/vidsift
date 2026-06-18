@@ -2,13 +2,18 @@ from pathlib import Path
 
 import pytest
 
+from vidsift.config.loader import load_config
 from vidsift.features.validation.transcript_validator.transcript_chunk_provider import \
     TranscriptChunkProvider
 
 
 @pytest.fixture()
 def set_up_transcript_chunk_provider():
-    return TranscriptChunkProvider(char_chunk_size=500)
+    return TranscriptChunkProvider(
+        config=load_config(
+            Path(f"{Path(__file__).parent.parent.parent}/fakes/fake_config.toml")
+        )
+    )
 
 # f = fake transcript
 # r = real transcript

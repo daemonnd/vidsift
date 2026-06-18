@@ -1,12 +1,19 @@
+from pathlib import Path
+
 import pytest
 
+from vidsift.config.loader import load_config
 from vidsift.models.video import Video
 from vidsift.services.validation_service import VideoValidator
 
 
 @pytest.fixture
 def set_up_validator():
-    return VideoValidator()
+    return VideoValidator(
+        config=load_config(
+            Path(f"{Path(__file__).parent.parent.parent}/fakes/fake_config.toml")
+        )
+    )
 
 # test data
 
