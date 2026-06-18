@@ -28,8 +28,18 @@ default_model = "qwen3.5:9b"
 validation_model = "qwen3.5:9b"
 summary_model = "qwen3.5:9b"
 
+# how often AI can run and fail to output the requested JSON
+# for smaller local AI models, it is usually 2-3 times
 max_allowed_json_output_runs = 3
 
+
+# ============================================================
+# Video processing
+# ============================================================
+[video_processing]
+# how often a video can fail in total before it gets marked as FAILED and gets abandoned
+# use vidsift videos list --status failed to list all the failed videos
+max_retry_attempts = 1
 
 # ============================================================
 # Validation
@@ -38,16 +48,18 @@ max_allowed_json_output_runs = 3
 [validation]
 enabled = true
 
-transcript_chunk_char_size = 500
+# how many chars should roughly be in one transcript chunk
+# if it is high, the AI will be used less often, but if it is too high the model hallucinates
+transcript_chunk_char_size = 500 # (<100), int
 
 
 # ============================================================
 # Validation - Pre Validation
 # ============================================================
 
-[validation.pre_validation.max_allowed]
-title_punctuation_ratio = 0.07
-title_uppercase_ratio = 0.4
+[validation.pre_validation.max_allowed] # (0-1), float
+title_punctuation_ratio = 0.07   # how many punctuations (.?!) can be in the title to pass relative to the total char amount of the title
+title_uppercase_ratio = 0.4      # how many uppercase can chars there can be relative to the total char amount
 title_emoji_ratio = 0.15
 title_clickbait_ratio = 0.15
 transcript_clickbait_ratio = 0.1
@@ -59,7 +71,7 @@ title_punctuation_ratio = 0.04
 title_clickbait_ratio = 0.05
 transcript_clickbait_ratio = 0.02
 
-[validation.pre_validation.weights]
+[validation.pre_validation.weights] # (0-10), float
 title_uppercase_weight = 1.0
 title_emoji_weight = 1.0
 title_punctuation_weight = 0.5
