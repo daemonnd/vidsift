@@ -36,7 +36,7 @@ class SummarizationService:
         except OSError as e:
             raise SummaryError(f"OSError: Failed to create directory at {self.config.summarization.output_dir}: {str(e)}") from e
         else:
-            dest_file = Path(f"{self.config.summarization.output_dir}/{vid.title.replace(" ", "")}.md")
+            dest_file = Path(f"{self.config.summarization.output_dir}/{vid.title.replace(" ", "_")}.md")
             try:
                 dest_file.touch()
             except FileExistsError as e:
