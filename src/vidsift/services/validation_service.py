@@ -138,6 +138,7 @@ class VideoValidator:
         chunks: str = self.transcript_chunk_provider.get_necessary_chunks(transcript=transcript)
 
         ai_manager: AIJsonOutputManager = AIJsonOutputManager(
+            config=self.config,
             requirements=AIJSONBaseRequirements(
                 system_prompt_filename="transcript_validation.md",
                 retry_system_filename="transcript_retry.md",
