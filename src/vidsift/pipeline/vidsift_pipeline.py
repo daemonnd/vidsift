@@ -53,7 +53,7 @@ class VidsiftOrchestrator:
         # video fetching
         self.video_data_collector: VideoDataCollection = VideoDataCollection(channel_id_list=channel_id_list)
         # video cache
-        self.video_db: VideoProcessingRepository = (video_db or VideoProcessingRepository())
+        self.video_db: VideoProcessingRepository = (video_db or VideoProcessingRepository(config=self.config))
         # validation
         self.video_validator: VideoValidator = (video_validator or VideoValidator(config))
         # transcript

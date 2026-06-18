@@ -77,11 +77,16 @@ class ChannelConfig(BaseModel):
     id: str
     name: str
 
+class VideoProcessingConfig(BaseModel):
+    model_config = ConfigDict(frozen=True)
+    max_retry_attempts: int = Field(le=10, ge=-1)
+
 
 class AppConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
     logging: LoggingConfig
     ai: AIConfig
+    video_processing: VideoProcessingConfig
     validation: ValidationConfig
     summarization: SummarizationConfig
     downloads: DownloadsConfig

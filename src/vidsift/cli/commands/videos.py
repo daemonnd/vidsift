@@ -40,6 +40,11 @@ def register_videos(subparsers):
         help="Target status of video",
         choices=["downloading", "summarizing", "done", "failed", "validating"]
     )
+    video_set_status.add_argument(
+        "--reset-failed-attempts",
+        help="Set the failed attempts amount to 0 (only recommended if setting the status to done or testing)",
+        action="store_true"
+    )
 
     video_set_status.set_defaults(
         func=handle_videos_set_status
@@ -48,7 +53,7 @@ def register_videos(subparsers):
     return videos_parser
 
 def handle_videos_list(args, config):
-    repo = VideoProcessingRepository()
+    repo = VideoProcessingRepository(config=config)
     try:
         if args.status:
             videos = repo.get_by_status(args.status)
@@ -63,10 +68,14 @@ def handle_videos_list(args, config):
         repo.close()
 
 def handle_videos_set_status(args, config):
-    repo = VideoProcessingRepository()
+    repo = VideoProcessingRepository(config=config)
     try:
         if args.video_id and args.status:
-            repo.set_status(args.video_id, args.status)
+            if args.reset_failed_attempts:
+                repo.set_status(args.video_id, args.status, reset_attempts=True)
+            else:
+                repo.set_status(args.video_id, args.status, reset_attempts=False)
+
     finally:
         repo.close()
 

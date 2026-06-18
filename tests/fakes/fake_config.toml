@@ -32,6 +32,15 @@ max_allowed_json_output_runs = 3
 
 
 # ============================================================
+# Video processing
+# ============================================================
+[video_processing]
+# how often a video can fail in total before it gets marked as FAILED and gets abandoned
+# use vidsift videos list --status failed to list all the failed videos
+max_retry_attempts = 1
+
+
+# ============================================================
 # Validation
 # ============================================================
 
