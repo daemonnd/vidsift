@@ -32,6 +32,7 @@ from vidsift.services.summarization_service import SummarizationService
 from vidsift.services.transcript_service import TranscriptService
 from vidsift.services.validation_service import VideoValidator
 from vidsift.services.video_data_collection_service import VideoDataCollection
+from vidsift.shared.delay_calculator import calculate_delay, sleep_delay
 from vidsift.shared.logging.log_event_fields import LogEvent
 
 logger = logging.getLogger(__name__)
@@ -47,7 +48,7 @@ class VidsiftOrchestrator:
         summarizer: SummarizationService | None = None,
         downloader: VideoDownloader | None = None,
         video_db: VideoProcessingRepository | None = None,
-
+        should_sleep: bool = True
     ):
         self.config: AppConfig = config
         # video fetching
@@ -62,6 +63,9 @@ class VidsiftOrchestrator:
         self.summarizer: SummarizationService = (summarizer or SummarizationService(config))
         # downloading
         self.downloader: VideoDownloader = (downloader or VideoDownloader())
+
+        # delay 
+        self.should_sleep: bool = should_sleep
 
     def run(self) -> None:
         try:
@@ -227,6 +231,13 @@ class VidsiftOrchestrator:
                     "decision": "downloaded",
                 },
             )
+            sleep_delay(
+                calculate_delay(
+                    min_delay=self.config.video_processing.min_vid_delay,
+                    random_delay=self.config.video_processing.random_vid_delay
+                ),
+                should_sleep=self.should_sleep
+            )
         logger.debug("Check for videos where the download got interrupted... Done")
 
     def resume_validations(self):
@@ -302,6 +313,14 @@ class VidsiftOrchestrator:
                 self.video_db.mark_failed(error_msg=error_msg, video_id=vid.video_id)
                 logger.info("Moving on to the next video because of the previous SummaryError...")
                 continue
+            finally:
+                sleep_delay(
+                    calculate_delay(
+                        min_delay=self.config.video_processing.min_vid_delay,
+                        random_delay=self.config.video_processing.random_vid_delay
+                    ),
+                    should_sleep=self.should_sleep
+                )
         logger.debug("Check for videos where the summarization got interrupted... Done")
 
     def process_validation_pipeline(self, vid: Video, create_db_entry: bool):
@@ -318,7 +337,7 @@ class VidsiftOrchestrator:
                             "channel_id": vid.channel_id,
                         },
                     )
-                    return
+                    return # no delay waiting
 
                 # update the database, set the status to VALIDATING
                 # only do that for new videos
@@ -409,6 +428,14 @@ class VidsiftOrchestrator:
             self.video_db.mark_failed(error_msg=error_msg, video_id=vid.video_id)
             logger.info("Moving on to the next video because of the previous SummaryError...")
             return
+        finally:
+            sleep_delay(
+                calculate_delay(
+                    min_delay=self.config.video_processing.min_vid_delay,
+                    random_delay=self.config.video_processing.random_vid_delay
+                ),
+                should_sleep=self.should_sleep
+            )
 
     def process_interrupted_videos(self):
         logger.info(
