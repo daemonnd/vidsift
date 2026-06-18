@@ -26,7 +26,7 @@ from vidsift.features.video_processing.repository import \
     VideoProcessingRepository
 from vidsift.ingestion.errors import VideoDataCollectionError
 from vidsift.models.validation.validation_result import ValidationResult
-from vidsift.models.video import Video
+from vidsift.models.video import InvalidVideoError, Video
 from vidsift.models.video_record import VideoProcessingRecord
 from vidsift.services.summarization_service import SummarizationService
 from vidsift.services.transcript_service import TranscriptService
@@ -249,7 +249,10 @@ class VidsiftOrchestrator:
         logger.debug("Check for videos where the download got interrupted...")
         downloading_vids_generator: Generator[VideoProcessingRecord, None, None] = self.video_db.get_by_status("downloading")
         for video in downloading_vids_generator:
-            vid: Video = Video.from_cache(video_db_row=video)
+            try:
+                vid: Video = Video.from_cache(video_db_row=video)
+            except InvalidVideoError:
+                raise
             logger.info(
                 f"Processing video {vid.video_id} that got interrupted while downloading.",
                 extra={
@@ -395,7 +398,10 @@ class VidsiftOrchestrator:
             transcript: str = self.fetch_transcript(vid=vid)
 
             # get the validation result
-            video_validation_result = self.validate_video(vid=vid, raw_transcript=transcript)
+            try:
+                video_validation_result = self.validate_video(vid=vid, raw_transcript=transcript)
+            except InvalidVideoError:
+                raise
             logger.info(
                 f"Video validation completed with decision '{video_validation_result.decision}'.",
                 extra={

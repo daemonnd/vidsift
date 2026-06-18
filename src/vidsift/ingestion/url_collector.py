@@ -4,9 +4,8 @@ import feedparser
 from feedparser import FeedParserDict
 
 from vidsift.ingestion.errors import (InvalidHTTPStatusError,
-                                      NonWellFormattedFeedError,
-                                      VideoDataCollectionError)
-from vidsift.models.video import Video
+                                      NonWellFormattedFeedError)
+from vidsift.models.video import InvalidVideoError, Video
 from vidsift.shared.video_id_extractor import VideoIDExtractor
 
 YOUTUBE_BASE_RSS_URL: str = "https://www.youtube.com/feeds/videos.xml?channel_id="
@@ -62,13 +61,16 @@ class UrlCollector:
             #channel_id_dict[channel_id] = {
             #"link": {}
             #}
-            video = Video(
-                title=str(entry.title), author=str(entry.author),
-                url=str(entry.link),
-                published=str(entry.published),
-                video_id=id_extractor.extract_id(str(entry.link)),
-                channel_id=channel_id
-            )
+            try:
+                video = Video(
+                    title=str(entry.title), author=str(entry.author),
+                    url=str(entry.link),
+                    published=str(entry.published),
+                    video_id=id_extractor.extract_id(str(entry.link)),
+                    channel_id=channel_id
+                )
+            except InvalidVideoError:
+                raise
             yield video
 
 
