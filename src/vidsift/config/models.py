@@ -76,6 +76,7 @@ class ChannelConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
     id: str
     name: str
+    action: Literal["validate", "download", "summarize"]
 
 class VideoProcessingConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
