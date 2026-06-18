@@ -36,7 +36,7 @@ def vid():
     return Video("sometitle", "someurl", "someauthor", "somechannelid", "somepubdate", "uuuuuuuuuuu")
 @pytest.fixture()
 def fake_config():
-        return load_config(Path(f"{Path(__file__).parent.parent}fakes/fake_config.toml"))
+        return load_config(Path(f"{Path(__file__).parent.parent.parent}/fakes/fake_config.toml"))
 
 
 def test_download_video_marks_done(db, validator, vid_downloader, set_up_transcript_service, summarization_service, vid, fake_config):

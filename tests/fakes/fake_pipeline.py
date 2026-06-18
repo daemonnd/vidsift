@@ -4,13 +4,14 @@ from vidsift.features.summary.errors import SummaryError
 from vidsift.features.transcript.errors import TranscriptError
 from vidsift.features.validation.errors import VideoValidationError
 from vidsift.models.validation.validation_result import ValidationResult
+from vidsift.models.video import Video
 
 
 class FailingSummarizer:
     def __init__(self):
         self.was_called = False
 
-    def summarize(self, raw_transcript: str):
+    def summarize(self, raw_transcript: str, vid: Video):
         self.was_called = True
         raise SummaryError("summary failed")
 
@@ -50,5 +51,5 @@ class FakeSummarizer:
     def __init__(self) -> None:
         self.was_called = False
 
-    def summarize(self, raw_transcript: str):
+    def summarize(self, raw_transcript: str, vid: Video):
         self.was_called = True

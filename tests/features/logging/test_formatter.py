@@ -77,12 +77,12 @@ def test_exception_formatting(log, json_formatter):
     assert parsed["level"] == "INFO"
 
 def test_loggint(log):
-    logger = getLogger("vidsift.")
+
 
     with pytest.raises(KeyError):
-        logger.info(
+        log.critical(
             "hello",
-            extra={"message": "abc"}
+            extra={"message": "abc", "msg": "test"}
         )
     
 
