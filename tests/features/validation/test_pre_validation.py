@@ -4,7 +4,7 @@ import pytest
 
 from vidsift.features.validation.pre_validation.metrics_counter import \
     PreValidator
-from vidsift.models.video import Video
+from vidsift.models.video import InvalidVideoError, Video
 
 
 @pytest.fixture()
@@ -318,4 +318,15 @@ def test_get_transcript_clickbait_phrase_ratio(set_up_validator):
     assert pre_validator.get_transcript_clickbait_phrase_ratio(ftranscript_clean_1) == 0
     assert pre_validator.get_transcript_clickbait_phrase_ratio(ftranscript_clean_2) == 0
     assert pre_validator.get_transcript_clickbait_phrase_ratio(ftranscript_transcript_1) == 0.2777777777777778
+
+def test_invalid_videos():
+
+    with pytest.raises(InvalidVideoError):
+        Video(fake, fake, fake, fchannel_id, fake, fake)
+    with pytest.raises(InvalidVideoError):
+        Video(fake, fake, fake, fake, fake, fvideo_id)
+    with pytest.raises(InvalidVideoError):
+        Video(fake, fake, fake, "JJjjjjjjjjjjjjjjjjjjjjjj", fake, fvideo_id)
+    with pytest.raises(InvalidVideoError):
+        Video(fake, fake, fake, fake, fake, fake)
 
