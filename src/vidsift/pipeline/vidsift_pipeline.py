@@ -493,11 +493,3 @@ class VidsiftOrchestrator:
                 "event": LogEvent.INTERRUPTED_PROCESSING_COMPLETED
             }
         )
-
-        # for another PR
-        # failed_vids_generator: Generator[VideoProcessingRecord, None, None] = self.video_db.get_by_status("failed")
-
-
-if __name__ == "__main__":
-    vo = VidsiftOrchestrator(["UCo71RUe6DX4w-Vd47rFLXPg"])
-    vo.run()

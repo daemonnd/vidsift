@@ -1,7 +1,12 @@
+from pathlib import Path
+
 from vidsift.config.models import AppConfig
+from vidsift.features.download.downloader import VideoDownloader
 from vidsift.ingestion.metadata_collector import MetadataCollector
 from vidsift.models.video import InvalidVideoError, Video
+from vidsift.models.video_record import VideoProcessingStatus
 from vidsift.pipeline.vidsift_pipeline import VidsiftOrchestrator
+from vidsift.services.summarization_service import SummarizationService
 
 
 def register_process(subparsers):
@@ -48,17 +53,32 @@ def handle_process(args, config: AppConfig):
     except InvalidVideoError:
         raise
     if args.download:
-        orchestrator.download(
-            vid=vid
+        downloader: VideoDownloader = VideoDownloader()
+        orchestrator.execute_processing_step(
+            vid=vid,
+            step_type="download",
+            success_decision="downloaded",
+            starting_status=VideoProcessingStatus.DOWNLOADING,
+            action=lambda: downloader.download(
+                video_url=vid.url,
+                output_path=Path(config.downloads.output_dir)
+            )
         )
     else:
         transcript = orchestrator.fetch_transcript(
             vid=vid
         )
         if args.summarize:
-            orchestrator.summarize(
+            summarizer: SummarizationService = SummarizationService(config=config)
+            orchestrator.execute_processing_step(
                 vid=vid,
-                transcript=transcript
+                step_type="summarize",
+                success_decision="summarized",
+                starting_status=VideoProcessingStatus.SUMMARIZING,
+                action=lambda: summarizer.summarize(
+                    raw_transcript=transcript,
+                    vid=vid
+                )
             )
         elif args.fetch_transcript:
             print(transcript)
