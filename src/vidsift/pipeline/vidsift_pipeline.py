@@ -13,12 +13,14 @@ What it does:
 
 
 import logging
+from collections.abc import Callable
 from pathlib import Path
 from sys import exit
-from typing import Generator
+from typing import Generator, Literal
 
 from vidsift.config.models import AppConfig, ChannelConfig
 from vidsift.features.download.downloader import VideoDownloader
+from vidsift.features.download.errors import VideoDownloadError
 from vidsift.features.summary.errors import SummaryError
 from vidsift.features.transcript.errors import TranscriptError
 from vidsift.features.validation.errors import VideoValidationError
@@ -27,7 +29,8 @@ from vidsift.features.video_processing.repository import \
 from vidsift.ingestion.errors import VideoDataCollectionError
 from vidsift.models.validation.validation_result import ValidationResult
 from vidsift.models.video import InvalidVideoError, Video
-from vidsift.models.video_record import VideoProcessingRecord
+from vidsift.models.video_record import (VideoProcessingRecord,
+                                         VideoProcessingStatus)
 from vidsift.services.summarization_service import SummarizationService
 from vidsift.services.transcript_service import TranscriptService
 from vidsift.services.validation_service import VideoValidator
@@ -102,9 +105,23 @@ class VidsiftOrchestrator:
                 for channel in channels
             }
             for vid in video_generator:
+                if self.video_db.exists(video_id=vid.video_id):
+                    logger.info(
+                        "Skipping video with video id {vid.video_id} because it was already processed.",
+                        extra={
+                            "event": LogEvent.VIDEO_SKIPPED_EXISTING,
+                            "video_id": vid.video_id,
+                            "channel_id": vid.channel_id,
+                        },
+                    )
+                    continue # no delay waiting
+
+                self.video_db.create(vid=vid)
+
                 channel = channel_lookup[vid.channel_id]
                 match channel.action:
                     case "download":
+                        self.video_db.set_status(video_id=vid.video_id, status="downloading")
                         logger.info(
                             f"Processing video with video id {vid.video_id} from {vid.author} with action download",
                             extra={
@@ -113,7 +130,23 @@ class VidsiftOrchestrator:
                                 "channel_id": vid.channel_id
                             }
                         )
-                        self.download(vid=vid)
+                        try:
+                            self.download(vid=vid)
+                        except VideoDownloadError as e:
+                            logger.exception(
+                                f"VideoDownloadError: Failed to download video with video id {vid.video_id}: {str(e)}",
+                                extra={
+                                    "event": LogEvent.VIDEO_DOWNLOAD_FAILED,
+                                    "video_id": vid.video_id,
+                                    "channel_id": vid.channel_id
+                                }
+                            )
+                            self.video_db.mark_failed(
+                                error_msg=str(e),
+                                video_id=vid.video_id
+                            )
+                        else:
+                            self.video_db.update_after_done(video_id=vid.video_id, decision="downloaded")
                     case "summarize":
                         logger.info(
                             f"Processing video with video id {vid.video_id} from {vid.author} with action summarize",
@@ -125,6 +158,7 @@ class VidsiftOrchestrator:
                         )
                         transcript: str = self.fetch_transcript(vid)
                         self.summarize(vid, transcript)
+                        self.video_db.update_after_done(video_id=vid.video_id, decision="summarized")
                     case "validate":
                         logger.info(
                             f"Processing video with video id {vid.video_id} from {vid.author} with action validate",
@@ -151,43 +185,71 @@ class VidsiftOrchestrator:
         )
         return video_validation_result
 
-    def download(self, vid: Video):
-        logger.info(
-            "Starting video download.",
-            extra={
-                "event": LogEvent.VIDEO_DOWNLOAD_STARTED,
-                "video_id": vid.video_id,
-                "channel_id": vid.channel_id,
-            },
+    def execute_processing_step(
+        self,
+        vid: Video,
+        step_type: Literal["download", "summarize", "validate"],
+        success_decision: Literal["downloaded", "summarized", "discarded"],
+        starting_status: VideoProcessingStatus,
+        action: Callable[[], None],
+    ) -> bool:
+        """
+        Video execution wrapper.
+        Responsabilities:
+        - set status
+        - excute action
+        - handle + log start, completed and failure
+
+        Returns true if it succeeded, false if it failed
+        """
+
+        starting_event, completed_event, failure_event = LogEvent.get_step_events(
+            general_event=step_type
         )
-        self.downloader.download(vid.url, output_path=Path(self.config.downloads.output_dir))
+
+        self.video_db.set_status(video_id=vid.video_id, status=starting_status)
+
         logger.info(
-            "Video download completed.",
+            f"Starting video {step_type}.",
             extra={
-                "event": LogEvent.VIDEO_DOWNLOAD_COMPLETED,
+                "event": starting_event,
                 "video_id": vid.video_id,
                 "channel_id": vid.channel_id,
             },
         )
 
-    def summarize(self, vid: Video, transcript: str):
-        logger.info(
-            "Starting video summarization.",
-            extra={
-                "event": LogEvent.VIDEO_SUMMARIZATION_STARTED,
-                "video_id": vid.video_id,
-                "channel_id": vid.channel_id,
-            },
-        )
-        self.summarizer.summarize(raw_transcript=transcript, vid=vid)
-        logger.info(
-            "Video summarization completed.",
-            extra={
-                "event": LogEvent.VIDEO_SUMMARIZATION_COMPLETED,
-                "video_id": vid.video_id,
-                "channel_id": vid.channel_id,
-            },
-        )
+        try:
+            action()
+        except InvalidVideoError:
+            raise
+        except Exception as e:
+            logger.exception(
+                f"{type(e).__name__}: Failed to {step_type} video with id {vid.video_id}: {str(e)}",
+                extra={
+                    "event": failure_event,
+                    "video_id": vid.video_id,
+                    "channel_id": vid.channel_id
+                }
+            )
+            self.video_db.mark_failed(
+                error_msg=str(e),
+                video_id=vid.video_id
+            )
+            return False
+        else:
+            self.video_db.update_after_done(
+                video_id=vid.video_id,
+                decision=success_decision
+            )
+            logger.info(
+                f"Video {step_type} completed.",
+                extra={
+                    "event": completed_event,
+                    "video_id": vid.video_id,
+                    "channel_id": vid.channel_id,
+                },
+            )
+            return True
 
     def take_action_on_video(self, video_validation_result: ValidationResult, transcript: str, vid: Video):
         # take the appropriate action based on the validation result
@@ -206,7 +268,18 @@ class VidsiftOrchestrator:
                     },
                 )
             case "summarized":
-                self.summarize(vid=vid, transcript=transcript)
+                try:
+                    self.summarize(vid=vid, transcript=transcript)
+                except SummaryError as e:
+                    logger.exception(
+                        f"SummaryError: Failed to summarize video with id {vid.video_id}: {str(e)}",
+                        extra={
+                            "event": LogEvent.VIDEO_SUMMARIZATION_FAILED,
+                            "video_id": vid.video_id,
+                            "channel_id": vid.channel_id
+                        }
+                    )
+                    return
                 # add it to the video cache
                 self.video_db.update_after_done(video_id=vid.video_id, decision="summarized")
                 logger.info(
@@ -261,17 +334,15 @@ class VidsiftOrchestrator:
                     "channel_id": vid.channel_id,
                 },
             )
-            self.download(vid=vid)
-            # add it to the video cache
-            self.video_db.update_after_done(video_id=vid.video_id, decision="downloaded")
-            logger.info(
-                "Video processing completed.",
-                extra={
-                    "event": LogEvent.VIDEO_PROCESSING_COMPLETED,
-                    "video_id": vid.video_id,
-                    "channel_id": vid.channel_id,
-                    "decision": "downloaded",
-                },
+            self.execute_processing_step(
+                vid=vid,
+                success_decision="downloaded",
+                starting_status=VideoProcessingStatus.DOWNLOADING,
+                step_type="download",
+                action=lambda: self.downloader.download(
+                    video_url=vid.url,
+                    output_path=Path(self.config.downloads.output_dir)
+                ),
             )
             sleep_delay(
                 calculate_delay(
@@ -315,46 +386,17 @@ class VidsiftOrchestrator:
             )
             try:
                 transcript: str = self.fetch_transcript(vid=vid)
-                self.summarize(vid=vid, transcript=transcript)
-                # add it to the video cache
-                self.video_db.update_after_done(video_id=vid.video_id, decision="summarized")
-                logger.info(
-                    "Video processing completed.",
-                    extra={
-                        "event": LogEvent.VIDEO_PROCESSING_COMPLETED,
-                        "video_id": vid.video_id,
-                        "channel_id": vid.channel_id,
-                        "decision": "summarized",
-                    },
-                )
-            except TranscriptError as e:
-                error_msg: str = f"TranscriptError: Each transcript fetching provider failed: {str(e)}"
-                logger.exception(
-                    error_msg,
-                    extra={
-                        "event": LogEvent.TRANSCRIPT_FETCH_FAILED,
-                        "video_id": vid.video_id,
-                        "channel_id": vid.channel_id,
-                    },
-                )
-                # add the failure to the video database
-                self.video_db.mark_failed(error_msg=error_msg, video_id=vid.video_id)
-                logger.info("Moving on to the next video because of the previous TranscriptError...")
-                continue
-            except SummaryError as e:
-                error_msg: str = f"SummaryError: Failed to summarize the video with id {vid.video_id} because of the following error: {str(e)}"
-                logger.exception(
-                    error_msg,
-                    extra={
-                        "event": LogEvent.VIDEO_SUMMARIZATION_FAILED,
-                        "video_id": vid.video_id,
-                        "channel_id": vid.channel_id,
-                    },
-                )
-                # add the failure to the video database
-                self.video_db.mark_failed(error_msg=error_msg, video_id=vid.video_id)
-                logger.info("Moving on to the next video because of the previous SummaryError...")
-                continue
+                if not self.execute_processing_step(
+                    vid=vid,
+                    step_type="summarize",
+                    success_decision="summarized",
+                    starting_status=VideoProcessingStatus.SUMMARIZING,
+                    action=lambda: self.summarizer.summarize(
+                        raw_transcript=transcript,
+                        vid=vid
+                    ),
+                ):
+                    continue
             finally:
                 sleep_delay(
                     calculate_delay(
@@ -372,7 +414,7 @@ class VidsiftOrchestrator:
                 # check if the video has already been handled
                 if self.video_db.exists(video_id=vid.video_id):
                     logger.info(
-                        "Skipping video because it was already processed.",
+                        f"Skipping video with video id {vid.video_id} because it was already processed.",
                         extra={
                             "event": LogEvent.VIDEO_SKIPPED_EXISTING,
                             "video_id": vid.video_id,
