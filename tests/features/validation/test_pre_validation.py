@@ -28,6 +28,8 @@ rvid4: Video = Video(channel_id="UC9x0AN7BWHpCDHSm9NiJFJQ",title='the WORST hack
 # f = fake vid
 
 fake: str = "fake"
+fvideo_id = "uuuuuuuuuuu"
+fchannel_id = "UCjjjjjjjjjjjjjjjjjjjjjj"
 
 # -------------------------
 # CLEAN / SHOULD MOSTLY PASS
@@ -38,7 +40,7 @@ fvid_clean_1 = Video(
     url=fake,
     author="TechBuilder",
     published=fake,
-    video_id=fake, channel_id=fake
+    video_id=fvideo_id, channel_id=fchannel_id
 )
 
 ftranscript_clean_1 = """
@@ -52,7 +54,7 @@ fvid_clean_2 = Video(
     url=fake,
     author="SysLab",
     published=fake,
-    video_id=fake, channel_id=fake
+    video_id=fvideo_id, channel_id=fchannel_id
 )
 
 ftranscript_clean_2 = """
@@ -69,7 +71,7 @@ fvid_clickbait_1 = Video(
     url=fake,
     author=fake,
     published=fake,
-    video_id=fake, channel_id=fake
+    video_id=fvideo_id, channel_id=fchannel_id
 )
 
 ftranscript_clickbait_1 = """
@@ -82,7 +84,7 @@ fvid_clickbait_2 = Video(
     url=fake,
     author=fake,
     published=fake,
-    video_id=fake, channel_id=fake
+    video_id=fvideo_id, channel_id=fchannel_id
 )
 
 ftranscript_clickbait_2 = """
@@ -94,7 +96,7 @@ fvid_clickbait_3 = Video(
     url=fake,
     author=fake,
     published=fake,
-    video_id=fake,channel_id=fake
+    video_id=fvideo_id,channel_id=fchannel_id
 )
 
 ftranscript_clickbait_3 = """
@@ -110,7 +112,7 @@ fvid_transcript_1 = Video(
     url=fake,
     author=fake,
     published=fake,
-    video_id=fake,channel_id=fake
+    video_id=fvideo_id,channel_id=fchannel_id
 )
 
 ftranscript_transcript_1 = """
@@ -124,7 +126,7 @@ fvid_transcript_2 = Video(
     url=fake,
     author=fake,
     published=fake,
-    video_id=fake,channel_id=fake
+    video_id=fvideo_id,channel_id=fchannel_id
 )
 
 ftranscript_transcript_2 = """
@@ -143,7 +145,7 @@ fvid_emoji_1 = Video(
     url=fake,
     author=fake,
     published=fake,
-    video_id=fake,channel_id=fake
+    video_id=fvideo_id,channel_id=fchannel_id
 )
 
 fvid_emoji_2 = Video(
@@ -151,7 +153,7 @@ fvid_emoji_2 = Video(
     url=fake,
     author=fake,
     published=fake,
-    video_id=fake,channel_id=fake
+    video_id=fvideo_id,channel_id=fchannel_id
 )
 
 fvid_emoji_3 = Video(
@@ -159,7 +161,7 @@ fvid_emoji_3 = Video(
     url=fake,
     author=fake,
     published=fake,
-    video_id=fake,channel_id=fake
+    video_id=fvideo_id,channel_id=fchannel_id
 )
 
 # -------------------------
@@ -171,7 +173,7 @@ fvid_uppercase_1 = Video(
     url=fake,
     author=fake,
     published=fake,
-    video_id=fake,channel_id=fake
+    video_id=fvideo_id,channel_id=fchannel_id
 )
 
 fvid_uppercase_2 = Video(
@@ -179,7 +181,7 @@ fvid_uppercase_2 = Video(
     url=fake,
     author=fake,
     published=fake,
-    video_id=fake,channel_id=fake
+    video_id=fvideo_id,channel_id=fchannel_id
 )
 
 fvid_uppercase_3 = Video(
@@ -187,7 +189,7 @@ fvid_uppercase_3 = Video(
     url=fake,
     author=fake,
     published=fake,
-    video_id=fake,channel_id=fake
+    video_id=fvideo_id,channel_id=fchannel_id
 )
 
 fvid_uppercase_4 = Video(
@@ -195,7 +197,7 @@ fvid_uppercase_4 = Video(
     url=fake,
     author=fake,
     published=fake,
-    video_id=fake,channel_id=fake
+    video_id=fvideo_id,channel_id=fchannel_id
 )
 
 # -------------------------
@@ -207,7 +209,7 @@ fvid_borderline_1 = Video(
     url=fake,
     author=fake,
     published=fake,
-    video_id=fake,channel_id=fake
+    video_id=fvideo_id,channel_id=fchannel_id
 )
 
 # contains "massive update" but is not really clickbait
@@ -221,7 +223,7 @@ fvid_borderline_2 = Video(
     url=fake,
     author=fake,
     published=fake,
-    video_id=fake,channel_id=fake
+    video_id=fvideo_id,channel_id=fchannel_id
 )
 
 # contains "warning"
@@ -239,7 +241,7 @@ fvid_mixed_1 = Video(
     url=fake,
     author=fake,
     published=fake,
-    video_id=fake,channel_id=fake
+    video_id=fvideo_id,channel_id=fchannel_id
 )
 
 ftranscript_mixed_1 = """
@@ -253,7 +255,7 @@ fvid_mixed_2 = Video(
     url=fake,
     author=fake,
     published=fake,
-    video_id=fake,channel_id=fake
+    video_id=fvideo_id,channel_id=fchannel_id
 )
 
 ftranscript_mixed_2 = """
@@ -265,9 +267,9 @@ No clickbait here after the intro.
 # Full of one signal but not the other
 # --------------------------
 fvid_full_signal_1 = Video(
-    title="...!!!?????", url=fake, author=fake, published=fake, video_id=fake, channel_id=fake)
+    title="...!!!?????", url=fake, author=fake, published=fake, video_id=fvideo_id, channel_id=fchannel_id)
 fvid_full_signal_2 = Video(
-    title="😀⌛🏘️📅🔥❗", url=fake, author=fake, published=fake, video_id=fake, channel_id=fake)
+    title="😀⌛🏘️📅🔥❗", url=fake, author=fake, published=fake, video_id=fvideo_id, channel_id=fchannel_id)
 
 
 

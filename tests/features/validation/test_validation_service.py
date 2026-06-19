@@ -28,25 +28,27 @@ def set_up_validator():
 
 # placeholder for url, author, published, video_id
 fake: str = ""
+fvideo_id = "uuuuuuuuuuu"
+fchannel_id = "UCjjjjjjjjjjjjjjjjjjjjjj"
 
-fvid1 = Video("This is a test video title", fake, fake, fake, fake, fake)
+fvid1 = Video("This is a test video title", fake, fake, fchannel_id, fake, fvideo_id)
 ftranscript1 = "This is a test transcript for the video. It contains multiple sentences and various words to test the pre-validation features."
 
-fvid_emoji_1 = Video("This is a video with 😀😀😀😀😀😀😀", fake, fake, fake, fake, fake)
-fvid_emoji_2 = Video("This is a test video title with some emojis 😀😀", fake, fake, fake, fake, fake)
-fvid_emoji_3 = Video("This is a test video title with one emoji 😀", fake, fake, fake, fake, fake)
+fvid_emoji_1 = Video("This is a video with 😀😀😀😀😀😀😀", fake, fake, fchannel_id, fake, fvideo_id)
+fvid_emoji_2 = Video("This is a test video title with some emojis 😀😀", fake, fake, fchannel_id, fake, fvideo_id)
+fvid_emoji_3 = Video("This is a test video title with one emoji 😀", fake, fake, fchannel_id, fake, fvideo_id)
 
-fvid_clickbait_1 = Video("You won't believe what happened next! This is 100% not clickbait, easy money and FREE!", fake, fake, fake, fake, fake)
-fvid_clickbait_2 = Video("This containse some clickbait phrases but not all of them, trust me", fake, fake, fake, fake, fake)
-fvid_clickbait_3 = Video("This is a clickbait title with some clickbait phrases but not all of them, trust me", fake, fake, fake, fake, fake)
+fvid_clickbait_1 = Video("You won't believe what happened next! This is 100% not clickbait, easy money and FREE!", fake, fake, fchannel_id, fake, fvideo_id)
+fvid_clickbait_2 = Video("This containse some clickbait phrases but not all of them, trust me", fake, fake, fchannel_id, fake, fvideo_id)
+fvid_clickbait_3 = Video("This is a clickbait title with some clickbait phrases but not all of them, trust me", fake, fake, fchannel_id, fake, fvideo_id)
 
-fvid_uppercase_1 = Video("THIS IS A TEST VIDEO TITLE IN UPPERCASE", fake, fake, fake, fake, fake)
-fvid_uppercase_2 = Video("This is a Test Video Title with Some Uppercase Words", fake, fake, fake, fake, fake)
-fivid_uppercase_3 = Video("This is a test video title in lowercase", fake, fake, fake, fake, fake)
+fvid_uppercase_1 = Video("THIS IS A TEST VIDEO TITLE IN UPPERCASE", fake, fake, fchannel_id, fake, fvideo_id)
+fvid_uppercase_2 = Video("This is a Test Video Title with Some Uppercase Words", fake, fake, fchannel_id, fake, fvideo_id)
+fivid_uppercase_3 = Video("This is a test video title in lowercase", fake, fake, fchannel_id, fake, fvideo_id)
 
-fvid_ponctuation_1 = Video("This is a ??!!!punc!uat!on!!!....", fake, fake, fake, fake, fake)
-fvid_ponctuation_2 = Video("This is a test video title with some punctuation!?", fake, fake, fake, fake, fake)
-fvid_ponctuation_3 = Video("This is a test video title with no punctuation", fake, fake, fake, fake, fake)
+fvid_ponctuation_1 = Video("This is a ??!!!punc!uat!on!!!....", fake, fake, fchannel_id, fake, fvideo_id)
+fvid_ponctuation_2 = Video("This is a test video title with some punctuation!?", fake, fake, fchannel_id, fake, fvideo_id)
+fvid_ponctuation_3 = Video("This is a test video title with no punctuation", fake, fake, fchannel_id, fake, fvideo_id)
 
 ftransctipt_clickbait_1 = """You won't believe what happened next! This is not clickbait!, 
 trust me, that hack is insane and urgent, before we continue, smash that like button and subscribe for more content 
@@ -54,15 +56,15 @@ like this, and this is 100% not clickbait"""
 ftransctipt_clickbait_2 = "This transcript contains some clickbait phrases but not all of them, trust me"
 ftransctipt_clickbait_3 = "This is a transcript with no phrases at all"
 
-fvid_mixed_signals = Video("This is a video with CLICKBAIT but not all of them, trust me, and some emojis 😀😀!!!!", fake, fake, fake, fake, fake)
+fvid_mixed_signals = Video("This is a video with CLICKBAIT but not all of them, trust me, and some emojis 😀😀!!!!", fake, fake, fchannel_id, fake, fvideo_id)
 ftranscript_mixed_signals1 = "This transcript contains some clickbait phrases but not all of them, trust me, and some emojis "
-fvid_mixed_signals2 = Video("This is a test video title with some CLICKBAIT phrases but not all of them, trust me, and some emojis 😀😀", fake, fake, fake, fake, fake)
+fvid_mixed_signals2 = Video("This is a test video title with some CLICKBAIT phrases but not all of them, trust me, and some emojis 😀😀", fake, fake, fchannel_id, fake, fvideo_id)
 ftranscript_mixed_signals2 = "This transcript contains some clickbait phrases but not all of them, trust me, and some emojis "
 # low clickbait signal
-fvid_mixed_signals3 = Video("This is a test video title with some CLICKBAIT phrases but not all of them, trust me, and some emojis 😀😀", fake, fake, fake, fake, fake)
+fvid_mixed_signals3 = Video("This is a test video title with some CLICKBAIT phrases but not all of them, trust me, and some emojis 😀😀", fake, fake, fchannel_id, fake, fvideo_id)
 ftranscript_mixed_signals3 = "This transcript contains some clickbait phrases but not all of them, trust me, and some emojis "
 
-fvid_short_title = Video("Short", fake, fake, fake, fake, fake)
+fvid_short_title = Video("Short", fake, fake, fchannel_id, fake, fvideo_id)
 
 
 
