@@ -1,6 +1,6 @@
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class ConsoleLoggingConfig(BaseModel):
@@ -77,6 +77,17 @@ class ChannelConfig(BaseModel):
     id: str
     name: str
     action: Literal["validate", "download", "summarize"]
+
+    @field_validator("id")
+    @classmethod
+    def validate_channel_id(cls, v: str) -> str:
+        if len(v) != 24:
+            raise ValueError(f"channel_id must be 24 chars, got {len(v)}")
+
+        if not v.startswith("UC"):
+            raise ValueError("channel_id must start with 'UC'")
+
+        return v
 
 class VideoProcessingConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
