@@ -5,7 +5,7 @@ from yt_dlp import YoutubeDL
 from yt_dlp.utils import DownloadError
 
 from vidsift.ingestion.errors import MetadataCollectionError
-from vidsift.models.video import Video
+from vidsift.models.video import InvalidVideoError, Video
 from vidsift.shared.logging.log_event_fields import LogEvent
 from vidsift.shared.video_id_extractor import VideoIDExtractor
 
@@ -79,13 +79,15 @@ class MetadataCollector:
                 logger.info(
                     f"Metadata collection from url {url} completed."
                 )
-                return Video(
-                    title=to_return["title"],
-                    url=to_return["url"],
-                    author=to_return["author"],
-                    channel_id=to_return["channel_id"],
-                    published=to_return["published"],
-                    video_id=to_return["video_id"]
-                )
-
+                try:
+                    return Video(
+                        title=to_return["title"],
+                        url=to_return["url"],
+                        author=to_return["author"],
+                        channel_id=to_return["channel_id"],
+                        published=to_return["published"],
+                        video_id=to_return["video_id"]
+                    )
+                except InvalidVideoError:
+                    raise
 

@@ -17,6 +17,7 @@ from vidsift.config.errors import (ConfigError, ConfigFileNotFoundError,
                                    ConfigValidationError, InvalidConfigError)
 from vidsift.config.loader import load_config
 from vidsift.config.models import AppConfig
+from vidsift.models.video import InvalidVideoError
 from vidsift.shared.logging.bootstrap_logger import setup_bootstrap_logging
 from vidsift.shared.logging.config import configure_logging
 from vidsift.shared.logging.log_event_fields import LogEvent
@@ -107,7 +108,11 @@ class VidsiftCLI:
 
         # execute args command
         if hasattr(args, "func"):
-            args.func(args, config)
+            try:
+                args.func(args, config)
+            except InvalidVideoError as e:
+                logger.critical(f"InvalidVideoError: Failed to create a video object to process videos: {str(e)}, exiting", exc_info=True)
+                exit(1)
 
 
 if __name__ == "__main__":

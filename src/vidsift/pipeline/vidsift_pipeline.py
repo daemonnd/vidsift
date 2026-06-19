@@ -17,7 +17,7 @@ from pathlib import Path
 from sys import exit
 from typing import Generator
 
-from vidsift.config.models import AppConfig
+from vidsift.config.models import AppConfig, ChannelConfig
 from vidsift.features.download.downloader import VideoDownloader
 from vidsift.features.summary.errors import SummaryError
 from vidsift.features.transcript.errors import TranscriptError
@@ -26,7 +26,7 @@ from vidsift.features.video_processing.repository import \
     VideoProcessingRepository
 from vidsift.ingestion.errors import VideoDataCollectionError
 from vidsift.models.validation.validation_result import ValidationResult
-from vidsift.models.video import Video
+from vidsift.models.video import InvalidVideoError, Video
 from vidsift.models.video_record import VideoProcessingRecord
 from vidsift.services.summarization_service import SummarizationService
 from vidsift.services.transcript_service import TranscriptService
@@ -79,7 +79,7 @@ class VidsiftOrchestrator:
 
             # new videos
             try:
-                logger.debug("RSS Fetch completed",
+                logger.debug("RSS Fetch started",
                     extra={
                         "event": LogEvent.RSS_FETCH_STARTED,
                     }
@@ -94,8 +94,47 @@ class VidsiftOrchestrator:
                 exit(1)
 
 
+            # process new videos
+            channel_lookup: dict = {}
+            channels: list[ChannelConfig] = self.config.channels
+            channel_lookup = {
+                channel.id: channel
+                for channel in channels
+            }
             for vid in video_generator:
-                self.process_validation_pipeline(vid=vid, create_db_entry=True)
+                channel = channel_lookup[vid.channel_id]
+                match channel.action:
+                    case "download":
+                        logger.info(
+                            f"Processing video with video id {vid.video_id} from {vid.author} with action download",
+                            extra={
+                                "event": LogEvent.VIDEO_DOWNLOAD_STARTED,
+                                "video_id": vid.video_id,
+                                "channel_id": vid.channel_id
+                            }
+                        )
+                        self.download(vid=vid)
+                    case "summarize":
+                        logger.info(
+                            f"Processing video with video id {vid.video_id} from {vid.author} with action summarize",
+                            extra={
+                                "event": LogEvent.VIDEO_SUMMARIZATION_STARTED,
+                                "video_id": vid.video_id,
+                                "channel_id": vid.channel_id
+                            }
+                        )
+                        transcript: str = self.fetch_transcript(vid)
+                        self.summarize(vid, transcript)
+                    case "validate":
+                        logger.info(
+                            f"Processing video with video id {vid.video_id} from {vid.author} with action validate",
+                            extra={
+                                "event": LogEvent.VIDEO_VALIDATION_STARTED,
+                                "video_id": vid.video_id,
+                                "channel_id": vid.channel_id
+                            }
+                        )
+                        self.process_validation_pipeline(vid=vid, create_db_entry=True)
 
         finally:
             self.video_db.close()
@@ -210,7 +249,10 @@ class VidsiftOrchestrator:
         logger.debug("Check for videos where the download got interrupted...")
         downloading_vids_generator: Generator[VideoProcessingRecord, None, None] = self.video_db.get_by_status("downloading")
         for video in downloading_vids_generator:
-            vid: Video = Video.from_cache(video_db_row=video)
+            try:
+                vid: Video = Video.from_cache(video_db_row=video)
+            except InvalidVideoError:
+                raise
             logger.info(
                 f"Processing video {vid.video_id} that got interrupted while downloading.",
                 extra={
@@ -356,7 +398,10 @@ class VidsiftOrchestrator:
             transcript: str = self.fetch_transcript(vid=vid)
 
             # get the validation result
-            video_validation_result = self.validate_video(vid=vid, raw_transcript=transcript)
+            try:
+                video_validation_result = self.validate_video(vid=vid, raw_transcript=transcript)
+            except InvalidVideoError:
+                raise
             logger.info(
                 f"Video validation completed with decision '{video_validation_result.decision}'.",
                 extra={
@@ -385,6 +430,13 @@ class VidsiftOrchestrator:
                 video_validation_result=video_validation_result,
                 transcript=transcript,
             )
+            sleep_delay(
+                calculate_delay(
+                    min_delay=self.config.video_processing.min_vid_delay,
+                    random_delay=self.config.video_processing.random_vid_delay
+                ),
+                should_sleep=self.should_sleep
+            )
 
         except TranscriptError as e:
             error_msg: str = f"TranscriptError: Each transcript fetching provider failed: {str(e)}"
@@ -399,6 +451,13 @@ class VidsiftOrchestrator:
             # add the failure to the video database
             self.video_db.mark_failed(error_msg=error_msg, video_id=vid.video_id)
             logger.info("Moving on to the next video because of the previous TranscriptError...")
+            sleep_delay(
+                calculate_delay(
+                    min_delay=self.config.video_processing.min_vid_delay,
+                    random_delay=self.config.video_processing.random_vid_delay
+                ),
+                should_sleep=self.should_sleep
+            )
             return
         except VideoValidationError as e:
             error_msg: str = f"VideoValidationError: Failed to validate the video with id {vid.video_id} because of the following error: {str(e)}"
@@ -413,6 +472,13 @@ class VidsiftOrchestrator:
             # add the failure to the video database
             self.video_db.mark_failed(error_msg=error_msg, video_id=vid.video_id)
             logger.info("Moving on to the next video because of the previous VideoValidationError...")
+            sleep_delay(
+                calculate_delay(
+                    min_delay=self.config.video_processing.min_vid_delay,
+                    random_delay=self.config.video_processing.random_vid_delay
+                ),
+                should_sleep=self.should_sleep
+            )
             return
         except SummaryError as e:
             error_msg: str = f"SummaryError: Failed to summarize the video with id {vid.video_id} because of the following error: {str(e)}"
@@ -427,8 +493,6 @@ class VidsiftOrchestrator:
             # add the failure to the video database
             self.video_db.mark_failed(error_msg=error_msg, video_id=vid.video_id)
             logger.info("Moving on to the next video because of the previous SummaryError...")
-            return
-        finally:
             sleep_delay(
                 calculate_delay(
                     min_delay=self.config.video_processing.min_vid_delay,
@@ -436,6 +500,7 @@ class VidsiftOrchestrator:
                 ),
                 should_sleep=self.should_sleep
             )
+            return
 
     def process_interrupted_videos(self):
         logger.info(

@@ -1,7 +1,6 @@
-
 from vidsift.config.models import AppConfig
 from vidsift.ingestion.metadata_collector import MetadataCollector
-from vidsift.models.video import Video
+from vidsift.models.video import InvalidVideoError, Video
 from vidsift.pipeline.vidsift_pipeline import VidsiftOrchestrator
 
 
@@ -44,7 +43,10 @@ def handle_process(args, config: AppConfig):
         channel_id_list=[""],
         config=config
     )
-    vid: Video = metadata_collector.fetch_metadata(args.url)
+    try:
+        vid: Video = metadata_collector.fetch_metadata(args.url)
+    except InvalidVideoError:
+        raise
     if args.download:
         orchestrator.download(
             vid=vid

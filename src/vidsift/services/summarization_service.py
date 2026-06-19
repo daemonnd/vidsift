@@ -10,6 +10,7 @@ from vidsift.features.validation.errors import EmptyTranscriptError
 from vidsift.models.video import Video
 from vidsift.shared.AI.errors import AIError
 from vidsift.shared.logging.log_event_fields import LogEvent
+from vidsift.shared.one_retry import retry_once
 from vidsift.shared.text_normalizer import TextNormalizer
 
 logger = logging.getLogger(__name__)
@@ -36,7 +37,7 @@ class SummarizationService:
         except OSError as e:
             raise SummaryError(f"OSError: Failed to create directory at {self.config.summarization.output_dir}: {str(e)}") from e
         else:
-            dest_file = Path(f"{self.config.summarization.output_dir}/{vid.title.replace}.md")
+            dest_file = Path(f"{self.config.summarization.output_dir}/{vid.title.replace(" ", "_")}.md")
             try:
                 dest_file.touch()
             except FileExistsError as e:
@@ -61,6 +62,7 @@ class SummarizationService:
         except AIError as e:
             raise SummaryError(f"An error occured while summarizing the short summaries of the chunks: {e}") from e
 
+    @retry_once
     def summarize(self, raw_transcript: str, vid: Video) -> str:
         """
         Method to summarize the whole transcript. 

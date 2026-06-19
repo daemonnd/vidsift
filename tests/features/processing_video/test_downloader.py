@@ -30,7 +30,7 @@ def summarization_service():
     return FakeSummarizer()
 @pytest.fixture()
 def vid():
-    return Video("sometitle", "someurl", "someauthor", "somechannelid", "somepubdate", "uuuuuuuuuuu")
+    return Video("sometitle", "someurl", "someauthor", "UCjjjjjjjjjjjjjjjjjjjjjj", "somepubdate", "uuuuuuuuuuu")
 @pytest.fixture()
 def fake_config():
         return load_config(Path(f"{Path(__file__).parent.parent.parent}/fakes/fake_config.toml"))

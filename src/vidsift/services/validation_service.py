@@ -23,7 +23,7 @@ from vidsift.models.validation.pre_validation_result import PreValidationResult
 from vidsift.models.validation.transcript_validation_result import \
     TranscriptValidationResult
 from vidsift.models.validation.validation_result import ValidationResult
-from vidsift.models.video import Video
+from vidsift.models.video import InvalidVideoError, Video
 from vidsift.shared.AI.errors import AIError
 from vidsift.shared.AI.json_output_manager import AIJsonOutputManager
 from vidsift.shared.logging.log_event_fields import LogEvent
@@ -46,14 +46,17 @@ class VideoValidator:
         returns True if the video does not seem to be clickbait, False if it is
         """
         title: str = self.text_normalizer.normalize(vid.title)
-        new_vid: Video = Video(
-            title=title,
-            url=vid.url,
-            author=vid.author,
-            published=vid.published,
-            video_id=vid.video_id,
-            channel_id=vid.channel_id,
-        )
+        try:
+            new_vid: Video = Video(
+                title=title,
+                url=vid.url,
+                author=vid.author,
+                published=vid.published,
+                video_id=vid.video_id,
+                channel_id=vid.channel_id,
+            )
+        except InvalidVideoError:
+            raise
 
         pre_vali_result: PreValidationResult = self.pre_validator.build_pre_validation_features(
             vid=new_vid, transcript=transcript
@@ -178,7 +181,13 @@ class VideoValidator:
 
         transcript: str = self.text_normalizer.normalize(raw_transcript)
 
-        if not self.pre_validate(vid=vid, transcript=transcript):
+        try:
+            pre_validation_res = self.pre_validate(vid=vid, transcript=transcript)
+        except InvalidVideoError:
+            raise
+
+
+        if not pre_validation_res:
             logger.info(
                 f"Video {vid.video_id} discarded because of excessive clickbait indicators.",
                 extra={
