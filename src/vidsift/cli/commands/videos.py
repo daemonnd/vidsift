@@ -2,6 +2,7 @@ from rich.console import Console
 
 from vidsift.features.video_processing.repository import \
     VideoProcessingRepository
+from vidsift.models.video_record import VideoProcessingStatus
 
 
 def register_videos(subparsers):
@@ -69,12 +70,23 @@ def handle_videos_list(args, config):
 
 def handle_videos_set_status(args, config):
     repo = VideoProcessingRepository(config=config)
+    match args.status: # args.status can only be "downloading", "summarizing", "validating", "failed", "done", because that is set in the choices
+        case "downloading":
+            target_status = VideoProcessingStatus.DOWNLOADING
+        case "summarizing":
+            target_status = VideoProcessingStatus.SUMMARIZING
+        case "validating":
+            target_status = VideoProcessingStatus.VALIDATING
+        case "failed":
+            target_status = VideoProcessingStatus.FAILED
+        case "done":
+            target_status = VideoProcessingStatus.DONE
     try:
         if args.video_id and args.status:
             if args.reset_failed_attempts:
-                repo.set_status(args.video_id, args.status, reset_attempts=True)
+                repo.set_status(args.video_id, target_status, reset_attempts=True)
             else:
-                repo.set_status(args.video_id, args.status, reset_attempts=False)
+                repo.set_status(args.video_id, target_status, reset_attempts=False)
 
     finally:
         repo.close()
