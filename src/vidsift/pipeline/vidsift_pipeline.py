@@ -107,7 +107,7 @@ class VidsiftOrchestrator:
             for vid in video_generator:
                 if self.video_db.exists(video_id=vid.video_id):
                     logger.info(
-                        "Skipping video with video id {vid.video_id} because it was already processed.",
+                        f"Skipping video with video id {vid.video_id} because it was already processed.",
                         extra={
                             "event": LogEvent.VIDEO_SKIPPED_EXISTING,
                             "video_id": vid.video_id,
@@ -176,14 +176,6 @@ class VidsiftOrchestrator:
                 "The vidsift orchestrator has been stopped.",
                 extra={"event": LogEvent.ORCHESTRATOR_STOPPED},
             )
-
-    def validate_video(self, vid: Video, raw_transcript: str):
-        # validate the video and get the action to perform
-        video_validation_result: ValidationResult = self.video_validator.validate_video(
-            vid=vid,
-            raw_transcript=raw_transcript,
-        )
-        return video_validation_result
 
     def execute_processing_step(
         self,
@@ -417,22 +409,39 @@ class VidsiftOrchestrator:
             transcript: str = self.fetch_transcript(vid=vid)
 
             # get the validation result
-            try:
-                video_validation_result = self.validate_video(vid=vid, raw_transcript=transcript)
-            except InvalidVideoError:
-                raise
             logger.info(
-                f"Video validation completed with decision '{video_validation_result.decision}'.",
+                f"Starting validation for video {vid.video_id}.",
                 extra={
-                    "event": LogEvent.VIDEO_VALIDATION_COMPLETED,
+                    "event": LogEvent.VIDEO_VALIDATION_STARTED,
                     "video_id": vid.video_id,
                     "channel_id": vid.channel_id,
-                    "decision": video_validation_result.decision,
-                    "quality_score": video_validation_result.content_quality_score,
-                    "topic_match_score": video_validation_result.topic_match_score,
-                    "summary_reason": video_validation_result.summary_reason,
                 },
             )
+            try:
+                video_validation_result = self.video_validator.validate_video(vid=vid, raw_transcript=transcript)
+            except VideoValidationError as e: 
+                # logs are handled by the validator, because the logs are more specific like this
+                self.video_db.mark_failed(
+                    error_msg=str(e),
+                    video_id=vid.video_id
+                )
+                return
+
+            except InvalidVideoError:
+                raise
+            else:
+                logger.info(
+                    f"Validation completed for video {vid.video_id} with decision'{video_validation_result.decision}'",
+                    extra={
+                        "event": LogEvent.VIDEO_VALIDATION_COMPLETED,
+                        "video_id": vid.video_id,
+                        "channel_id": vid.channel_id,
+                        "decision": video_validation_result.decision,
+                        "score": video_validation_result.content_quality_score,
+                        "topic_match_score": video_validation_result.topic_match_score,
+                        "reason": video_validation_result.summary_reason,
+                    },
+                )
 
             # update the database after validation
             self.video_db.save_validation_result(
