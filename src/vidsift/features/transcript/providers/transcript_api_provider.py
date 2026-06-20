@@ -46,6 +46,8 @@ class YoutubeTranscriptApiProvider(TranscriptProvider):
             raise TranscriptFetchingBlockedError(str(e))
         except Exception as e:
             raise TranscriptError(str(e))
+        except BaseException:
+            raise
         else:
             full_transcript: list = []
             for snippet in fetched_transcript:
@@ -154,6 +156,8 @@ class YoutubeTranscriptApiProvider(TranscriptProvider):
                 },
             )
             raise TranscriptError(f"TranscriptError: Failed to download the transcript of {video.video_id}: {str(e)}")
+        except BaseException:
+            raise
         else:
             logger.info(
                 "Transcript fetching completed.",

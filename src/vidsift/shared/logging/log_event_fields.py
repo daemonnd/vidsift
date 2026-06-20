@@ -15,6 +15,10 @@ class LogEvent:
     # orchestrator events
     ORCHESTRATOR_STARTED = "orchestrator_started"
     ORCHESTRATOR_STOPPED = "orchestrator_stopped"
+    ORCHESTRATOR_INTERRUPTED = "orchestrator_interrupted"
+
+    # invalid video event
+    INVALID_VIDEO = "invalid_video"
 
     # interrupted processed events
     INTERRUPTED_PROCESSING_STARTED = "interrupted_processing_started"

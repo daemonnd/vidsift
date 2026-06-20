@@ -52,6 +52,8 @@ class TranscriptService:
                         "provider": provider.get_provider_name(),
                     },
                 )
+            except BaseException:
+                raise
             else:
                 logger.info(
                     f"Transcript fetching completed with provider {provider.get_provider_name()}",

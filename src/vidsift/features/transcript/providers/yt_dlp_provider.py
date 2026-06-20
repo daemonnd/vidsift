@@ -66,6 +66,8 @@ class YtDlpTranscriptProvider(TranscriptProvider):
                     extra={"event": LogEvent.TRANSCRIPT_PROVIDER_FAILED, "provider": "yt_dlp"},
                 )
                 raise TranscriptError(str(e))
+            except BaseException:
+                raise
             else:
                 logger.info(
                     "Transcript provider completed successfully.",

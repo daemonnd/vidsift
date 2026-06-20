@@ -229,6 +229,8 @@ class VidsiftOrchestrator:
                 video_id=vid.video_id
             )
             return False
+        except BaseException:
+            raise
         else:
             self.video_db.update_after_done(
                 video_id=vid.video_id,
@@ -366,6 +368,9 @@ class VidsiftOrchestrator:
                     ),
                 ):
                     continue
+            except (SystemExit, KeyboardInterrupt):
+                self.should_sleep = False
+                raise # raise it to main, so that vidsift can exit
             finally:
                 sleep_delay(
                     calculate_delay(

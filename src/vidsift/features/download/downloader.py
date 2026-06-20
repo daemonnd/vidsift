@@ -22,6 +22,8 @@ class VideoDownloader:
                 ydl.download([video_url])
         except Exception as e:
             raise VideoDownloadError(str(e)) from e
+        except BaseException:
+            raise
 
 if __name__ == "__main__":
     vd: VideoDownloader = VideoDownloader()
