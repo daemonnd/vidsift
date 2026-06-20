@@ -7,6 +7,7 @@ from vidsift.models.video import InvalidVideoError, Video
 from vidsift.models.video_record import VideoProcessingStatus
 from vidsift.pipeline.vidsift_pipeline import VidsiftOrchestrator
 from vidsift.services.summarization_service import SummarizationService
+from vidsift.services.validation_service import VideoValidator
 
 
 def register_process(subparsers):
@@ -73,7 +74,8 @@ def handle_process(args, config: AppConfig):
         elif args.fetch_transcript:
             print(transcript)
         else:
-            validation_result = orchestrator.validate_video(
+            video_validator: VideoValidator = VideoValidator(config=config)
+            validation_result = video_validator.validate_video(
                 vid=vid,
                 raw_transcript=transcript
             )
