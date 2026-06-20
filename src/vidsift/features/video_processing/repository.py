@@ -157,10 +157,14 @@ class VideoProcessingRepository:
         If it is higher than the max allowed amount, the status get set to FAILED and the video gets abandoned
         """
         try:
-            retry_count = self.cur.execute("""
+            result = self.cur.execute("""
             SELECT retry_count FROM processed_videos
             WHERE video_id = ?
-            """, (video_id,)).fetchone()[0]
+            """, (video_id,)).fetchone()
+            if result:
+                retry_count = result[0]
+            else:
+                retry_count = 0
             if int(retry_count) >= self.config.video_processing.max_retry_attempts:
                 # if it exeeds / is equal to the max allowed attempts
                 parameters: tuple = (VideoProcessingStatus.FAILED.value, error_msg, video_id)
@@ -262,10 +266,14 @@ class VideoProcessingRepository:
         if reset_attempts:
             retry_count = 0
         else:
-            retry_count = self.cur.execute("""
+            result = self.cur.execute("""
             SELECT retry_count FROM processed_videos
             WHERE video_id = ?
-            """, (video_id,)).fetchone()[0]
+            """, (video_id,)).fetchone()
+            if result:
+                retry_count = result[0]
+            else:
+                retry_count = 0
 
         try:
             parameters: tuple = (status.value, int(retry_count), video_id)

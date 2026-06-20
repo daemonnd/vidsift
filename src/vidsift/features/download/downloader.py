@@ -16,11 +16,12 @@ class VideoDownloader:
 
     def download(self, video_url: str, output_path: Path) -> None:
         try:
-            download_opts = self.ydl_opts["outtmpl"] = str(Path(f"{str(output_path)}/%(title)s.%(ext)s"))
-            with YoutubeDL(download_opts) as ydl:
+            download_opts = self.ydl_opts
+            download_opts["outtmpl"] = str(Path(output_path / "%(title)s.%(ext)s"))
+            with YoutubeDL(self.ydl_opts) as ydl:
                 ydl.download([video_url])
         except Exception as e:
-            raise VideoDownloadError() from e
+            raise VideoDownloadError(str(e)) from e
 
 if __name__ == "__main__":
     vd: VideoDownloader = VideoDownloader()
