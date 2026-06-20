@@ -92,3 +92,15 @@ class LogEvent:
     VIDEO_SUMMARIZATION_STARTED = "video_summarization_started"
     VIDEO_SUMMARIZATION_COMPLETED = "video_summarization_completed"
     VIDEO_SUMMARIZATION_FAILED = "video_summarization_failed"
+
+    # scheduler events
+    SCHEDULER_STARTED = "scheduler_started"
+    SCHEDULER_FAILED = "scheduler_failed"
+    SCHEDULER_COOLDOWN_STARTED = "scheduler_cooldown_started"
+    SCHEDULER_COOLDOWN_COMPLETED = "scheduler_cooldown_completed"
+
+
+    # locking events
+    LOCK_ACQUIRED = "lock_acquired"
+    LOCK_RELEASED = "lock_released"
+    LOCK_FAILED = "lock_failed"

@@ -1,19 +1,30 @@
 import datetime
 import sqlite3
 from pathlib import Path
-from sqlite3 import Connection, Cursor
+from sqlite3 import Connection, Cursor, OperationalError
 from time import sleep
 from typing import Literal
 
-from vidsift.runtime.errors import LockingError, MoreThanOneRowError
+from platformdirs import user_data_dir
+
+from vidsift.runtime.errors import LockWritingError
 
 
 class LockManager:
-    def __init__(self, owner: Literal["scheduler", "manual"], db_path: Path | None = None) -> None:
-        if db_path is None:
-            self.db_path: Path = Path(Path.home() / ".local" / "share" / "vidsift" / "processed_videos.db")
-        else:
-            self.db_path: Path = db_path
+    def __init__(
+        self,
+        owner: Literal["scheduler", "manual"],
+        sleep_interval: float,
+        db_path: Path = Path(
+            user_data_dir(
+                appname="vidsift"
+            )
+        )
+    ) -> None:
+        if db_path == Path(user_data_dir(appname="vidsift")):
+            db_path = db_path / "lock.db"
+        self.sleep_interval = sleep_interval
+        self.db_path: Path = db_path
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         self.conn: Connection = sqlite3.connect(str(self.db_path))
         self.conn.row_factory = sqlite3.Row
@@ -21,57 +32,64 @@ class LockManager:
         self._initialize_database(owner=owner)
 
     def _initialize_database(self, owner) -> None:
-        self.cur.execute("""CREATE TABLE IF NOT EXISTS lock (
-            id TEXT PRIMARY KEY,
+        try:
+            self.cur.execute("""CREATE TABLE IF NOT EXISTS lock (
+                id TEXT PRIMARY KEY,
 
-            owner TEXT,
-            status TEXT NOT NULL,
-            updated_at TEXT
-        )
-        """)
-        self.cur.execute("""
-            INSERT OR IGNORE INTO lock VALUES
-            (?, ?, ?, ?)
-        """, ("global", owner, "FREE", datetime.datetime.now().isoformat()))
-        self.conn.commit()
+                owner TEXT,
+                status TEXT NOT NULL,
+                updated_at TEXT
+            )
+            """)
+            self.cur.execute("""
+                INSERT OR IGNORE INTO lock VALUES
+                (?, ?, ?, ?)
+            """, ("global", owner, "FREE", datetime.datetime.now().isoformat()))
+            self.conn.commit()
+        except OperationalError as e:
+            raise LockWritingError(f"Failed to write to the lock db because of an operational error: {str(e)}") from e
 
 
 
 
-    def acquire(self, owner: Literal["scheduler", "manual"], sleep_interval: float = 10) -> None:
+    def acquire(self, owner: Literal["scheduler", "manual"]) -> None:
         """
         Method to acquire the lock
         Waits until lock is free
         """
         while True:
-            cur = self.conn.execute(
-                """
-                UPDATE lock
-                SET owner = ?,
-                    status = 'RUNNING',
-                    updated_at = ?
-                WHERE id = 'global'
-                AND status = 'FREE'
-                """,
-                (owner, datetime.datetime.now().isoformat())
-            )
+            try:
+                cur = self.conn.execute(
+                    """
+                    UPDATE lock
+                    SET owner = ?,
+                        status = 'RUNNING',
+                        updated_at = ?
+                    WHERE id = 'global'
+                    AND status = 'FREE'
+                    """,
+                    (owner, datetime.datetime.now().isoformat())
+                )
 
-            self.conn.commit()
+                self.conn.commit()
+            except OperationalError as e:
+                raise LockWritingError(f"Failed to write to the lock db because of an operational error: {str(e)}") from e
 
             if cur.rowcount == 1:
                 return  # lock acquired
 
-            sleep(sleep_interval)
+            sleep(self.sleep_interval)
 
 
     def release(self, owner: Literal["scheduler", "manual"]) -> None:
-
-        self.cur.execute("""
-            UPDATE lock
-            SET owner = NULL,
-                status = 'FREE',
-                updated_at = ?
-            WHERE id = 'global' AND owner = ?
-        """, (datetime.datetime.now().isoformat(), owner))
-        self.conn.commit()
-
+        try:
+            self.cur.execute("""
+                UPDATE lock
+                SET owner = NULL,
+                    status = 'FREE',
+                    updated_at = ?
+                WHERE id = 'global' AND owner = ?
+            """, (datetime.datetime.now().isoformat(), owner))
+            self.conn.commit()
+        except OperationalError as e:
+            raise LockWritingError(f"Failed to write to the lock db because of an operational error: {str(e)}") from e
