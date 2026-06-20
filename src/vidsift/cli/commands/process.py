@@ -45,7 +45,6 @@ def register_process(subparsers):
 
 def handle_process(args, config: AppConfig):
     orchestrator = VidsiftOrchestrator(
-        channel_id_list=[""],
         config=config
     )
     if args.download:

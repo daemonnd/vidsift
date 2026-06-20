@@ -1,3 +1,5 @@
+from argparse import ArgumentParser
+
 from vidsift.pipeline.vidsift_pipeline import VidsiftOrchestrator
 
 
@@ -10,6 +12,8 @@ def register_run(subparsers):
 
 
 def handle_pipeline_run(args, config):
-    orchestrator = VidsiftOrchestrator(config=config)
+    channel_id_list = ["UCo71RUe6DX4w-Vd47rFLXPg", ]
+
+    orchestrator = VidsiftOrchestrator(channel_id_list, config=config)
 
     orchestrator.run()

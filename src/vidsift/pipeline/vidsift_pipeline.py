@@ -44,7 +44,6 @@ logger = logging.getLogger(__name__)
 class VidsiftOrchestrator:
     def __init__(
         self,
-        channel_id_list: list[str],
         config: AppConfig,
         video_validator: VideoValidator | None = None,
         transcript_service: TranscriptService | None = None,
@@ -54,6 +53,10 @@ class VidsiftOrchestrator:
         should_sleep: bool = True
     ):
         self.config: AppConfig = config
+
+        channel_id_list: list[str] = []
+        for channel in config.channels:
+            channel_id_list.append(channel.id)
         # video fetching
         self.video_data_collector: VideoDataCollection = VideoDataCollection(channel_id_list=channel_id_list)
         # video cache
