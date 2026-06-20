@@ -1,10 +1,24 @@
+from typing import Literal
+
+
 class LogEvent:
+    @staticmethod
+    def get_final_output_events(general_event: Literal["download", "summarize"]):
+        """
+        Get the events in a tuple of started, completed and failed from a general event
+        """
+        match general_event:
+            case "download":
+                return LogEvent.VIDEO_DOWNLOAD_STARTED, LogEvent.VIDEO_DOWNLOAD_COMPLETED, LogEvent.VIDEO_DOWNLOAD_FAILED
+            case "summarize":
+                return LogEvent.VIDEO_SUMMARIZATION_STARTED, LogEvent.VIDEO_SUMMARIZATION_COMPLETED, LogEvent.VIDEO_SUMMARIZATION_FAILED
     # orchestrator events
     ORCHESTRATOR_STARTED = "orchestrator_started"
     ORCHESTRATOR_STOPPED = "orchestrator_stopped"
 
     # interrupted processed events
     INTERRUPTED_PROCESSING_STARTED = "interrupted_processing_started"
+    INTERRUPTED_PROCESSING_COMPLETED = "interrupted_processing_completed"
 
     VALIDATION_RESUME_STARTED = "validation_resume_started"
     DOWNLOAD_RESUME_STARTED = "download_resume_started"

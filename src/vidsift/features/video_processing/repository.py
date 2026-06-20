@@ -157,10 +157,14 @@ class VideoProcessingRepository:
         If it is higher than the max allowed amount, the status get set to FAILED and the video gets abandoned
         """
         try:
-            retry_count = self.cur.execute("""
+            result = self.cur.execute("""
             SELECT retry_count FROM processed_videos
             WHERE video_id = ?
-            """, (video_id,)).fetchone()[0]
+            """, (video_id,)).fetchone()
+            if result:
+                retry_count = result[0]
+            else:
+                retry_count = 0
             if int(retry_count) >= self.config.video_processing.max_retry_attempts:
                 # if it exeeds / is equal to the max allowed attempts
                 parameters: tuple = (VideoProcessingStatus.FAILED.value, error_msg, video_id)
@@ -255,31 +259,24 @@ class VideoProcessingRepository:
             except ValidationError as e:
                 raise VideoProcessingDataValidationError(f"Failed to get the data of a video because of a ValidationError, database seems corrupt: {str(e)}") from e
 
-    def set_status(self, video_id: str, status: Literal["downloading", "summarizing", "done", "failed", "validating"], reset_attempts: bool) -> None:
+    def set_status(self, video_id: str, status: VideoProcessingStatus, reset_attempts: bool = False) -> None:
         """
         Method to edit the status of a video
         """
         if reset_attempts:
             retry_count = 0
         else:
-            retry_count = self.cur.execute("""
+            result = self.cur.execute("""
             SELECT retry_count FROM processed_videos
             WHERE video_id = ?
-            """, (video_id,)).fetchone()[0]
+            """, (video_id,)).fetchone()
+            if result:
+                retry_count = result[0]
+            else:
+                retry_count = 0
 
-        match status:
-            case "downloading":
-                target_status = VideoProcessingStatus.DOWNLOADING.value
-            case "summarizing":
-                target_status = VideoProcessingStatus.SUMMARIZING.value
-            case "done":
-                target_status = VideoProcessingStatus.DONE.value
-            case "failed":
-                target_status = VideoProcessingStatus.FAILED.value
-            case "validating":
-                target_status = VideoProcessingStatus.VALIDATING.value
         try:
-            parameters: tuple = (target_status, int(retry_count), video_id)
+            parameters: tuple = (status.value, int(retry_count), video_id)
             self.cur.execute("""
             UPDATE processed_videos
             SET status = ?,

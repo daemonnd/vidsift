@@ -86,15 +86,6 @@ class VideoValidator:
             )
             return False
         else:
-            logger.info(
-                f"Video {vid.video_id} passed pre-validation.",
-                extra={
-                    "video_id": vid.video_id,
-                    "channel_id": vid.channel_id,
-                    "pre_validation_score": round(pre_vali_calc_result, 2),
-                    "reason": reason,
-                },
-            )
             return True
 
     def validate_metadata(self, vid: Video) -> MetadataValidationResult:
@@ -170,14 +161,6 @@ class VideoValidator:
             raise VideoValidationError(f"Transcript validation failed for video {vid.video_id} due to AI error: {str(e)}")
 
     def validate_video(self, vid: Video, raw_transcript: str) -> ValidationResult:
-        logger.info(
-            f"Starting validation for video {vid.video_id}.",
-            extra={
-                "event": LogEvent.VIDEO_VALIDATION_STARTED,
-                "video_id": vid.video_id,
-                "channel_id": vid.channel_id,
-            },
-        )
 
         transcript: str = self.text_normalizer.normalize(raw_transcript)
 
@@ -291,18 +274,6 @@ class VideoValidator:
         )
         validation_result = decision_engine.make_decision(decision_engine.calculate_decision_scores())
 
-        logger.info(
-            f"Validation completed for video {vid.video_id}.",
-            extra={
-                "event": LogEvent.VIDEO_VALIDATION_COMPLETED,
-                "video_id": vid.video_id,
-                "channel_id": vid.channel_id,
-                "decision": validation_result.decision,
-                "score": validation_result.content_quality_score,
-                "topic_match_score": validation_result.topic_match_score,
-                "reason": validation_result.summary_reason,
-            },
-        )
 
         return validation_result
 

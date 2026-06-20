@@ -63,7 +63,7 @@ class SummarizationService:
             raise SummaryError(f"An error occured while summarizing the short summaries of the chunks: {e}") from e
 
     @retry_once
-    def summarize(self, raw_transcript: str, vid: Video) -> str:
+    def summarize(self, raw_transcript: str, vid: Video) -> None:
         """
         Method to summarize the whole transcript. 
         It calls summarize, store_summaries and summarize_overall and returns the final result
@@ -87,7 +87,6 @@ class SummarizationService:
                 "output_file": str(dest_path)
             }
         )
-        return final_summary
 
 if __name__ == "__main__":
     summarization_service = SummarizationService(ai_model="qwen3.5:9b")

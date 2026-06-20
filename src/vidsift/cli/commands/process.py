@@ -1,7 +1,13 @@
+from pathlib import Path
+
 from vidsift.config.models import AppConfig
+from vidsift.features.download.downloader import VideoDownloader
 from vidsift.ingestion.metadata_collector import MetadataCollector
 from vidsift.models.video import InvalidVideoError, Video
+from vidsift.models.video_record import VideoProcessingStatus
 from vidsift.pipeline.vidsift_pipeline import VidsiftOrchestrator
+from vidsift.services.summarization_service import SummarizationService
+from vidsift.services.validation_service import VideoValidator
 
 
 def register_process(subparsers):
@@ -38,32 +44,38 @@ def register_process(subparsers):
 
 
 def handle_process(args, config: AppConfig):
-    metadata_collector = MetadataCollector()
     orchestrator = VidsiftOrchestrator(
         channel_id_list=[""],
         config=config
     )
+    if args.download:
+        downloader: VideoDownloader = VideoDownloader()
+        downloader.download(
+            video_url=args.url,
+            output_path=Path(config.downloads.output_dir)
+        )
+        return
+
+    metadata_collector = MetadataCollector()
     try:
         vid: Video = metadata_collector.fetch_metadata(args.url)
     except InvalidVideoError:
         raise
-    if args.download:
-        orchestrator.download(
-            vid=vid
-        )
     else:
         transcript = orchestrator.fetch_transcript(
             vid=vid
         )
         if args.summarize:
-            orchestrator.summarize(
-                vid=vid,
-                transcript=transcript
+            summarizer: SummarizationService = SummarizationService(config=config)
+            summarizer.summarize(
+                raw_transcript=transcript,
+                vid=vid
             )
         elif args.fetch_transcript:
             print(transcript)
         else:
-            validation_result = orchestrator.validate_video(
+            video_validator: VideoValidator = VideoValidator(config=config)
+            validation_result = video_validator.validate_video(
                 vid=vid,
                 raw_transcript=transcript
             )

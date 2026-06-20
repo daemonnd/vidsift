@@ -38,7 +38,6 @@ def fake_config():
 @pytest.fixture()
 def db(tmp_path, fake_config):
     return VideoProcessingRepository(db_path=tmp_path / "test.db", config=fake_config)
-
 def test_download_video_marks_done(db, validator, vid_downloader, set_up_transcript_service, summarization_service, vid, fake_config):
     vid: Video = vid
     validator = validator
@@ -239,7 +238,7 @@ def test_failing_summary(
     cached: VideoProcessingRecord = db.get(vid.video_id)
 
     assert cached is not None
-    assert cached.status == VideoProcessingStatus.VALIDATING
+    assert cached.status == VideoProcessingStatus.SUMMARIZING
     assert cached.retry_count > 0
 
     # validation completed successfully

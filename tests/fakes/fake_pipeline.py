@@ -44,7 +44,7 @@ class FakeDownloader:
     def __init__(self):
         self.was_called = False
 
-    def download(self, url, output_path):
+    def download(self, video_url, output_path):
         self.was_called = True
 
 class FakeSummarizer:

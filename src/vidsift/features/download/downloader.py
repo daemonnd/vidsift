@@ -2,6 +2,8 @@ from pathlib import Path
 
 from yt_dlp import YoutubeDL
 
+from vidsift.features.download.errors import VideoDownloadError
+
 
 class VideoDownloader:
     def __init__(self):
@@ -13,9 +15,13 @@ class VideoDownloader:
         }
 
     def download(self, video_url: str, output_path: Path) -> None:
-        self.ydl_opts["outtmpl"] = str(Path(f"{str(output_path)}/%(title)s.%(ext)s"))
-        with YoutubeDL(self.ydl_opts) as ydl:
-            ydl.download([video_url])
+        try:
+            download_opts = self.ydl_opts
+            download_opts["outtmpl"] = str(Path(output_path / "%(title)s.%(ext)s"))
+            with YoutubeDL(self.ydl_opts) as ydl:
+                ydl.download([video_url])
+        except Exception as e:
+            raise VideoDownloadError(str(e)) from e
 
 if __name__ == "__main__":
     vd: VideoDownloader = VideoDownloader()
