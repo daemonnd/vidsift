@@ -225,7 +225,7 @@ class VidsiftOrchestrator:
                 }
             )
             self.video_db.mark_failed(
-                error_msg=str(e),
+                error_msg=repr(e),
                 video_id=vid.video_id
             )
             return False
@@ -422,7 +422,7 @@ class VidsiftOrchestrator:
             except VideoValidationError as e: 
                 # logs are handled by the validator, because the logs are more specific like this
                 self.video_db.mark_failed(
-                    error_msg=str(e),
+                    error_msg=repr(e),
                     video_id=vid.video_id
                 )
                 return
