@@ -118,14 +118,6 @@ class VidsiftCLI:
                     }
                 )
                 exit(1)
-            except SystemExit as e:
-                logger.exception(
-                    f"SystemExit: Vidsift got interrupted: {str(e)}",
-                    extra={
-                        "event": LogEvent.ORCHESTRATOR_INTERRUPTED,
-                    }
-                )
-                exit(1)
             except KeyboardInterrupt as e:
                 logger.exception(
                     f"KeyboardInterrupt: Vidsift go interrupted: {str(e)}",
@@ -141,6 +133,7 @@ class VidsiftCLI:
                         "event": LogEvent.ORCHESTRATOR_STOPPED
                     }
                 )
+                exit(0)
         else:
             logger.critical("No command provided, nothing to run")
             exit(1)
