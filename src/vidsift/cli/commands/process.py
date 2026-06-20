@@ -43,42 +43,32 @@ def register_process(subparsers):
 
 
 def handle_process(args, config: AppConfig):
-    metadata_collector = MetadataCollector()
     orchestrator = VidsiftOrchestrator(
         channel_id_list=[""],
         config=config
     )
+    if args.download:
+        downloader: VideoDownloader = VideoDownloader()
+        downloader.download(
+            video_url=args.url,
+            output_path=Path(config.downloads.output_dir)
+        )
+        return
+
+    metadata_collector = MetadataCollector()
     try:
         vid: Video = metadata_collector.fetch_metadata(args.url)
     except InvalidVideoError:
         raise
-    if args.download:
-        downloader: VideoDownloader = VideoDownloader()
-        orchestrator.execute_processing_step(
-            vid=vid,
-            step_type="download",
-            success_decision="downloaded",
-            starting_status=VideoProcessingStatus.DOWNLOADING,
-            action=lambda: downloader.download(
-                video_url=vid.url,
-                output_path=Path(config.downloads.output_dir)
-            )
-        )
     else:
         transcript = orchestrator.fetch_transcript(
             vid=vid
         )
         if args.summarize:
             summarizer: SummarizationService = SummarizationService(config=config)
-            orchestrator.execute_processing_step(
-                vid=vid,
-                step_type="summarize",
-                success_decision="summarized",
-                starting_status=VideoProcessingStatus.SUMMARIZING,
-                action=lambda: summarizer.summarize(
-                    raw_transcript=transcript,
-                    vid=vid
-                )
+            summarizer.summarize(
+                raw_transcript=transcript,
+                vid=vid
             )
         elif args.fetch_transcript:
             print(transcript)
