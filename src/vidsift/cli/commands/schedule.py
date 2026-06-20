@@ -1,19 +1,30 @@
-from argparse import ArgumentParser
-
 from vidsift.pipeline.vidsift_pipeline import VidsiftOrchestrator
+from vidsift.runtime.scheduler import BackgroundServiceManager
 
 
-def register_run(subparsers):
-    run_parser = subparsers.add_parser("run", help="Run the vidsift pipeline")
+def register_schedule(subparsers):
+    schedule_parser = subparsers.add_parser("schedule", help="Run the vidsift pipeline infinite, wait a certain amount of time between each run")
+    schedule_parser.add_argument(
+        "--sleep-interval",
+        help="How many seconds vidsift should sleep between each run",
+        type=int
+    )
 
-    run_parser.set_defaults(func=handle_pipeline_run)
+    schedule_parser.set_defaults(func=handle_pipeline_run)
 
-    return run_parser
+    return schedule_parser
 
 
 def handle_pipeline_run(args, config):
-    channel_id_list = ["UCo71RUe6DX4w-Vd47rFLXPg", ]
+    background_service_manager = BackgroundServiceManager(
+        orchestrator=VidsiftOrchestrator(
+            config=config
+        ),
+        config=config,
+    )
+    if args.sleep_interval:
+        background_service_manager.run(
+            sleep_interval=args.sleep_interval
+        )
 
-    orchestrator = VidsiftOrchestrator(channel_id_list, config=config)
 
-    orchestrator.run()

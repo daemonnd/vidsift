@@ -3,6 +3,7 @@ from argparse import ArgumentParser
 from vidsift.cli.commands.config import handle_config, register_config
 from vidsift.cli.commands.process import register_process
 from vidsift.cli.commands.run import handle_pipeline_run, register_run
+from vidsift.cli.commands.schedule import register_schedule
 from vidsift.cli.commands.videos import register_videos
 
 
@@ -42,6 +43,7 @@ def parse_args():
     config_parser = register_config(subparsers)
     process_parser = register_process(subparsers)
     videos_parser = register_videos(subparsers)
+    schedule_parser = register_schedule(subparsers)
 
 
 
