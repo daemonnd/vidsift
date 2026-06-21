@@ -22,7 +22,7 @@ class YtDlpTranscriptProvider(TranscriptProvider):
         super().__init__()
         Path("/tmp/vidsift/").mkdir(exist_ok=True, parents=True)
 
-    def fetch_transcript(self, video_url: str) -> None:
+    def fetch_transcript(self, video_url: str, video_id: str) -> None:
         """
         Writes transcript vtt to a file under /tmp/
         Raises:
@@ -42,7 +42,7 @@ class YtDlpTranscriptProvider(TranscriptProvider):
 
         logger.info(
             "Starting transcript provider attempt using yt-dlp.",
-            extra={"event": LogEvent.TRANSCRIPT_PROVIDER_STARTED, "provider": "yt_dlp"},
+            extra={"event": LogEvent.TRANSCRIPT_PROVIDER_STARTED, "video_id": video_id, "provider": "yt_dlp"},
         )
 
         with YoutubeDL(ydl_opts) as ydl:
@@ -51,19 +51,19 @@ class YtDlpTranscriptProvider(TranscriptProvider):
             except DownloadError as e:
                 logger.exception(
                     f"Transcript provider failed: {str(e)}",
-                    extra={"event": LogEvent.TRANSCRIPT_PROVIDER_FAILED, "provider": "yt_dlp"},
+                    extra={"event": LogEvent.TRANSCRIPT_PROVIDER_FAILED,"video_id": video_id, "provider": "yt_dlp"},
                 )
                 raise TranscriptDownloadError(str(e))
             except DownloadCancelled as e:
                 logger.exception(
                     f"Transcript provider cancelled: {str(e)}",
-                    extra={"event": LogEvent.TRANSCRIPT_PROVIDER_FAILED, "provider": "yt_dlp"},
+                    extra={"event": LogEvent.TRANSCRIPT_PROVIDER_FAILED,"video_id": video_id, "provider": "yt_dlp"},
                 )
                 raise TranscriptDownloadError(str(e))
             except Exception as e:
                 logger.exception(
                     f"Transcript provider unknown error: {str(e)}",
-                    extra={"event": LogEvent.TRANSCRIPT_PROVIDER_FAILED, "provider": "yt_dlp"},
+                    extra={"event": LogEvent.TRANSCRIPT_PROVIDER_FAILED,"video_id": video_id, "provider": "yt_dlp"},
                 )
                 raise TranscriptError(str(e))
             except BaseException:
@@ -71,7 +71,7 @@ class YtDlpTranscriptProvider(TranscriptProvider):
             else:
                 logger.info(
                     "Transcript provider completed successfully.",
-                    extra={"event": LogEvent.TRANSCRIPT_PROVIDER_COMPLETED, "provider": "yt_dlp"},
+                    extra={"event": LogEvent.TRANSCRIPT_PROVIDER_COMPLETED,"video_id": video_id, "provider": "yt_dlp"},
                 )
 
     def find_vtt_file(self, video_id: str) -> Path:
@@ -136,7 +136,7 @@ class YtDlpTranscriptProvider(TranscriptProvider):
         )
 
         try:
-            self.fetch_transcript(video.url)
+            self.fetch_transcript(video.url, video.video_id)
             transcript_str = self.convert_vtt_to_str(vtt_file=self.find_vtt_file(video_id=video.video_id))
         except TranscriptNotFoundError as e:
             logger.warning(

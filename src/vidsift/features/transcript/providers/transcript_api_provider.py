@@ -84,7 +84,7 @@ class YoutubeTranscriptApiProvider(TranscriptProvider):
             transcript: str = self.extract_transcript_transcript_api(video_id=video.video_id)
 
 
-        except TranscriptFetchingBlockedError as e:
+        except TranscriptFetchingBlockedError:
             logger.warning(
                 "Transcript fetching blocked.",
                 extra={
@@ -92,8 +92,7 @@ class YoutubeTranscriptApiProvider(TranscriptProvider):
                     "video_id": video.video_id,
                     "channel_id": video.channel_id,
                     "provider": self.get_provider_name(),
-                    "error": str(e),
-                },
+                }, exc_info=True
             )
             raise TranscriptError(f"Failed to get the transcript of {video.video_id} with YouTube transcript API")
         except InvalidVideoId as e:
@@ -105,7 +104,7 @@ class YoutubeTranscriptApiProvider(TranscriptProvider):
                     "channel_id": video.channel_id,
                     "provider": self.get_provider_name(),
                     "error": str(e),
-                },
+                }, exc_info=True
             )
             raise TranscriptError(f"Failed to get the transcript of {video.video_id} with YouTube transcript API")
         except TranscriptFetchingError as e:
@@ -117,10 +116,10 @@ class YoutubeTranscriptApiProvider(TranscriptProvider):
                     "channel_id": video.channel_id,
                     "provider": self.get_provider_name(),
                     "error": str(e),
-                },
+                }, exc_info=True
             )
             raise TranscriptError(f"Failed to get the transcript of {video.video_id} with YouTube transcript API")
-        except TranscriptNotAvailibleError as e:
+        except TranscriptNotAvailibleError:
             logger.warning(
                 "Transcript not available.",
                 extra={
@@ -128,8 +127,7 @@ class YoutubeTranscriptApiProvider(TranscriptProvider):
                     "video_id": video.video_id,
                     "channel_id": video.channel_id,
                     "provider": self.get_provider_name(),
-                    "error": str(e),
-                },
+                }, exc_info=True
             )
             raise TranscriptError(f"Failed to get the transcript of {video.video_id} with YouTube transcript API")
         except TranscriptError as e:
@@ -140,8 +138,7 @@ class YoutubeTranscriptApiProvider(TranscriptProvider):
                     "video_id": video.video_id,
                     "channel_id": video.channel_id,
                     "provider": self.get_provider_name(),
-                    "error": str(e),
-                },
+                }, exc_info=True
             )
             raise TranscriptError(f"TranscriptError: Failed to download the transcript of {video.video_id}: {str(e)}")
         except Exception as e:
@@ -152,8 +149,7 @@ class YoutubeTranscriptApiProvider(TranscriptProvider):
                     "video_id": video.video_id,
                     "channel_id": video.channel_id,
                     "provider": self.get_provider_name(),
-                    "error": str(e),
-                },
+                }, exc_info=True
             )
             raise TranscriptError(f"TranscriptError: Failed to download the transcript of {video.video_id}: {str(e)}")
         except BaseException:
