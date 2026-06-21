@@ -65,7 +65,7 @@ class SummarizationService:
     @retry_once
     def summarize(self, raw_transcript: str, vid: Video) -> None:
         """
-        Method to summarize the whole transcript. 
+        Method to summarize the whole transcript.
         It calls summarize, store_summaries and summarize_overall and returns the final result
         Raises:
         SummaryError if something went wrong

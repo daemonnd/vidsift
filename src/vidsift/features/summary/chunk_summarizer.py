@@ -93,8 +93,10 @@ class ChunkSummaryManager:
 
         summaries: list[str] = []
         summary: str = ""
+        total_chunks: int = 0
 
         for chunk, chunk_index in transcript_chunks:
+            total_chunks += 1
             logger.debug(
                 f"Processing  chunk {chunk_index+1}...",
                 extra={
@@ -141,6 +143,7 @@ class ChunkSummaryManager:
             extra={
                 "event": LogEvent.TRANSCRIPT_SUMMARIZATION_COMPLETED,
                 "video_id": video_id,
+                "total_chunks": total_chunks,
                 "successful_summaries": len(summaries),
             },
         )
