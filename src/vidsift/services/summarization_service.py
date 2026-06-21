@@ -2,6 +2,8 @@
 import logging
 from pathlib import Path
 
+from pathvalidate import sanitize_filename
+
 from vidsift.config.models import AppConfig
 from vidsift.features.summary.chunk_summarizer import ChunkSummaryManager
 from vidsift.features.summary.errors import SummaryError
@@ -37,7 +39,8 @@ class SummarizationService:
         except OSError as e:
             raise SummaryError(f"OSError: Failed to create directory at {self.config.summarization.output_dir}: {str(e)}") from e
         else:
-            dest_file = Path(f"{self.config.summarization.output_dir}/{vid.title.replace(" ", "_")}.md")
+            dest_file_name = f"{vid.title}_{vid.video_id}.md"
+            dest_file = Path(f"{self.config.summarization.output_dir}/{sanitize_filename(dest_file_name)}")
             try:
                 dest_file.touch()
             except FileExistsError as e:
