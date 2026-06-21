@@ -12,10 +12,18 @@ class LogEvent:
                 return LogEvent.VIDEO_DOWNLOAD_STARTED, LogEvent.VIDEO_DOWNLOAD_COMPLETED, LogEvent.VIDEO_DOWNLOAD_FAILED
             case "summarize":
                 return LogEvent.VIDEO_SUMMARIZATION_STARTED, LogEvent.VIDEO_SUMMARIZATION_COMPLETED, LogEvent.VIDEO_SUMMARIZATION_FAILED
+    # run events
+    RUN_STARTED = "run_started"
+    RUN_COMPLETED = "run_completed"
     # orchestrator events
     ORCHESTRATOR_STARTED = "orchestrator_started"
     ORCHESTRATOR_STOPPED = "orchestrator_stopped"
     ORCHESTRATOR_INTERRUPTED = "orchestrator_interrupted"
+
+    # single video manual runs
+    MANUAL_DOWNLOAD_RUN_STARTED = "manual_download_run_started"
+    MANUAL_SUMMARIZATION_RUN_STARTED = "manual_summarization_run_started"
+
 
     # invalid video event
     INVALID_VIDEO = "invalid_video"
@@ -25,8 +33,11 @@ class LogEvent:
     INTERRUPTED_PROCESSING_COMPLETED = "interrupted_processing_completed"
 
     VALIDATION_RESUME_STARTED = "validation_resume_started"
+    VALIDATION_RESUME_COMPLETED = "validation_resume_completed"
     DOWNLOAD_RESUME_STARTED = "download_resume_started"
+    DOWNLOAD_RESUME_COMPLETED = "download_resume_completed"
     SUMMARIZATION_RESUME_STARTED = "summarization_resume_started"
+    SUMMARIZATION_RESUME_COMPLETED = "summarization_resume_completed"
 
     # video delay events
     VIDEO_DELAY_STARTED = "video_delay_started"

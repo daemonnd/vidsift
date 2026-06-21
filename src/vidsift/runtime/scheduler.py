@@ -1,11 +1,14 @@
 import logging
+from contextvars import Token
 from time import sleep
 
 from vidsift.config.models import AppConfig
 from vidsift.pipeline.vidsift_pipeline import VidsiftOrchestrator
 from vidsift.runtime.errors import LockingError
 from vidsift.runtime.lock_manager import LockManager
+from vidsift.shared.execution_context import reset_run_context
 from vidsift.shared.logging.log_event_fields import LogEvent
+from vidsift.shared.run_manager import RunManager
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +25,7 @@ class BackgroundServiceManager:
             owner="scheduler",
             sleep_interval=locking_interval
         )
+        self.locking_interval = locking_interval
 
     def run(
         self,
@@ -35,15 +39,11 @@ class BackgroundServiceManager:
         4. sleep sleep_interval seconds
         repeat
         """
+        token: None | Token = None
         try:
             while True:
-                self.lock_manager.acquire(owner="scheduler")
-                logger.info(
-                    "Acquired lock",
-                    extra={
-                        "event": LogEvent.LOCK_ACQUIRED
-                    }
-                )
+                run_manager = RunManager()
+                token = run_manager.start_run(owner="scheduler", sleep_interval=self.locking_interval, run_type="schedule_run")
                 try:
                     self.orchestrator.run()
                 except SystemExit as e:
@@ -53,11 +53,13 @@ class BackgroundServiceManager:
                             "event": LogEvent.ORCHESTRATOR_STOPPED,
                         }
                     )
+                # not use end_run(), because the lock release and run end are separated because of the cooldown
                 self.lock_manager.release(owner="scheduler")
                 logger.info(
                     "Lock released",
                     extra={
-                        "event": LogEvent.LOCK_RELEASED
+                        "event": LogEvent.LOCK_RELEASED,
+                        "owner": "scheduler"
                     }
                 )
                 logger.info(
@@ -75,6 +77,14 @@ class BackgroundServiceManager:
                         "interval": sleep_interval
                     }
                 )
+                reset_run_context(token)
+                logger.info(
+                    "Run completed",
+                    extra={
+                        "event": LogEvent.RUN_COMPLETED,
+                        "owner": "scheduler"
+                    }
+                )
 
         except LockingError as e:
             logger.exception(
@@ -85,3 +95,6 @@ class BackgroundServiceManager:
             )
         finally:
             self.lock_manager.release(owner="scheduler")
+            if token:
+                reset_run_context(token)
+

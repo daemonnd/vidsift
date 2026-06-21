@@ -94,7 +94,9 @@ class VidsiftOrchestrator:
             except VideoDataCollectionError as e:
                 logger.exception(
                     f"VideoDataCollectionError: Failed to collect the necessary data about the videos to process: {str(e)}",
-                    extra={"event": LogEvent.RSS_FETCH_FAILED},
+                    extra={
+                        "event": LogEvent.RSS_FETCH_FAILED,
+                    },
                 )
                 logger.info("Exiting because no data exist...")
                 exit(1)
@@ -177,7 +179,9 @@ class VidsiftOrchestrator:
             self.video_db.close()
             logger.info(
                 "The vidsift orchestrator has been stopped.",
-                extra={"event": LogEvent.ORCHESTRATOR_STOPPED},
+                extra={
+                    "event": LogEvent.ORCHESTRATOR_STOPPED,
+                },
             )
 
     def execute_processing_step(
@@ -325,7 +329,12 @@ class VidsiftOrchestrator:
                 ),
                 should_sleep=self.should_sleep
             )
-        logger.debug("Check for videos where the download got interrupted... Done")
+        logger.debug(
+            "Check for videos where the download got interrupted... Done",
+            extra={
+                "event": LogEvent.VALIDATION_RESUME_STARTED,
+            }
+        )
 
     def resume_validations(self):
         # re-validate the videos where only the metadata is present
@@ -342,7 +351,12 @@ class VidsiftOrchestrator:
                 },
             )
             self.process_validation_pipeline(vid=vid, create_db_entry=False)
-        logger.debug("Check for videos where the validation got interrupted... Done")
+        logger.debug(
+            "Check for videos where the validation got interrupted... Done",
+            extra={
+                "event": LogEvent.VALIDATION_RESUME_COMPLETED,
+            }
+        )
 
     def resume_summaries(self):
         # restart the summarization action for the videos where the summary got interrupted
@@ -382,7 +396,12 @@ class VidsiftOrchestrator:
                     ),
                     should_sleep=self.should_sleep
                 )
-        logger.debug("Check for videos where the summarization got interrupted... Done")
+        logger.debug(
+            "Check for videos where the summarization got interrupted... Done",
+            extra={
+                "event": LogEvent.SUMMARIZATION_RESUME_COMPLETED,
+            }
+        )
 
     def process_validation_pipeline(self, vid: Video, create_db_entry: bool):
         try:
