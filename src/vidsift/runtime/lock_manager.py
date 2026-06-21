@@ -19,10 +19,8 @@ class LockManager:
             user_data_dir(
                 appname="vidsift"
             )
-        )
+        ) / "lock.db"
     ) -> None:
-        if db_path == Path(user_data_dir(appname="vidsift")):
-            db_path = db_path / "lock.db"
         self.sleep_interval = sleep_interval
         self.db_path: Path = db_path
         self.db_path.parent.mkdir(parents=True, exist_ok=True)

@@ -6,6 +6,7 @@ from vidsift.ingestion.metadata_collector import MetadataCollector
 from vidsift.models.video import InvalidVideoError, Video
 from vidsift.models.video_record import VideoProcessingStatus
 from vidsift.pipeline.vidsift_pipeline import VidsiftOrchestrator
+from vidsift.runtime.lock_manager import LockManager
 from vidsift.services.summarization_service import SummarizationService
 from vidsift.services.validation_service import VideoValidator
 
@@ -44,6 +45,7 @@ def register_process(subparsers):
 
 
 def handle_process(args, config: AppConfig):
+    lock_manager: LockManager = LockManager(owner="manual", sleep_interval=10)
     orchestrator = VidsiftOrchestrator(
         config=config
     )
