@@ -71,19 +71,7 @@ class YoutubeTranscriptApiProvider(TranscriptProvider):
         - TranscriptError
         """
         try:
-            logger.info(
-                "Transcript fetching started.",
-                extra={
-                    "event": LogEvent.TRANSCRIPT_FETCH_STARTED,
-                    "video_id": video.video_id,
-                    "channel_id": video.channel_id,
-                    "provider": self.get_provider_name(),
-                },
-            )
-
             transcript: str = self.extract_transcript_transcript_api(video_id=video.video_id)
-
-
         except TranscriptFetchingBlockedError:
             logger.warning(
                 "Transcript fetching blocked.",
@@ -155,16 +143,6 @@ class YoutubeTranscriptApiProvider(TranscriptProvider):
         except BaseException:
             raise
         else:
-            logger.info(
-                "Transcript fetching completed.",
-                extra={
-                    "event": LogEvent.TRANSCRIPT_FETCH_COMPLETED,
-                    "video_id": video.video_id,
-                    "channel_id": video.channel_id,
-                    "provider": self.get_provider_name(),
-                },
-            )
-
             return transcript
 
     def get_provider_name(self) -> str:

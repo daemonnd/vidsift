@@ -130,10 +130,6 @@ class YtDlpTranscriptProvider(TranscriptProvider):
         Raises:
             - TranscriptError on failure
         """
-        logger.info(
-            "Starting transcript fetch.",
-            extra={"event": LogEvent.TRANSCRIPT_FETCH_STARTED, "video_id": video.video_id},
-        )
 
         try:
             self.fetch_transcript(video.url, video.video_id)
@@ -169,12 +165,7 @@ class YtDlpTranscriptProvider(TranscriptProvider):
             )
             raise TranscriptError(f"TranscriptError: Failed to download the transcript of {video.video_id}: {str(e)}")
         else:
-            logger.info(
-                "Transcript fetch completed successfully.",
-                extra={"event": LogEvent.TRANSCRIPT_FETCH_COMPLETED, "video_id": video.video_id},
-            )
-
-        return transcript_str
+            return transcript_str
 
     def get_provider_name(self) -> str:
         return "yt_dlp"
