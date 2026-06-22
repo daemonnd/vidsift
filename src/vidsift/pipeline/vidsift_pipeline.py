@@ -20,8 +20,6 @@ from typing import Generator, Literal
 
 from vidsift.config.models import AppConfig, ChannelConfig
 from vidsift.features.download.downloader import VideoDownloader
-from vidsift.features.download.errors import VideoDownloadError
-from vidsift.features.summary.errors import SummaryError
 from vidsift.features.transcript.errors import TranscriptError
 from vidsift.features.validation.errors import VideoValidationError
 from vidsift.features.video_processing.repository import \
