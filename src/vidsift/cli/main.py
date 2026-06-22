@@ -1,8 +1,8 @@
 from argparse import ArgumentParser
 
-from vidsift.cli.commands.config import handle_config, register_config
+from vidsift.cli.commands.config import register_config
 from vidsift.cli.commands.process import register_process
-from vidsift.cli.commands.run import handle_pipeline_run, register_run
+from vidsift.cli.commands.run import register_run
 from vidsift.cli.commands.schedule import register_schedule
 from vidsift.cli.commands.videos import register_videos
 
@@ -10,8 +10,8 @@ from vidsift.cli.commands.videos import register_videos
 def parse_args():
     parser = ArgumentParser(
         prog="vidsift",
-        description="AI-powered YouTube feed filtering and transcript-based video validation and processing",
         suggest_on_error=True,
+        description="""AI-powered YouTube feed filtering and transcript-based video validation and processing""",
     )
 
 
