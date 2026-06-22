@@ -21,10 +21,6 @@ class BackgroundServiceManager:
     ) -> None:
         self.orchestrator: VidsiftOrchestrator = orchestrator
         self.config: AppConfig = config
-        self.lock_manager: LockManager = LockManager(
-            owner="scheduler",
-            sleep_interval=locking_interval
-        )
         self.locking_interval = locking_interval
 
     def run(
@@ -53,15 +49,7 @@ class BackgroundServiceManager:
                             "event": LogEvent.ORCHESTRATOR_STOPPED,
                         }
                     )
-                # not use end_run(), because the lock release and run end are separated because of the cooldown
-                self.lock_manager.release(owner="scheduler")
-                logger.info(
-                    "Lock released",
-                    extra={
-                        "event": LogEvent.LOCK_RELEASED,
-                        "owner": "scheduler"
-                    }
-                )
+                run_manager.end_run()
                 logger.info(
                     "Scheduler cooldown started",
                     extra={
@@ -77,14 +65,6 @@ class BackgroundServiceManager:
                         "interval": sleep_interval
                     }
                 )
-                reset_run_context(token)
-                logger.info(
-                    "Run completed",
-                    extra={
-                        "event": LogEvent.RUN_COMPLETED,
-                        "owner": "scheduler"
-                    }
-                )
 
         except LockingError as e:
             logger.exception(
@@ -94,7 +74,6 @@ class BackgroundServiceManager:
                 }
             )
         finally:
-            self.lock_manager.release(owner="scheduler")
             if token:
                 reset_run_context(token)
 
