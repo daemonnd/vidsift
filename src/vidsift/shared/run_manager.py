@@ -17,7 +17,7 @@ class RunManager:
             self,
             owner: Literal["scheduler", "manual"],
             run_type: Literal["manual_pipeline_run", "manual_video_run", "schedule_run"],
-            sleep_interval: float = 5
+            sleep_interval: float = 5,
     ):
         self.owner: Literal["scheduler", "manual"] = owner
         self.lock_manager: LockManager = LockManager(owner=self.owner, sleep_interval=sleep_interval)
@@ -42,6 +42,7 @@ class RunManager:
         return self.token
 
     def end_run(self):
+        try:
             logger.info(
                 "Run completed",
                 extra={
@@ -58,3 +59,5 @@ class RunManager:
                     "owner": self.owner
                 }
             )
+        finally:
+            self.lock_manager.close()

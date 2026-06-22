@@ -91,3 +91,6 @@ class LockManager:
             self.conn.commit()
         except OperationalError as e:
             raise LockWritingError(f"Failed to write to the lock db because of an operational error: {str(e)}") from e
+
+    def close(self) -> None:
+        self.conn.close()
