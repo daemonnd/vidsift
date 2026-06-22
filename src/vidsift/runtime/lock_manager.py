@@ -55,6 +55,7 @@ class LockManager:
         Method to acquire the lock
         Waits until lock is free
         """
+        first_run: bool = True
         while True:
             try:
                 cur = self.conn.execute(
@@ -76,6 +77,15 @@ class LockManager:
             if cur.rowcount == 1:
                 return  # lock acquired
 
+            if first_run:
+                print(f"""
+                If you are sure that no other instance of vidsift is running, 
+                then you can remove the lock file using this command:
+                ```
+                rm {self.db_path}
+                ```
+                """)
+                first_run = False
             sleep(self.sleep_interval)
 
 
