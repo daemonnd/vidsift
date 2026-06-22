@@ -2,6 +2,8 @@
 import logging
 from pathlib import Path
 
+from pathvalidate import sanitize_filename
+
 from vidsift.config.models import AppConfig
 from vidsift.features.summary.chunk_summarizer import ChunkSummaryManager
 from vidsift.features.summary.errors import SummaryError
@@ -23,9 +25,9 @@ class SummarizationService:
         self.final_summarizer: FinalSummarizer = FinalSummarizer(ai_model=self.config.ai.summary_model)
         self.text_normalizer: TextNormalizer = TextNormalizer()
 
-    def summarize_all_chunks(self, transcript: str) -> list[str]:
+    def summarize_all_chunks(self, transcript: str, video_id: str) -> list[str]:
         try:
-            return self.chunk_summarizer.summarize_all_chunks(transcript=transcript)
+            return self.chunk_summarizer.summarize_all_chunks(transcript=transcript, video_id=video_id)
         except EmptyTranscriptError as e:
             raise SummaryError(f"An Error occured while summarizing chunks of the transcript: {e}") from e
         # a SummaryError can propagate, cause if will be caught later, in the vidsift pipeline
@@ -37,7 +39,8 @@ class SummarizationService:
         except OSError as e:
             raise SummaryError(f"OSError: Failed to create directory at {self.config.summarization.output_dir}: {str(e)}") from e
         else:
-            dest_file = Path(f"{self.config.summarization.output_dir}/{vid.title.replace(" ", "_")}.md")
+            dest_file_name = f"{vid.title}_{vid.video_id}.md"
+            dest_file = Path(f"{self.config.summarization.output_dir}/{sanitize_filename(dest_file_name)}")
             try:
                 dest_file.touch()
             except FileExistsError as e:
@@ -65,7 +68,7 @@ class SummarizationService:
     @retry_once
     def summarize(self, raw_transcript: str, vid: Video) -> None:
         """
-        Method to summarize the whole transcript. 
+        Method to summarize the whole transcript.
         It calls summarize, store_summaries and summarize_overall and returns the final result
         Raises:
         SummaryError if something went wrong
@@ -73,7 +76,7 @@ class SummarizationService:
         Final String of the AI summary
         """
         transcript: str = self.text_normalizer.normalize(raw_transcript)
-        summaries: list[str] = self.summarize_all_chunks(transcript=transcript)
+        summaries: list[str] = self.summarize_all_chunks(transcript=transcript, video_id=vid.video_id)
         final_summary: str = self.summarize_overall(summaries=summaries)
         dest_path: Path = self.store_summary(
             summary=final_summary,

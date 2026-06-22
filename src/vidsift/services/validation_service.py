@@ -142,7 +142,7 @@ class VideoValidator:
         try:
             return ai_manager.run_ai_pipeline(
                 AIJSONRuntimeRequirements(
-                    ai_model="qwen3.5:9b",
+                    ai_model=self.config.ai.validation_model,
                     first_attempt_pattern="$CUSTOM_CHANNEL_INSTRUCTIONS",
                     first_attempt_replacement=get_custom_instructions(vid.author),
                     first_attempt_append=f"\n{chunks}",
@@ -181,8 +181,8 @@ class VideoValidator:
                 },
             )
             return ValidationResult(
-                content_quality_score=0.1,
-                topic_match_score=0.1,
+                content_quality_score=1,
+                topic_match_score=1,
                 decision="discarded",
                 summary_reason={"reason": "signs of exessive clickbait are present"},
             )

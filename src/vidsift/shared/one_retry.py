@@ -15,4 +15,6 @@ def retry_once(func):
         except Exception as e:
             logger.warning(f"Error occurred: {e}. Retrying once...")
             return func(*args, **kwargs)
+        except BaseException:
+            raise
     return wrapper

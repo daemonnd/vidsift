@@ -74,7 +74,7 @@ class ChunkSummaryManager:
 
             return normalized_summary
 
-    def summarize_all_chunks(self, transcript: str) -> list[str]:
+    def summarize_all_chunks(self, transcript: str, video_id: str) -> list[str]:
         """
         Method to summarize all the chunks.
         Raises:
@@ -93,12 +93,15 @@ class ChunkSummaryManager:
 
         summaries: list[str] = []
         summary: str = ""
+        total_chunks: int = 0
 
         for chunk, chunk_index in transcript_chunks:
+            total_chunks += 1
             logger.debug(
                 f"Processing  chunk {chunk_index+1}...",
                 extra={
                     "event": LogEvent.CHUNK_SUMMARIZATION_STARTED,
+                    "video_id": video_id,
                     "chunk_index": chunk_index,
                     "chunk_length": len(chunk),
                 },
@@ -112,6 +115,7 @@ class ChunkSummaryManager:
                     f"Failed to summarize transcript chunk, some important information in the final summary may be missing: {str(e)}",
                     extra={
                         "event": LogEvent.CHUNK_SUMMARIZATION_FAILED,
+                        "video_id": video_id,
                         "chunk_index": chunk_index,
                         "chunk_length": len(chunk),
                     },
@@ -124,6 +128,7 @@ class ChunkSummaryManager:
                     "Chunk contained no important information.",
                     extra={
                         "event": LogEvent.CHUNK_SUMMARIZATION_COMPLETED,
+                        "video_id": video_id,
                         "chunk_index": chunk_index,
                         "chunk_length": len(chunk),
                         "contains_important_information": False,
@@ -137,6 +142,8 @@ class ChunkSummaryManager:
             "Transcript chunk summarization completed.",
             extra={
                 "event": LogEvent.TRANSCRIPT_SUMMARIZATION_COMPLETED,
+                "video_id": video_id,
+                "total_chunks": total_chunks,
                 "successful_summaries": len(summaries),
             },
         )

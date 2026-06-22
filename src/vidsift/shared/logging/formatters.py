@@ -41,6 +41,12 @@ class JSONFormatter(Formatter):
             "exc_text",
         }
     def format(self, record: LogRecord) -> str:
+        from vidsift.shared.execution_context import get_run_context
+        ctx = get_run_context()
+        if ctx:
+            run_id = ctx.run_id
+        else:
+            run_id = None
         output: dict = {
                 "timestamp": self.formatTime(record=record),
                 "level": record.levelname,
@@ -48,6 +54,7 @@ class JSONFormatter(Formatter):
                 "logger_name": record.name,
                 "file_name": record.filename,
                 "lineno": record.lineno,
+                "run_id": str(run_id),
             }
         if record.exc_info:
             if not record.exc_text:

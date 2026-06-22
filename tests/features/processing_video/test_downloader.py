@@ -48,7 +48,6 @@ def test_download_video_marks_done(db, validator, vid_downloader, set_up_transcr
 
     orchestrator = VidsiftOrchestrator(
             should_sleep=False,
-            channel_id_list=["somechannelid"],
             video_validator=validator,
             transcript_service=transcript_service,
             downloader=downloader,
@@ -74,7 +73,6 @@ def test_summary(db, set_up_transcript_service,  summarization_service, vid_down
     downloader: FakeDownloader = vid_downloader
     orchestrator = VidsiftOrchestrator(
         should_sleep=False,
-        channel_id_list=["somechannelid"],
         video_validator=validator,
         summarizer=summarization_service,
         video_db=db,
@@ -99,7 +97,6 @@ def test_discard(db, summarization_service, vid_downloader, set_up_transcript_se
     db: VideoProcessingRepository = db
     orchestrator = VidsiftOrchestrator(
         should_sleep=False,
-        channel_id_list=["somechannelid"],
         video_db=db,
         video_validator=validator,
         summarizer=summarizer,
@@ -126,7 +123,6 @@ def test_failing_get_transcript(db, summarization_service, vid_downloader, vid, 
 
     orchestrator = VidsiftOrchestrator(
         should_sleep=False,
-        channel_id_list=["somechannelid"],
         video_db=db,
         video_validator=validator,
         summarizer=summarizer,
@@ -169,7 +165,6 @@ def test_failing_validate_video(
 
     orchestrator = VidsiftOrchestrator(
         should_sleep=False,
-        channel_id_list=["somechannelid"],
         video_db=db,
         video_validator=validator,
         summarizer=summarizer,
@@ -217,7 +212,6 @@ def test_failing_summary(
 
     orchestrator = VidsiftOrchestrator(
         should_sleep=False,
-        channel_id_list=["somechannelid"],
         video_db=db,
         video_validator=validator,
         summarizer=summarizer,
@@ -270,7 +264,6 @@ def test_existing_video_is_skipped(
 
     orchestrator = VidsiftOrchestrator(
         should_sleep=False,
-        channel_id_list=["somechannelid"],
         video_db=db,
         video_validator=validator,
         summarizer=summarizer,

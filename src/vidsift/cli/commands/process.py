@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 
 from vidsift.config.models import AppConfig
@@ -6,8 +7,13 @@ from vidsift.ingestion.metadata_collector import MetadataCollector
 from vidsift.models.video import InvalidVideoError, Video
 from vidsift.models.video_record import VideoProcessingStatus
 from vidsift.pipeline.vidsift_pipeline import VidsiftOrchestrator
+from vidsift.runtime.lock_manager import LockManager
 from vidsift.services.summarization_service import SummarizationService
 from vidsift.services.validation_service import VideoValidator
+from vidsift.shared.execution_context import (RunContext, reset_run_context,
+                                              set_run_context)
+from vidsift.shared.logging.log_event_fields import LogEvent
+from vidsift.shared.run_manager import RunManager
 
 
 def register_process(subparsers):
@@ -44,43 +50,63 @@ def register_process(subparsers):
 
 
 def handle_process(args, config: AppConfig):
-    orchestrator = VidsiftOrchestrator(
-        channel_id_list=[""],
-        config=config
-    )
-    if args.download:
-        downloader: VideoDownloader = VideoDownloader()
-        downloader.download(
-            video_url=args.url,
-            output_path=Path(config.downloads.output_dir)
-        )
-        return
-
-    metadata_collector = MetadataCollector()
+    run_manager: RunManager = RunManager()
+    run_manager.start_run(owner="manual", run_type="manual_pipeline_run")
     try:
-        vid: Video = metadata_collector.fetch_metadata(args.url)
-    except InvalidVideoError:
-        raise
-    else:
-        transcript = orchestrator.fetch_transcript(
-            vid=vid
+        orchestrator = VidsiftOrchestrator(
+            config=config
         )
-        if args.summarize:
-            summarizer: SummarizationService = SummarizationService(config=config)
-            summarizer.summarize(
-                raw_transcript=transcript,
+        logger = logging.getLogger(__name__)
+        if args.download:
+            from vidsift.shared.video_id_extractor import VideoIDExtractor
+            logger.info(
+                f"Starting manual download with url {args.url}",
+                extra={
+                    "event": LogEvent.MANUAL_DOWNLOAD_RUN_STARTED,
+                    "video_id": VideoIDExtractor().extract_id(args.url)
+                }
+            )
+            downloader: VideoDownloader = VideoDownloader()
+            downloader.download(
+                video_url=args.url,
+                output_path=Path(config.downloads.output_dir)
+            )
+            return
+
+        metadata_collector = MetadataCollector()
+        try:
+            vid: Video = metadata_collector.fetch_metadata(args.url)
+        except InvalidVideoError:
+            raise
+        else:
+            transcript = orchestrator.fetch_transcript(
                 vid=vid
             )
-        elif args.fetch_transcript:
-            print(transcript)
-        else:
-            video_validator: VideoValidator = VideoValidator(config=config)
-            validation_result = video_validator.validate_video(
-                vid=vid,
-                raw_transcript=transcript
-            )
-            orchestrator.take_action_on_video(
-                vid=vid,
-                video_validation_result=validation_result,
-                transcript=transcript
-            )
+            if args.summarize:
+                logger.info(
+                    f"Starting manual summarization with video id {vid.video_id}",
+                    extra={
+                        "event": LogEvent.MANUAL_SUMMARIZATION_RUN_STARTED,
+                        "video_id": vid.video_id
+                    }
+                )
+                summarizer: SummarizationService = SummarizationService(config=config)
+                summarizer.summarize(
+                    raw_transcript=transcript,
+                    vid=vid
+                )
+            elif args.fetch_transcript:
+                print(transcript)
+            else:
+                video_validator: VideoValidator = VideoValidator(config=config)
+                validation_result = video_validator.validate_video(
+                    vid=vid,
+                    raw_transcript=transcript
+                )
+                orchestrator.take_action_on_video(
+                    vid=vid,
+                    video_validation_result=validation_result,
+                    transcript=transcript
+                )
+    finally:
+        run_manager.end_run()

@@ -111,8 +111,32 @@ class VidsiftCLI:
             try:
                 args.func(args, config)
             except InvalidVideoError as e:
-                logger.critical(f"InvalidVideoError: Failed to create a video object to process videos: {str(e)}, exiting", exc_info=True)
+                logger.critical(
+                    f"InvalidVideoError: Failed to create a video object to process videos: {str(e)}, exiting", exc_info=True,
+                    extra={
+                        "event": LogEvent.INVALID_VIDEO
+                    }
+                )
                 exit(1)
+            except KeyboardInterrupt as e:
+                logger.exception(
+                    f"KeyboardInterrupt: Vidsift go interrupted: {str(e)}",
+                    extra={
+                        "event": LogEvent.ORCHESTRATOR_INTERRUPTED
+                    }
+                )
+                exit(130)
+            else:
+                logger.info(
+                    "Orchestrator terminated successfully.",
+                    extra={
+                        "event": LogEvent.ORCHESTRATOR_STOPPED
+                    }
+                )
+                exit(0)
+        else:
+            logger.critical("No command provided, nothing to run")
+            exit(1)
 
 
 if __name__ == "__main__":

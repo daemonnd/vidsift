@@ -87,7 +87,7 @@ class VideoDataCollection:
                     )
                     continue
 
-        except Exception:
+        except BaseException:
             raise
         else:
             logger.info(
