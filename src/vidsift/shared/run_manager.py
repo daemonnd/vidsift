@@ -5,6 +5,8 @@ import logging
 from typing import Literal
 from uuid import uuid7
 
+from platformdirs import user_log_dir
+
 from vidsift.runtime.lock_manager import LockManager
 from vidsift.shared.execution_context import (RunContext, reset_run_context,
                                               set_run_context)
@@ -36,8 +38,8 @@ class RunManager:
             "Run started",
             extra={
                 "event": LogEvent.RUN_STARTED,
-                "run_type": run_type
-            }
+                "run_type": run_type,
+                "log_file": f"{user_log_dir(appname='vidsift')}/vidsift.jsonl"            }
         )
         return self.token
 
