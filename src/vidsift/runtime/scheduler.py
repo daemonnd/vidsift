@@ -5,7 +5,6 @@ from time import sleep
 from vidsift.config.models import AppConfig
 from vidsift.pipeline.vidsift_pipeline import VidsiftOrchestrator
 from vidsift.runtime.errors import LockingError
-from vidsift.runtime.lock_manager import LockManager
 from vidsift.shared.execution_context import reset_run_context
 from vidsift.shared.logging.log_event_fields import LogEvent
 from vidsift.shared.run_manager import RunManager
