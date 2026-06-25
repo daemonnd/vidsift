@@ -38,7 +38,7 @@ class BackgroundServiceManager:
         try:
             while True:
                 run_manager = RunManager()
-                token = run_manager.start_run(owner="scheduler", sleep_interval=self.locking_interval, run_type="schedule_run")
+                token = run_manager.start_run(sleep_interval=self.locking_interval, run_type="schedule_run")
                 try:
                     self.orchestrator.run()
                 except SystemExit as e:
