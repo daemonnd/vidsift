@@ -17,13 +17,11 @@ logger = logging.getLogger(__name__)
 class RunManager:
     def start_run(
             self,
-            owner: Literal["scheduler", "manual"],
             run_type: Literal["manual_pipeline_run", "manual_video_run", "schedule_run"],
             sleep_interval: float = 5,
     ):
-        self.owner: Literal["scheduler", "manual"] = owner
-        self.lock_manager: LockManager = LockManager(owner=self.owner, sleep_interval=sleep_interval)
-        self.lock_manager.acquire(self.owner)
+        self.lock_manager: LockManager = LockManager(sleep_interval=sleep_interval)
+        self.lock_manager.acquire()
 
         run_context = RunContext(run_id=uuid7())
         self.token = set_run_context(run_context)
@@ -31,7 +29,6 @@ class RunManager:
             "Acquired lock",
             extra={
                 "event": LogEvent.LOCK_ACQUIRED,
-                "owner": self.owner
             }
         )
         logger.info(
@@ -49,17 +46,16 @@ class RunManager:
                 "Run completed",
                 extra={
                     "event": LogEvent.RUN_COMPLETED,
-                    "owner": self.owner
                 }
             )
             reset_run_context(self.token)
-            self.lock_manager.release(self.owner)
+            self.lock_manager.release()
             logger.info(
                 "Lock released",
                 extra={
                     "event": LogEvent.LOCK_RELEASED,
-                    "owner": self.owner
                 }
             )
         finally:
-            self.lock_manager.close()
+            #self.lock_manager.close()
+            pass
