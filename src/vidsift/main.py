@@ -146,4 +146,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     vidsift_app: VidsiftCLI = VidsiftCLI()
-    #vidsift_app.run()
+    vidsift_app.run()
