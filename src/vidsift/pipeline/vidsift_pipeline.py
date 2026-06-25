@@ -56,7 +56,7 @@ class VidsiftOrchestrator:
         for channel in config.channels:
             channel_id_list.append(channel.id)
         # video fetching
-        self.video_data_collector: VideoDataCollection = VideoDataCollection(channel_id_list=channel_id_list)
+        self.video_data_collector: VideoDataCollection = VideoDataCollection(channel_id_list=channel_id_list, config=config)
         # video cache
         self.video_db: VideoProcessingRepository = (video_db or VideoProcessingRepository(config=self.config))
         # validation

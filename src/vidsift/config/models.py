@@ -92,6 +92,7 @@ class ChannelConfig(BaseModel):
 class VideoProcessingConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
     max_retry_attempts: int = Field(le=10, ge=-1)
+    days_uploaded_before: int = Field(ge=0)
     min_vid_delay: int = Field(ge=30)
     random_vid_delay: int = Field(ge=10)
 

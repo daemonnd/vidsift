@@ -3,6 +3,7 @@ from typing import Generator
 
 from feedparser import FeedParserDict
 
+from vidsift.config.models import AppConfig
 from vidsift.ingestion.errors import (InvalidHTTPStatusError,
                                       NonWellFormattedFeedError,
                                       VideoDataCollectionError)
@@ -14,7 +15,8 @@ logger = logging.getLogger(__name__)
 
 
 class VideoDataCollection:
-    def __init__(self, channel_id_list: list[str]) -> None:
+    def __init__(self, channel_id_list: list[str], config: AppConfig) -> None:
+        self.config: AppConfig = config
         self.channel_id_list: list[str] = channel_id_list
 
         if not self.channel_id_list:
@@ -24,7 +26,8 @@ class VideoDataCollection:
 
     def get_videos_to_process(self) -> Generator[Video, None, None]:
         data_collector: UrlCollector = UrlCollector(
-            channel_id_list=self.channel_id_list
+            channel_id_list=self.channel_id_list,
+            config=self.config
         )
 
         logger.info(

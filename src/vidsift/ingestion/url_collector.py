@@ -1,8 +1,10 @@
+from datetime import datetime, timedelta
 from typing import Generator
 
 import feedparser
 from feedparser import FeedParserDict
 
+from vidsift.config.models import AppConfig
 from vidsift.ingestion.errors import (InvalidHTTPStatusError,
                                       NonWellFormattedFeedError)
 from vidsift.models.video import InvalidVideoError, Video
@@ -12,9 +14,10 @@ YOUTUBE_BASE_RSS_URL: str = "https://www.youtube.com/feeds/videos.xml?channel_id
 id_extractor = VideoIDExtractor()
 
 class UrlCollector:
-    def __init__(self, channel_id_list: list[str]) -> None:
-        self.channel_id_list: list = channel_id_list
+    def __init__(self, channel_id_list: list[str], config: AppConfig) -> None:
+        self.config: AppConfig = config
 
+        self.channel_id_list: list = channel_id_list
         if self.channel_id_list == []:
             raise  ValueError("The channel ID list given for fetching video data is empty")
 
@@ -57,10 +60,12 @@ class UrlCollector:
                 continue
             if "/shorts/" in entry.link:
                 continue
+            # skip videos that are less recent than specified in the config
+            video_upload_time = datetime.fromisoformat(str(entry.published))
+            oldest_allowed_date = datetime.now() - timedelta(days=self.config.video_processing.days_uploaded_before)
+            if video_upload_time.timestamp() < oldest_allowed_date.timestamp():
+                continue
 
-            #channel_id_dict[channel_id] = {
-            #"link": {}
-            #}
             try:
                 video = Video(
                     title=str(entry.title), author=str(entry.author),
