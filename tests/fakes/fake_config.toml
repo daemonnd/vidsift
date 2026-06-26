@@ -41,6 +41,9 @@ max_retry_attempts = 1
 # how much seconds vidsift should sleep after having processed one video at minimum, (min_vid_delay)
 # then how much of random secods will be added (between 0 and random_vid_delay)
 
+
+days_uploaded_before = 4
+
 # int (< 30)
 min_vid_delay = 300 # 5 minutes
 # int(< 10)
