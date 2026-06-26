@@ -52,6 +52,7 @@ class SummarizationService:
 
 
 
+    @retry_once
     def summarize_overall(self, summaries: list[str]) -> str:
         """
         Method to summarize all the short, bulleted summaries
@@ -65,7 +66,6 @@ class SummarizationService:
         except AIError as e:
             raise SummaryError(f"An error occured while summarizing the short summaries of the chunks: {e}") from e
 
-    @retry_once
     def summarize(self, raw_transcript: str, vid: Video) -> None:
         """
         Method to summarize the whole transcript.
