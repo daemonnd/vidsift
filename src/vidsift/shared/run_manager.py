@@ -3,7 +3,7 @@ File to manage the locking, run starting etc.
 """
 import logging
 from typing import Literal
-from uuid import uuid7
+from uuid import UUID, uuid7
 
 from platformdirs import user_log_dir
 
@@ -20,10 +20,10 @@ class RunManager:
             run_type: Literal["manual_pipeline_run", "manual_video_run", "schedule_run"],
             sleep_interval: float = 5,
     ):
-        self.lock_manager: LockManager = LockManager(sleep_interval=sleep_interval)
-        self.lock_manager.acquire()
-
         run_context = RunContext(run_id=uuid7())
+        self.lock_manager: LockManager = LockManager(sleep_interval=sleep_interval)
+        self.lock_manager.acquire(run_id=run_context.run_id)
+
         self.token = set_run_context(run_context)
         logger.info(
             "Acquired lock",
