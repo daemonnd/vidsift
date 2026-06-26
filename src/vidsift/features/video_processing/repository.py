@@ -22,9 +22,7 @@ class VideoProcessingRepository:
         else:
             self.db_path: Path = db_path
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
-        self.conn: Connection = sqlite3.connect(str(self.db_path))
-        self.conn.row_factory = sqlite3.Row
-        self.cur: Cursor = self.conn.cursor()
+        self.open()
         self._initialize_database()
 
     def _initialize_database(self) -> None:
@@ -293,6 +291,10 @@ class VideoProcessingRepository:
 
     def close(self) -> None:
         self.conn.close()
+    def open(self) -> None:
+        self.conn: Connection = sqlite3.connect(str(self.db_path))
+        self.conn.row_factory = sqlite3.Row
+        self.cur: Cursor = self.conn.cursor()
 
 
 if __name__ == "__main__":

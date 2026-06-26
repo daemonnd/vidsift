@@ -73,6 +73,7 @@ class VidsiftOrchestrator:
 
     def run(self) -> None:
         try:
+            self.video_db.open()
             logger.info(
                 "The vidsift orchestrator started.",
                 extra={"event": LogEvent.ORCHESTRATOR_STARTED},
