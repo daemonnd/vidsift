@@ -51,7 +51,7 @@ def register_process(subparsers):
 
 def handle_process(args, config: AppConfig):
     run_manager: RunManager = RunManager()
-    run_manager.start_run(owner="manual", run_type="manual_pipeline_run")
+    run_manager.start_run(run_type="manual_pipeline_run")
     try:
         orchestrator = VidsiftOrchestrator(
             config=config

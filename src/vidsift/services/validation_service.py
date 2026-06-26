@@ -6,7 +6,8 @@ from dataclasses import asdict
 
 from vidsift.config.models import AppConfig
 from vidsift.features.validation.decision_engine import DecisionEngine
-from vidsift.features.validation.errors import VideoValidationError
+from vidsift.features.validation.errors import (CustomInstructionsReadingError,
+                                                VideoValidationError)
 from vidsift.features.validation.instruction_provider import \
     get_custom_instructions
 from vidsift.features.validation.pre_validation.metrics_counter import \
@@ -122,6 +123,17 @@ class VideoValidator:
                 },
             )
             raise VideoValidationError(f"Metadata validation failed for video {vid.video_id} due to AI error: {str(e)}")
+        except CustomInstructionsReadingError as e:
+            logger.exception(
+                f"Could not read custom instructions for video {vid.video_id}: {str(e)}",
+                extra={
+                    "event": LogEvent.VIDEO_VALIDATION_FAILED,
+                    "video_id": vid.video_id,
+                    "channel_id": vid.channel_id,
+                    "validation_stage": "metadata"
+                }
+            )
+            raise VideoValidationError(f"Metadata validation failed for video {vid.video_id} due to Custom instructions reading error: {str(e)}")
 
     def validate_transcript(self, vid: Video, transcript: str) -> TranscriptValidationResult:
         """
@@ -159,6 +171,17 @@ class VideoValidator:
                 },
             )
             raise VideoValidationError(f"Transcript validation failed for video {vid.video_id} due to AI error: {str(e)}")
+        except CustomInstructionsReadingError as e:
+            logger.exception(
+                f"Could not read custom instructions for video {vid.video_id}: {str(e)}",
+                extra={
+                    "event": LogEvent.VIDEO_VALIDATION_FAILED,
+                    "video_id": vid.video_id,
+                    "channel_id": vid.channel_id,
+                    "validation_stage": "metadata"
+                }
+            )
+            raise VideoValidationError(f"Metadata validation failed for video {vid.video_id} due to Custom instructions reading error: {str(e)}")
 
     def validate_video(self, vid: Video, raw_transcript: str) -> ValidationResult:
 

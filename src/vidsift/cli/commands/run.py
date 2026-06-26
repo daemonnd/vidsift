@@ -12,7 +12,7 @@ def register_run(subparsers):
 
 def handle_pipeline_run(args, config):
     run_manager = RunManager()
-    run_manager.start_run(owner="manual", run_type="manual_pipeline_run")
+    run_manager.start_run(run_type="manual_pipeline_run")
 
     try:
         orchestrator = VidsiftOrchestrator(config=config)

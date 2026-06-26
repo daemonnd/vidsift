@@ -40,6 +40,15 @@ max_allowed_json_output_runs = 3
 # how often a video can fail in total before it gets marked as FAILED and gets abandoned
 # use vidsift videos list --status failed to list all the failed videos
 max_retry_attempts = 1
+
+# How recent videos should be.
+# The RSS feeds can contain month or even year old videos that may not be wanted
+# This limits the newly processed videos to the upload date between today and today - the value
+# This is especially useful when just having installed vidsift to set it low to not get videos that may
+# have already been watched
+# It does NOT affect interrupted or failed videos, only new ones
+days_uploaded_before = 7
+
 # how much seconds vidsift should sleep after having processed one video at minimum, (min_vid_delay)
 # then how much of random secods will be added (between 0 and random_vid_delay)
 

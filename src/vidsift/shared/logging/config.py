@@ -13,7 +13,7 @@ from vidsift.shared.logging.handlers import RichConsoleHandler
 
 def get_log_file_path() -> Path:
     Path(user_log_dir(appname="vidsift")).mkdir(parents=True, exist_ok=True)
-    user_log_file: Path = Path(f"{user_log_dir(appname="vidsift")}/vidsift.jsonl")
+    user_log_file: Path = Path(f"{user_log_dir(appname='vidsift')}/vidsift.jsonl")
     Path(user_log_file).touch(exist_ok=True)
     return user_log_file
 

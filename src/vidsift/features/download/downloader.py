@@ -9,15 +9,16 @@ class VideoDownloader:
     def __init__(self):
 
         self.ydl_opts = {
-            "format": "best",
+            "format": "bestvideo+bestaudion/best",
             "cookiesfrombrowser": tuple(["firefox"]),
             "sleep_interval_requests": 3,
+            "restrictfilenames": True
         }
 
     def download(self, video_url: str, output_path: Path) -> None:
         try:
             download_opts = self.ydl_opts
-            download_opts["outtmpl"] = str(Path(output_path / "%(title)s.%(ext)s"))
+            download_opts["outtmpl"] = str(Path(output_path / "%(title)s [%(id)s].%(ext)s"))
             with YoutubeDL(self.ydl_opts) as ydl:
                 ydl.download([video_url])
         except Exception as e:
