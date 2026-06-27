@@ -39,13 +39,13 @@ function init {
     VIDSIFT_BIN_DIR="${VIDSIFT_BIN_DIR:-${XDG_BIN_HOME:-"$HOME/.local/bin/"}}"
     export VIDSIFT_BIN_DIR="${VIDSIFT_BIN_DIR%/}"
 
-    mkdir -p "$CONFIG_DIR"
+    mkdir -p "$CONFIG_DIR/systemd/user"
     mkdir -p "$VIDSIFT_DATA_DIR"
     mkdir -p "$VIDSIFT_BIN_DIR"
 }
 
 function mv_service {
-    cat <<EOF >"${CONFIG_DIR}/systemd/${USER}/vidsift.service"
+    cat <<EOF >"${CONFIG_DIR}/systemd/user/vidsift.service"
 [Unit]
 Description=Vidsift YouTube pipeline service
 
@@ -66,7 +66,7 @@ function enable_service {
 }
 
 function check_bin {
-    if [[ ! -e "$VIDSIFT_BIN_DIR/vidsift" ]]; then
+    if [[ ! -x "$VIDSIFT_BIN_DIR/vidsift" ]]; then
         echo "ERROR: Vidsifts bin Path is not executable or does not exist: $VIDSIFT_BIN_DIR/vidsift"
         exit 1
     fi
@@ -76,6 +76,7 @@ function main {
     #check_args "$@"
     init "$@"
     mv_service
+    enable_service
     check_bin
     echo "The service has been set up properly. Start it using 'systemctl --user start vidsift.service'"
 }
