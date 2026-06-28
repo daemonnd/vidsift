@@ -42,3 +42,8 @@ class BgRunnserService(VidsiftService):
             self.service.stop_service()
         except ServiceError:
             raise
+    def get_status(self) -> None:
+        try:
+            self.service.get_status()
+        except ServiceError:
+            raise

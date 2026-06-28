@@ -6,25 +6,32 @@ def register_service(subparsers):
         "service",
         help="Manage the OS vidsift background service that starts vidsift schedule once after boot"
     )
-    exclusive_schedule_parser_group = schedule_parser.add_mutually_exclusive_group()
+    exclusive_schedule_parser_group = schedule_parser.add_mutually_exclusive_group(
+        required=True
+    )
     exclusive_schedule_parser_group.add_argument(
         "--enable",
         help="Enable the background service for Linux, Windows or MacOS",
-        action="store_true"
+        action="store_true",
     )
     exclusive_schedule_parser_group.add_argument(
         "--disable",
         help="Disable the background service for Linux, Windows or MacOS",
-        action="store_true"
+        action="store_true",
     )
     exclusive_schedule_parser_group.add_argument(
         "--start",
         help="Start the service now",
-        action="store_true"
+        action="store_true",
     )
     exclusive_schedule_parser_group.add_argument(
         "--stop",
         help="Stop the service now",
+        action="store_true",
+    )
+    exclusive_schedule_parser_group.add_argument(
+        "--status",
+        help="Show the status of the service",
         action="store_true"
     )
 
@@ -43,6 +50,8 @@ def handle_background_service(args, config):
         bg_runner_service.start_service()
     elif args.stop:
         bg_runner_service.stop_service()
+    elif args.status:
+        bg_runner_service.get_status()
 
 
 

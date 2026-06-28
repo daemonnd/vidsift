@@ -9,9 +9,10 @@ from vidsift.features.service.base import VidsiftService
 class SystemdService(VidsiftService):
     def __init__(self) -> None:
         super().__init__()
-        self.service_path: Path = Path(user_config_dir("vidsift"))
+        self.service_path: Path = Path(user_config_dir("systemd"))
         self.service_path.mkdir(parents=True, exist_ok=True)
-        self.service_path = self.service_path / "systemd" / "user" / "vidsift.service"
+        self.service_path = self.service_path / "user" / "vidsift.service"
+        self.service_path.touch(exist_ok=True)
 
         self.vidsift_bin_path: Path = Path(user_bin_dir())
         self.vidsift_bin_path.mkdir(parents=True, exist_ok=True)
@@ -45,3 +46,6 @@ WantedBy=default.target
         subprocess.run("systemctl --user start vidsift.service")
     def stop_service(self) -> None:
         subprocess.run("systemctl --user stop vidsift.service")
+    def get_status(self) -> str:
+        result =  subprocess.run("systemctl --user status vidsift.service", capture_output=True)
+        return result.stdout.decode()
