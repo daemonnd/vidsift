@@ -14,7 +14,7 @@ class FileLoggingConfig(BaseModel):
     enabled: bool
     level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
     dependency_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
-    rotation: Literal["S", "M", "H", "D"]
+    rotation: Literal["S", "M", "H", "D", "midnight"]
     retain_days: int = Field(ge=0, le=1000)
     utc_time: bool
 
