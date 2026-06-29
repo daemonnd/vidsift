@@ -10,3 +10,5 @@ class TaskSchedulerService(VidsiftService):
         pass
     def stop_service(self) -> None:
         pass
+    def get_status(self) -> str | None:
+        pass

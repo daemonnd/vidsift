@@ -1,5 +1,7 @@
 import platform
 
+from rich import print
+
 from vidsift.features.service.base import VidsiftService
 from vidsift.features.service.errors import OSNotSupportedError, ServiceError
 from vidsift.features.service.launchd_service import LaunchdService
@@ -44,6 +46,6 @@ class BgRunnserService(VidsiftService):
             raise
     def get_status(self) -> None:
         try:
-            self.service.get_status()
+            print(f"Status of the vidsift service: '{self.service.get_status()}'")
         except ServiceError:
             raise
