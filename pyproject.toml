@@ -36,6 +36,8 @@ dependencies = [
     "urllib3==2.7.0",
     "youtube-transcript-api==1.2.4",
     "yt-dlp==2026.6.9",
+    "psutil==7.2.2",
+    "portalocker==3.2.0",
 ]
 
 [project.optional-dependencies]
