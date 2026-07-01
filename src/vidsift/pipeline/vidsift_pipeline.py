@@ -24,7 +24,9 @@ from vidsift.features.transcript.errors import TranscriptError
 from vidsift.features.validation.errors import VideoValidationError
 from vidsift.features.video_processing.repository import \
     VideoProcessingRepository
-from vidsift.ingestion.errors import VideoDataCollectionError
+from vidsift.ingestion.errors import (VideoDataCollectionError,
+                                      VideoFilteringError)
+from vidsift.ingestion.video_filter import VideoFilter
 from vidsift.models.validation.validation_result import ValidationResult
 from vidsift.models.video import InvalidVideoError, Video
 from vidsift.models.video_record import (VideoProcessingRecord,
@@ -48,6 +50,7 @@ class VidsiftOrchestrator:
         summarizer: SummarizationService | None = None,
         downloader: VideoDownloader | None = None,
         video_db: VideoProcessingRepository | None = None,
+        video_filter: VideoFilter | None = None,
         should_sleep: bool = True
     ):
         self.config: AppConfig = config
@@ -57,6 +60,8 @@ class VidsiftOrchestrator:
             channel_id_list.append(channel.id)
         # video fetching
         self.video_data_collector: VideoDataCollection = VideoDataCollection(channel_id_list=channel_id_list, config=config)
+        # video filtering
+        self.video_filter: VideoFilter = (video_filter or VideoFilter())
         # video cache
         self.video_db: VideoProcessingRepository = (video_db or VideoProcessingRepository(config=self.config))
         # validation
@@ -119,6 +124,44 @@ class VidsiftOrchestrator:
                         },
                     )
                     continue # no delay waiting
+                try:
+                    is_livestream = self.video_filter.check_is_livestream(vid=vid)
+                except VideoFilteringError as e:
+                    logger.exception(
+                        f"VideoFilteringError: Failed to check if video is a livestream: {str(e)}",
+                        extra={
+                            "event": LogEvent.LIVESTREAM_CHECK_FAILED,
+                            "video_id": vid.video_id,
+                            "channel_id": vid.channel_id
+                        }
+                    )
+                    self.video_db.create(vid=vid)
+                    self.video_db.mark_failed(
+                        error_msg=repr(e),
+                        video_id=vid.video_id
+                    )
+                    continue
+                print(f"Is live: {is_livestream}")
+                if is_livestream:
+                    print("is a livestream")
+                    logger.info(
+                        f"Skipped video with video id {vid.video_id} with title {vid.title} because it is a livestream",
+                        extra={
+                            "event": LogEvent.LIVESTREAM_SKIPPED,
+                            "video_id": vid.video_id,
+                            "channel_id": vid.channel_id
+                        }
+                    )
+                    self.video_db.create(vid=vid)
+                    self.video_db.save_validation_result(
+                        video_id=vid.video_id,
+                        decision="discarded",
+                        quality_score=0.0,
+                        topic_match_score=0.0,
+                        reason="The video is a livestream"
+                    )
+                    self.video_db.update_after_done(video_id=vid.video_id, decision="discarded")
+                    continue
 
                 self.video_db.create(vid=vid)
 

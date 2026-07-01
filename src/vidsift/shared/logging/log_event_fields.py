@@ -55,6 +55,10 @@ class LogEvent:
     RSS_FETCH_FAILED = "rss_fetch_failed"
     RSS_FETCH_COMPLETED = "rss_fetch_completed"
 
+    # video filtering events
+    LIVESTREAM_SKIPPED = "livestream_skipped"
+    LIVESTREAM_CHECK_FAILED = "livestream_check_failed"
+
     # pre-validation events
     PRE_VALIDATION_STARTED = "pre_validation_started"
     PRE_VALIDATION_COMPLETED = "pre_validation_completed"

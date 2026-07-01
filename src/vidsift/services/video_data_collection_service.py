@@ -40,6 +40,7 @@ class VideoDataCollection:
 
         try:
             for channel in self.channel_id_list:
+                print(f"Fetching RSS feed for channel: {channel}")
                 try:
                     feed: FeedParserDict = data_collector.fetch_feed(
                         channel_id=channel
@@ -56,6 +57,7 @@ class VideoDataCollection:
                     )
 
                     for video in current_channel_data:
+                        print(f"Yielding video: {video.title} from channel: {channel}")
                         yield video
 
                 except InvalidHTTPStatusError as e:
