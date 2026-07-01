@@ -127,6 +127,26 @@ class VidsiftOrchestrator:
                 try:
                     is_livestream = self.video_filter.check_is_livestream(vid=vid)
                 except VideoFilteringError as e:
+                    if "This live event will begin in" in str(e):
+                        if str(e).endswith("minutes.") or str(e).endswith("hours.") or str(e).endswith("days."):
+                            logger.info(
+                                f"Skipped video with video id {vid.video_id} with title '{vid.title}' because it is a livestream that will begin in the future",
+                                extra={
+                                    "event": LogEvent.LIVESTREAM_SKIPPED,
+                                    "video_id": vid.video_id,
+                                    "channel_id": vid.channel_id
+                                }
+                            )
+                            self.video_db.create(vid=vid)
+                            self.video_db.save_validation_result(
+                                video_id=vid.video_id,
+                                decision="discarded",
+                                quality_score=0.0,
+                                topic_match_score=0.0,
+                                reason="The video is a livestream that will begin in the future"
+                            )
+                            self.video_db.update_after_done(video_id=vid.video_id, decision="discarded")
+                            continue
                     logger.exception(
                         f"VideoFilteringError: Failed to check if video is a livestream: {str(e)}",
                         extra={
