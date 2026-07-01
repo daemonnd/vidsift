@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 class ChunkSummaryManager:
     def __init__(self, config: AppConfig):
         self.config: AppConfig = config
-        self.chunk_summary_ai: AIUsageManager = AIUsageManager(system_prompt_file_name="chunk_summary.md")
+        self.chunk_summary_ai: AIUsageManager = AIUsageManager(system_prompt_file_name="chunk_summary.md", config=self.config)
         self.ai_model: str = config.ai.summary_model
         self.transcript_chunk_generator: TranscriptChunkGenerator = TranscriptChunkGenerator(char_chunk_size=self.config.summarization.char_chunk_size)
         self.text_normalizer: TextNormalizer = TextNormalizer()

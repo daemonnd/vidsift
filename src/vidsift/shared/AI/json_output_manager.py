@@ -25,9 +25,9 @@ class AIJsonOutputManager:
         """
         Method to run the AI pipeline to get a valid JSON output from the AI, with retries if the output is not valid.
         """
-        validation_ai: AIUsageManager = AIUsageManager(self.system_prompt_filename)
-        retry_system_ai: AIUsageManager = AIUsageManager(self.retry_system_filename)
-        ai_executor: AIUsageManager = AIUsageManager("")
+        validation_ai: AIUsageManager = AIUsageManager(self.system_prompt_filename, config=self.config)
+        retry_system_ai: AIUsageManager = AIUsageManager(self.retry_system_filename, config=self.config)
+        ai_executor: AIUsageManager = AIUsageManager("", config=self.config)
         use_full_validate: bool = True
 
         logger.debug(
