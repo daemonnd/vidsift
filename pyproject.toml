@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "vidsift"
 version = "0.1.0"
-requires-python = ">=3.11"
+requires-python = ">=3.14"
 
 dependencies = [
     "annotated-types==0.7.0",
