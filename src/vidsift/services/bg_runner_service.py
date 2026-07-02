@@ -5,9 +5,8 @@ from rich import print
 from vidsift.features.service.base import VidsiftService
 from vidsift.features.service.errors import OSNotSupportedError, ServiceError
 from vidsift.features.service.launchd_service import LaunchdService
+from vidsift.features.service.schtasks_service import SchtasksService
 from vidsift.features.service.systemd_service import SystemdService
-from vidsift.features.service.task_scheduler_service import \
-    TaskSchedulerService
 
 
 class BgRunnserService(VidsiftService):
@@ -22,7 +21,7 @@ class BgRunnserService(VidsiftService):
             case "Darwin":
                 self.service: VidsiftService = LaunchdService()
             case "Windows":
-                self.service: VidsiftService = TaskSchedulerService()
+                self.service: VidsiftService = SchtasksService()
 
     def install_service(self) -> None:
         try:
