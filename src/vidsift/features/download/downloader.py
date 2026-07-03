@@ -13,7 +13,7 @@ class VideoDownloader:
         self.ydl_opts = {
             "format": yt_dlp_config.format,
             "cookiesfrombrowser": tuple([yt_dlp_config.cookies_from_browser]),
-            "sleep_requests": yt_dlp_config.sleep_requests,
+            "sleep_interval_requests": yt_dlp_config.sleep_requests,
             "quiet": yt_dlp_config.quiet,
             "merge_output_format": yt_dlp_config.merge_output_format,
             "max_retries": yt_dlp_config.max_retries,

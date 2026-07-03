@@ -10,7 +10,7 @@ class VideoFilter:
         yt_dlp_config = config.video_processing.yt_dlp
         self.ytl_opts = {
             "cookies_from_browser": tuple([yt_dlp_config.cookies_from_browser]),
-            "sleep_requests": yt_dlp_config.sleep_requests,
+            "sleep_interval_requests": yt_dlp_config.sleep_requests,
             "quiet": yt_dlp_config.quiet,
         }
     def check_is_livestream(self, vid: Video) -> bool:
@@ -24,7 +24,7 @@ class VideoFilter:
             raise VideoFilteringError(f"Error while checking if video is livestream: {e}")
         else:
             live_status = data.get("live_status")
-            print(f"live status of vid {vid.video_id}: {live_status}")
+            print(f"live status of vid '{vid.video_id}': '{live_status}'")
             if live_status == "not_live":
                 return False
             return True

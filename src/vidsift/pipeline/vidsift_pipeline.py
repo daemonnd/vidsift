@@ -161,9 +161,7 @@ class VidsiftOrchestrator:
                         video_id=vid.video_id
                     )
                     continue
-                print(f"Is live: {is_livestream}")
                 if is_livestream:
-                    print("is a livestream")
                     logger.info(
                         f"Skipped video with video id {vid.video_id} with title {vid.title} because it is a livestream",
                         extra={
