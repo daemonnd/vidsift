@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from src.vidsift.shared.logging.formatters import JSONFormatter
+from vidsift.shared.logging.formatters import JSONFormatter
 
 
 @pytest.fixture()
