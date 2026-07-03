@@ -90,6 +90,11 @@ class SchtasksService(VidsiftService):
                 check=True,
             )
         except subprocess.CalledProcessError as e:
-            raise ServiceExecutionError(f"Failed to get service status: {e}") from e
+            try:
+                if result:
+                    raise ServiceExecutionError(f"Failed to get service status: {e}. STDERR: {result.stderr}") from e
+            except UnboundLocalError:
+                pass
+            raise ServiceExecutionError(f"Failed to get service status: {e}. STDERR is not availible.") from e
         else:
             return f"{result.stdout}\n{result.stderr}"
