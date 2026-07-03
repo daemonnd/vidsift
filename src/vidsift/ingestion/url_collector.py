@@ -1,5 +1,4 @@
-import ssl
-import urllib.request
+import logging
 from datetime import datetime, timedelta
 from typing import Generator
 
@@ -13,6 +12,8 @@ from vidsift.ingestion.errors import (InvalidHTTPStatusError,
                                       NonWellFormattedFeedError)
 from vidsift.models.video import InvalidVideoError, Video
 from vidsift.shared.video_id_extractor import VideoIDExtractor
+
+logger = logging.getLogger(__name__)
 
 YOUTUBE_BASE_RSS_URL: str = "https://www.youtube.com/feeds/videos.xml?channel_id="
 id_extractor = VideoIDExtractor()
@@ -54,7 +55,15 @@ class UrlCollector:
         """
         bozo = feed.get('bozo')
         if bozo == 1:
-            raise NonWellFormattedFeedError(f"Bozo of {YOUTUBE_BASE_RSS_URL}{channel_id} is 1: {feed.get("bozo_exception")}")
+            match self.config.video_fetching.rss_bozo_level:
+                case "ignore":
+                    pass
+                case "debug":
+                    logger.warning(f"Bozo of {YOUTUBE_BASE_RSS_URL}{channel_id} is 1: {feed.get('bozo_exception')}")
+                case "permissive":
+                    logger.warning(f"Bozo of {YOUTUBE_BASE_RSS_URL}{channel_id} is 1")
+                case "strict":
+                    raise NonWellFormattedFeedError(f"Bozo of {YOUTUBE_BASE_RSS_URL}{channel_id} is 1: {feed.get("bozo_exception")}")
 
 
     def parse_one_channel(self,  feed: FeedParserDict, channel_id: str) -> Generator[Video, None, None]:
@@ -73,25 +82,29 @@ class UrlCollector:
             # link
             # published
 
-            # not add channel creation and shorts to the list
-            if entry.get('title') == entry.get('author'):
-                continue
-            if "/shorts/" in entry.link:
-                continue
-            # skip videos that are less recent than specified in the config
-            video_upload_time = datetime.fromisoformat(str(entry.published))
-            oldest_allowed_date = datetime.now() - timedelta(days=self.config.video_processing.days_uploaded_before)
-            if video_upload_time.timestamp() < oldest_allowed_date.timestamp():
-                continue
-
             try:
-                video = Video(
-                    title=str(entry.title), author=str(entry.author),
-                    url=str(entry.link),
-                    published=str(entry.published),
-                    video_id=id_extractor.extract_id(str(entry.link)),
-                    channel_id=channel_id
-                )
-            except InvalidVideoError:
-                raise
-            yield video
+                # not add channel creation and shorts to the list
+                if entry.get('title') == entry.get('author'):
+                    continue
+                if "/shorts/" in entry.link:
+                    continue
+                # skip videos that are less recent than specified in the config
+                video_upload_time = datetime.fromisoformat(str(entry.published))
+                oldest_allowed_date = datetime.now() - timedelta(days=self.config.video_processing.days_uploaded_before)
+                if video_upload_time.timestamp() < oldest_allowed_date.timestamp():
+                    continue
+
+                try:
+                    video = Video(
+                        title=str(entry.title), author=str(entry.author),
+                        url=str(entry.link),
+                        published=str(entry.published),
+                        video_id=id_extractor.extract_id(str(entry.link)),
+                        channel_id=channel_id
+                    )
+                except InvalidVideoError:
+                    raise
+            except Exception as e:
+                logger.warning(f"Failed to parse video entry for channel {channel_id}: {e}")
+            else:
+                yield video

@@ -18,6 +18,11 @@ rotation = "midnight"        # D: Daily, H: Hourly, M: every minute, S: every se
 retain_days = 14             # for how many days the logs should be kept
 utc_time = false             # true: UTC time, false: local time
 
+# ============================================================
+# Video fetching
+# ============================================================
+[video_fetching]
+rss_bozo_level = "permissive" # permissive (log warning), strict (fail on bozo error), ignore (fully ignore bozo), debug (log bozo exception)
 
 # ============================================================
 # AI

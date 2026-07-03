@@ -73,7 +73,7 @@ class VidsiftOrchestrator:
         # downloading
         self.downloader: VideoDownloader = (downloader or VideoDownloader())
 
-        # delay 
+        # delay
         self.should_sleep: bool = should_sleep
 
     def run(self) -> None:
@@ -82,7 +82,7 @@ class VidsiftOrchestrator:
             logger.info(
                 "The vidsift orchestrator started.",
                 extra={"event": LogEvent.ORCHESTRATOR_STARTED},
-            )  # TODO: add debug mode when cli is implemented
+            )
 
             # before fetching and processing any new videos, process the interrupted / failed ones
             self.process_interrupted_videos()
@@ -115,7 +115,7 @@ class VidsiftOrchestrator:
             }
             for vid in video_generator:
                 if self.video_db.exists(video_id=vid.video_id):
-                    logger.info(
+                    logger.debug(
                         f"Skipping video with video id {vid.video_id} because it was already processed.",
                         extra={
                             "event": LogEvent.VIDEO_SKIPPED_EXISTING,
@@ -471,7 +471,7 @@ class VidsiftOrchestrator:
                 # not process the video if a db entry exists but the video is new
                 # check if the video has already been handled
                 if self.video_db.exists(video_id=vid.video_id):
-                    logger.info(
+                    logger.debug(
                         f"Skipping video with video id {vid.video_id} because it was already processed.",
                         extra={
                             "event": LogEvent.VIDEO_SKIPPED_EXISTING,

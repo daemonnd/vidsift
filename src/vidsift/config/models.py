@@ -23,7 +23,9 @@ class LoggingConfig(BaseModel):
     console: ConsoleLoggingConfig
     file: FileLoggingConfig
 
-
+class VideoFetchingConfig(BaseModel):
+    model_config = ConfigDict(frozen=True)
+    rss_bozo_level: Literal["permissive", "strict", "ignore", "debug"]
 
 class AIConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
@@ -111,6 +113,7 @@ class VideoProcessingConfig(BaseModel):
 class AppConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
     logging: LoggingConfig
+    video_fetching: VideoFetchingConfig
     ai: AIConfig
     video_processing: VideoProcessingConfig
     validation: ValidationConfig
