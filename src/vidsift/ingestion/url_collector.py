@@ -29,6 +29,8 @@ class UrlCollector:
     def fetch_feed(self, channel_id: str) -> FeedParserDict:
         context = ssl.create_default_context(cafile=certifi.where())
         response = urllib.request.urlopen(f"{YOUTUBE_BASE_RSS_URL}{channel_id}", context=context)
+        if response.status != 200:
+            raise InvalidHTTPStatusError(f"Invalid HTTP status code {response.status} for channel {channel_id}")
         raw_xml = response.read()
         return feedparser.parse(raw_xml)
 
@@ -39,9 +41,6 @@ class UrlCollector:
         - InvalidHTTPStatusError if HTTP status is not 200
         - NonWellFormattedFeedError if feed is unwell parsed
         """
-        status = feed.get('status')
-        if status != 200:
-            raise InvalidHTTPStatusError(f"The HTTP status of {YOUTUBE_BASE_RSS_URL}{channel_id} is {status}, which is not 200")
         bozo = feed.get('bozo')
         if bozo == 1:
             raise NonWellFormattedFeedError(f"Bozo of {YOUTUBE_BASE_RSS_URL}{channel_id} is 1: {feed.get("bozo_exception")}")
