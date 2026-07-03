@@ -33,9 +33,11 @@ class UrlCollector:
         - InvalidHTTPStatusError if HTTP status is not 200
         - NonWellFormattedFeedError if feed is unwell parsed
         """
-        if feed.status != 200:
-            raise InvalidHTTPStatusError(f"The HTTP status of {YOUTUBE_BASE_RSS_URL}{channel_id} is {feed.status}, which is not 200")
-        if feed.bozo == 1:
+        status = feed.get('status')
+        if status != 200:
+            raise InvalidHTTPStatusError(f"The HTTP status of {YOUTUBE_BASE_RSS_URL}{channel_id} is {status}, which is not 200")
+        bozo = feed.get('bozo')
+        if bozo == 1:
             raise NonWellFormattedFeedError(f"Bozo of {YOUTUBE_BASE_RSS_URL}{channel_id} is 1, indicating that the feed is non-well-formed")
 
 
@@ -48,7 +50,7 @@ class UrlCollector:
 
         #channel_id_dict: dict = {}
 
-        for entry in feed.entries:
+        for entry in feed.get("entries", []):
             # collects:
             # title
             # author
