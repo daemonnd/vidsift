@@ -4,6 +4,7 @@ from typing import Any
 from yt_dlp import YoutubeDL
 from yt_dlp.utils import DownloadError
 
+from vidsift.config.models import AppConfig
 from vidsift.ingestion.errors import MetadataCollectionError
 from vidsift.models.video import InvalidVideoError, Video
 from vidsift.shared.logging.log_event_fields import LogEvent
@@ -13,13 +14,15 @@ logger = logging.getLogger(__name__)
 
 
 class MetadataCollector:
-    def __init__(self) -> None:
+    def __init__(self, config: AppConfig) -> None:
+        yt_dlp_config = config.video_processing.yt_dlp
         self.video_id_extractor = VideoIDExtractor()
         ydl_opts: dict[str, Any] = {
-            "cookiesfrombrowser": tuple(["firefox"]),
+            "cookiesfrombrowser": tuple([yt_dlp_config.cookies_from_browser]),
             "skip_download": True,
-            "sleep_interval_requests": 3,
-            "no_playlist": True
+            "sleep_interval_requests": yt_dlp_config.sleep_requests,
+            "no_playlist": True,
+            "quiet": yt_dlp_config.quiet,
         }
         self.ydl: YoutubeDL = YoutubeDL(ydl_opts)
     def fetch_metadata(self, url: str):

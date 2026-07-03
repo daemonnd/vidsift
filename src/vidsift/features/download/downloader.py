@@ -2,17 +2,21 @@ from pathlib import Path
 
 from yt_dlp import YoutubeDL
 
+from vidsift.config.models import AppConfig
 from vidsift.features.download.errors import VideoDownloadError
 
 
 class VideoDownloader:
-    def __init__(self):
+    def __init__(self, config: AppConfig):
+        yt_dlp_config = config.video_processing.yt_dlp
 
         self.ydl_opts = {
-            "format": "bestvideo+bestaudion/best",
-            "cookiesfrombrowser": tuple(["firefox"]),
-            "sleep_interval_requests": 3,
-            "restrictfilenames": True
+            "format": yt_dlp_config.format,
+            "cookiesfrombrowser": tuple([yt_dlp_config.cookies_from_browser]),
+            "sleep_requests": yt_dlp_config.sleep_requests,
+            "quiet": yt_dlp_config.quiet,
+            "merge_output_format": yt_dlp_config.merge_output_format,
+            "max_retries": yt_dlp_config.max_retries,
         }
 
     def download(self, video_url: str, output_path: Path) -> None:
@@ -25,8 +29,3 @@ class VideoDownloader:
             raise VideoDownloadError(str(e)) from e
         except BaseException:
             raise
-
-if __name__ == "__main__":
-    vd: VideoDownloader = VideoDownloader()
-    vd.download("https://www.youtube.com/watch?v=dQw4w9WgXcQ", output_path=Path("/home/user/Videos/vidsift/"))
-

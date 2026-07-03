@@ -1,5 +1,6 @@
 import logging
 
+from vidsift.config.models import AppConfig
 from vidsift.features.transcript.errors import TranscriptError
 from vidsift.features.transcript.providers.base import TranscriptProvider
 from vidsift.features.transcript.providers.transcript_api_provider import \
@@ -13,8 +14,8 @@ logger = logging.getLogger(__name__)
 
 
 class TranscriptService:
-    def __init__(self) -> None:
-        self.providers: list[TranscriptProvider] = [YtDlpTranscriptProvider(), YoutubeTranscriptApiProvider()]
+    def __init__(self, config: AppConfig) -> None:
+        self.providers: list[TranscriptProvider] = [YtDlpTranscriptProvider(config=config), YoutubeTranscriptApiProvider()]
 
     def get_transcript(self, video: Video) -> str:
         for provider in self.providers:

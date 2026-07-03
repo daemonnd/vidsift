@@ -1,15 +1,17 @@
 from yt_dlp import YoutubeDL
 
+from vidsift.config.models import AppConfig
 from vidsift.ingestion.errors import VideoFilteringError
 from vidsift.models.video import Video
 
 
 class VideoFilter:
-    def __init__(self) -> None:
+    def __init__(self, config: AppConfig) -> None:
+        yt_dlp_config = config.video_processing.yt_dlp
         self.ytl_opts = {
-            "cookies_from_browser": tuple(["firefox"]),
-            "sleep_requests": 3,
-            "quiet": True
+            "cookies_from_browser": tuple([yt_dlp_config.cookies_from_browser]),
+            "sleep_requests": yt_dlp_config.sleep_requests,
+            "quiet": yt_dlp_config.quiet,
         }
     def check_is_livestream(self, vid: Video) -> bool:
         """

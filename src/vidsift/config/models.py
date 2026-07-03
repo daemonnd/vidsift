@@ -101,6 +101,14 @@ class ChannelConfig(BaseModel):
             raise ValueError("channel_id must start with 'UC'")
 
         return v
+class YtDlpConfig(BaseModel):
+    model_config = ConfigDict(frozen=True)
+    max_retries: int | Literal["infinite"] = Field(ge=0)
+    sleep_requests: int = Field(ge=0)
+    cookies_from_browser: str
+    quiet: bool
+    merge_output_format: str
+    format: str
 
 class VideoProcessingConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
@@ -108,6 +116,7 @@ class VideoProcessingConfig(BaseModel):
     days_uploaded_before: int = Field(ge=0)
     min_vid_delay: int = Field(ge=30)
     random_vid_delay: int = Field(ge=10)
+    yt_dlp: YtDlpConfig
 
 
 class AppConfig(BaseModel):

@@ -61,17 +61,17 @@ class VidsiftOrchestrator:
         # video fetching
         self.video_data_collector: VideoDataCollection = VideoDataCollection(channel_id_list=channel_id_list, config=config)
         # video filtering
-        self.video_filter: VideoFilter = (video_filter or VideoFilter())
+        self.video_filter: VideoFilter = (video_filter or VideoFilter(config=config))
         # video cache
         self.video_db: VideoProcessingRepository = (video_db or VideoProcessingRepository(config=self.config))
         # validation
         self.video_validator: VideoValidator = (video_validator or VideoValidator(config))
         # transcript
-        self.transcript_service: TranscriptService = (transcript_service or TranscriptService())
+        self.transcript_service: TranscriptService = (transcript_service or TranscriptService(config))
         # summarization
         self.summarizer: SummarizationService = (summarizer or SummarizationService(config))
         # downloading
-        self.downloader: VideoDownloader = (downloader or VideoDownloader())
+        self.downloader: VideoDownloader = (downloader or VideoDownloader(config=config))
 
         # delay
         self.should_sleep: bool = should_sleep
