@@ -5,6 +5,7 @@ from typing import Generator
 
 import certifi
 import feedparser
+import httpx
 from feedparser import FeedParserDict
 
 from vidsift.config.models import AppConfig
@@ -27,18 +28,28 @@ class UrlCollector:
 
 
     def fetch_feed(self, channel_id: str) -> FeedParserDict:
-        context = ssl.create_default_context(cafile=certifi.where())
-        response = urllib.request.urlopen(f"{YOUTUBE_BASE_RSS_URL}{channel_id}", context=context)
-        if response.status != 200:
-            raise InvalidHTTPStatusError(f"Invalid HTTP status code {response.status} for channel {channel_id}")
-        raw_xml = response.read()
-        return feedparser.parse(raw_xml)
+        """
+        Fetches the feed for a given channel ID and returns the parsed feed.
+        Raises:
+            - HttpStatusError if the HTTP request fails or returns a non-200 status code.
+        Returns:
+            - the parsed xml feed as a FeedParserDict.
+        """
+        url = f"{YOUTUBE_BASE_RSS_URL}{channel_id}"
+
+        with httpx.Client(verify=certifi.where(), timeout=10.0) as client:
+            response = client.get(url)
+            try:
+                response.raise_for_status()
+            except httpx.HTTPStatusError as e:
+                raise InvalidHTTPStatusError(f"HTTP request failed for {url}: {e.response.status_code} {e.response.reason_phrase}")
+
+        return feedparser.parse(response.content)
 
     def validate_feed_response(self, feed: FeedParserDict, channel_id: str) -> None:
         """
         Method to validate if the feed is okay, if not it raises
         Raises:
-        - InvalidHTTPStatusError if HTTP status is not 200
         - NonWellFormattedFeedError if feed is unwell parsed
         """
         bozo = feed.get('bozo')

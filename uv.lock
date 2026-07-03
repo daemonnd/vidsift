@@ -449,6 +449,7 @@ source = { editable = "." }
 dependencies = [
     { name = "emoji" },
     { name = "feedparser" },
+    { name = "httpx" },
     { name = "ollama" },
     { name = "pathvalidate" },
     { name = "platformdirs" },
@@ -470,6 +471,7 @@ dev = [
 requires-dist = [
     { name = "emoji", specifier = ">=2.15.0" },
     { name = "feedparser", specifier = ">=6.0.12" },
+    { name = "httpx", specifier = ">=0.28.1" },
     { name = "ollama", specifier = ">=0.6.2" },
     { name = "pathvalidate", specifier = ">=3.3.1" },
     { name = "platformdirs", specifier = ">=4.10.0" },
