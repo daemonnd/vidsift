@@ -4,14 +4,16 @@ It runs the AI and generates the prompts for it
 """
 from pathlib import Path
 
-from ollama import ChatResponse, RequestError, ResponseError, chat
+from ollama import ChatResponse, Client, RequestError, ResponseError
 
+from vidsift.config.models import AppConfig
 from vidsift.shared.AI.errors import (AIModelError, AIRequestError,
                                       EmptyAIResponseError)
 
 
 class AIUsageManager:
-    def __init__(self, system_prompt_file_name: str) -> None:
+    def __init__(self, system_prompt_file_name: str, config: AppConfig) -> None:
+        self.config: AppConfig = config
         self.sys_prompt_file: Path = Path(Path().home() / ".config" / "vidsift" / "prompts" / system_prompt_file_name)
         if not system_prompt_file_name:
             self.system_prompt: str = ""
@@ -53,7 +55,7 @@ class AIUsageManager:
         - AIModelError if an error with the model occured
         """
         try:
-            response: ChatResponse = chat(model=model,  messages=[
+            response: ChatResponse = Client(host=self.config.ai.host).chat(model=model,  messages=[
                 {
                     'role': 'user',
                     'content': prompt,

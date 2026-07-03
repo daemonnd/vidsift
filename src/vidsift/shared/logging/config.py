@@ -14,7 +14,6 @@ from vidsift.shared.logging.handlers import RichConsoleHandler
 def get_log_file_path() -> Path:
     Path(user_log_dir(appname="vidsift")).mkdir(parents=True, exist_ok=True)
     user_log_file: Path = Path(f"{user_log_dir(appname='vidsift')}/vidsift.jsonl")
-    Path(user_log_file).touch(exist_ok=True)
     return user_log_file
 
 def configure_logging(config: AppConfig):
@@ -25,8 +24,11 @@ def configure_logging(config: AppConfig):
     logger = logging.getLogger()
 
     # remove existing handlers
-    if logger.hasHandlers():
-        logger.handlers.clear()
+    #if logger.hasHandlers():
+    #    logger.handlers.clear()
+    for hander in logger.handlers[:]:
+        hander.close()
+        logger.removeHandler(hander)
     #logger.propagate = False
  
     # define the logger, once with a console handler and once with a file handler
@@ -35,9 +37,11 @@ def configure_logging(config: AppConfig):
     file_handler = TimedRotatingFileHandler(
         filename=str(get_log_file_path()),
         when=file_config.rotation,
+        interval=1,
         backupCount=file_config.retain_days,
         utc=file_config.utc_time
     )
+    print(file_handler.rolloverAt)
 
     # get filter instances
     console_dependeny_filter: ConsoleDependencyFilter = ConsoleDependencyFilter(console_config=console_config)

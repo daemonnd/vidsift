@@ -24,6 +24,7 @@ utc_time = false             # true: UTC time, false: local time
 # ============================================================
 
 [ai]
+host = "http://localhost:11434"
 default_model = "qwen3.5:9b"
 validation_model = "qwen3.5:9b"
 summary_model = "qwen3.5:9b"

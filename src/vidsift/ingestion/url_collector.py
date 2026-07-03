@@ -1,6 +1,9 @@
+import ssl
+import urllib.request
 from datetime import datetime, timedelta
 from typing import Generator
 
+import certifi
 import feedparser
 from feedparser import FeedParserDict
 
@@ -24,7 +27,10 @@ class UrlCollector:
 
 
     def fetch_feed(self, channel_id: str) -> FeedParserDict:
-        return feedparser.parse(f"{YOUTUBE_BASE_RSS_URL}{channel_id}")
+        context = ssl.create_default_context(cafile=certifi.where())
+        response = urllib.request.urlopen(f"{YOUTUBE_BASE_RSS_URL}{channel_id}", context=context)
+        raw_xml = response.read()
+        return feedparser.parse(raw_xml)
 
     def validate_feed_response(self, feed: FeedParserDict, channel_id: str) -> None:
         """
@@ -33,10 +39,12 @@ class UrlCollector:
         - InvalidHTTPStatusError if HTTP status is not 200
         - NonWellFormattedFeedError if feed is unwell parsed
         """
-        if feed.status != 200:
-            raise InvalidHTTPStatusError(f"The HTTP status of {YOUTUBE_BASE_RSS_URL}{channel_id} is {feed.status}, which is not 200")
-        if feed.bozo == 1:
-            raise NonWellFormattedFeedError(f"Bozo of {YOUTUBE_BASE_RSS_URL}{channel_id} is 1, indicating that the feed is non-well-formed")
+        status = feed.get('status')
+        if status != 200:
+            raise InvalidHTTPStatusError(f"The HTTP status of {YOUTUBE_BASE_RSS_URL}{channel_id} is {status}, which is not 200")
+        bozo = feed.get('bozo')
+        if bozo == 1:
+            raise NonWellFormattedFeedError(f"Bozo of {YOUTUBE_BASE_RSS_URL}{channel_id} is 1: {feed.get("bozo_exception")}")
 
 
     def parse_one_channel(self,  feed: FeedParserDict, channel_id: str) -> Generator[Video, None, None]:
@@ -48,7 +56,7 @@ class UrlCollector:
 
         #channel_id_dict: dict = {}
 
-        for entry in feed.entries:
+        for entry in feed.get("entries", []):
             # collects:
             # title
             # author
@@ -56,7 +64,7 @@ class UrlCollector:
             # published
 
             # not add channel creation and shorts to the list
-            if entry.title == entry.author:
+            if entry.get('title') == entry.get('author'):
                 continue
             if "/shorts/" in entry.link:
                 continue
@@ -77,12 +85,3 @@ class UrlCollector:
             except InvalidVideoError:
                 raise
             yield video
-
-
-
-if __name__ == "__main__":
-    channel_id_list: list = ["UC9x0AN7BWHpCDHSm9NiJFJQ","UCo71RUe6DX4w-Vd47rFLXPg"]
-    url_collectr: UrlCollector = UrlCollector(channel_id_list=channel_id_list)
-    to_process = url_collectr.parse_all_channels()
-    for i in to_process:
-        print(i)

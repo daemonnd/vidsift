@@ -14,3 +14,8 @@ class NonWellFormattedFeedError(VideoDataCollectionError):
 class MetadataCollectionError(Exception):
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
+
+# for video filtering
+class VideoFilteringError(Exception):
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)

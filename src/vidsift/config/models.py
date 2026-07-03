@@ -14,7 +14,7 @@ class FileLoggingConfig(BaseModel):
     enabled: bool
     level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
     dependency_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
-    rotation: Literal["S", "M", "H", "D"]
+    rotation: Literal["S", "M", "H", "D", "midnight"]
     retain_days: int = Field(ge=0, le=1000)
     utc_time: bool
 
@@ -27,10 +27,21 @@ class LoggingConfig(BaseModel):
 
 class AIConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
+    host: str
     default_model: str
     validation_model: str
     summary_model: str
     max_allowed_json_output_runs: int = Field(ge=0,le=5)
+
+    @field_validator("host")
+    @classmethod
+    def validate_host(cls, v: str) -> str:
+        if v.startswith("http://") or v.startswith("https://"):
+            pass
+        else:
+            raise ValueError("host must start with http:// or https://")
+
+        return v
 
 
 class PreValidationThresholdConfig(BaseModel):

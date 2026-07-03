@@ -14,7 +14,7 @@ dependency_level = "WARNING"
 enabled = true               # currently not possible to disable
 level = "DEBUG"
 dependency_level = "WARNING"
-rotation = "D"               # D: Daily, H: Hourly, M: every minute, S: every second
+rotation = "midnight"        # D: Daily, H: Hourly, M: every minute, S: every second, midnight: at midnight
 retain_days = 14             # for how many days the logs should be kept
 utc_time = false             # true: UTC time, false: local time
 
@@ -24,6 +24,7 @@ utc_time = false             # true: UTC time, false: local time
 # ============================================================
 
 [ai]
+host = "http://localhost:11434"
 default_model = "qwen3.5:9b"
 validation_model = "qwen3.5:9b"
 summary_model = "qwen3.5:9b"
