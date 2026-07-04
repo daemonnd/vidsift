@@ -30,14 +30,14 @@ class VideoFetchingConfig(BaseModel):
 
 class AIConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
-    host: str
+    base_url: str
     provider: Literal["ollama", "lmstudio", "openai", "anthropic", "cohere", "xai", "mistral", "google",  "microsoft", "custom"]
     default_model: str
     validation_model: str
     summary_model: str
     max_allowed_json_output_runs: int = Field(ge=0,le=5)
 
-    @field_validator("host")
+    @field_validator("base_url")
     @classmethod
     def validate_host(cls, v: str) -> str:
         if v.startswith("http://") or v.startswith("https://"):

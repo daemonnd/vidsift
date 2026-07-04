@@ -1,7 +1,9 @@
 """
 File to manage AI excecution
 """
-from vidsift.config.models import AppConfig
+from vidsift.config.models import AIConfig
+from vidsift.models.ai_models import AIRequest, AIResponse, ProviderName
+from vidsift.shared.AI.errors import AIError, EmptyAIResponseError
 from vidsift.shared.AI.providers.anthropic import AnthropicProvider
 from vidsift.shared.AI.providers.base import AIProvider
 from vidsift.shared.AI.providers.cohere import CohereProvider
@@ -16,6 +18,23 @@ from vidsift.shared.AI.providers.xai import XAIProvider
 
 
 class AIEcecutor:
-    def __init__(self, config: AppConfig) -> None:
-        self.config: AppConfig = config
+    def __init__(self, config: AIConfig) -> None:
+        self.config: AIConfig = config
+        match self.config.provider:
+            case "ollama":
+                self.ai: AIProvider = OllamaProvider(config=config)
+    def generate(self, request: AIRequest) -> AIResponse:
+        try:
+            response: AIResponse = self.ai.generate(request=request)
+        except AIError:
+            raise
+        except Exception as e:
+            raise AIError(f"{type(e)}: {str(e)}")
+        else:
+            if not response.content or not response.content.replace(" ", ""):
+                raise EmptyAIResponseError("The response of the AI is empty")
+            else:
+                return response
+    def get_provider_name(self) -> ProviderName:
+        return self.ai.get_provider_name()
 

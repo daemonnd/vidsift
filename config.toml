@@ -29,8 +29,8 @@ rss_bozo_level = "permissive" # permissive (log warning), strict (fail on bozo e
 # ============================================================
 
 [ai]
-host = "http://localhost:11434"
-provider = "ollama"             # ollama, lmstudio, openai, anthropic, xai, google_gemini
+base_url = "http://localhost:11434"
+provider = "ollama"                 # ollama, lmstudio, openai, anthropic, xai, google_gemini
 default_model = "qwen3.5:9b"
 validation_model = "qwen3.5:9b"
 summary_model = "qwen3.5:9b"

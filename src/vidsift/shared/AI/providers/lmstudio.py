@@ -1,3 +1,5 @@
+from openai import OpenAI
+
 from vidsift.config.models import AppConfig
 from vidsift.models.ai_models import AIRequest, AIResponse, ProviderName
 from vidsift.shared.AI.providers.base import AIProvider
@@ -6,14 +8,22 @@ from vidsift.shared.AI.providers.base import AIProvider
 class LMStudioProvider(AIProvider):
     def __init__(self, config: AppConfig) -> None:
         super().__init__(config)
-        self.config: AppConfig = config
+        self.client = OpenAI(
+            base_url=config.ai.base_url,
+            api_key="lm-studio"
+        )
 
     def generate(self, request: AIRequest) -> AIResponse:
+        resp = self.client.chat.completions.create(
+            model=request.model,
+            messages=[{"role": "user", "content": request.prompt}],
+            temperature=request.temperature,
+            max_tokens=request.max_tokens
+        )
         return AIResponse(
-            content="",
+            content=resp.choices[0].message.content,
             provider=ProviderName.LMSTUDIO,
             model=request.model,
-            success=True,
         )
 
     def get_provider_name(self) -> ProviderName:

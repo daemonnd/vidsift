@@ -20,14 +20,12 @@ class ProviderName(str, Enum):
 class AIRequest:
     prompt: str
     model: str
-    system_prompt: Optional[str] = None
+    max_tokens: int
     temperature: float = 0.7
-    max_tokens: Optional[int] = None
 
 
 @dataclass
 class AIResponse:
-    content: str
+    content: str | None
     provider: ProviderName
     model: str
-    success: bool = True

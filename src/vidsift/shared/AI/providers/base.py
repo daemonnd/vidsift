@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from vidsift.config.models import AppConfig
+from vidsift.config.models import AIConfig, AppConfig
 from vidsift.models.ai_models import AIRequest, AIResponse, ProviderName
 
 
@@ -9,8 +9,21 @@ class AIProvider(ABC):
     Provider Base class for AI.
     All AI providers should inherit from this class and implement the generate method.
     """
-    def __init__(self, config: AppConfig) -> None:
-        self.config: AppConfig = config
+    def __init__(self, config: AIConfig, api_key: str | None = None) -> None:
+        self.config: AIConfig = config
+        self._validate_data()
+
+    @abstractmethod
+    def _validate_data(self) -> None:
+        """
+        Method to validate the data before making a request to the AI.
+        It checks the base url, api key, and other required parameters.
+        Raises:
+        - AIRequestError if the base url is unhealthy
+        - AIModelError for model-related errors
+        """
+        pass
+
 
     @abstractmethod
     def generate(self, request: AIRequest) -> AIResponse:
