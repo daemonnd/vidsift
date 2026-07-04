@@ -1,6 +1,8 @@
 from vidsift.config.models import AppConfig
+from vidsift.models.ai_models import AIRequest
 from vidsift.shared.AI.errors import AIError
-from vidsift.shared.AI.run_model import AIUsageManager
+from vidsift.shared.AI.executor import AIExecutor
+from vidsift.shared.AI.prompt_manager import PromptManager
 
 
 class FinalSummarizer:
@@ -11,12 +13,18 @@ class FinalSummarizer:
             - PersmissionError
         """
         self.config: AppConfig = config
-        self.ai_manager: AIUsageManager = AIUsageManager(system_prompt_file_name="full_summary.md", config=self.config)
+        self.prompt_manager: PromptManager = PromptManager(system_prompt_file_name="full_summary.md", config=self.config)
         self.ai_model: str = ai_model
+        self.ai_executor: AIExecutor = AIExecutor(config=config.ai, api_key=None)
 
     def summarize(self, summarized_chunks: list[str]) -> str:
         try:
-            return self.ai_manager.run_ai(self.ai_manager.generate_prompt(append='\n'.join(summarized_chunks)), model=self.ai_model)
+            ai_request = AIRequest(
+                prompt=self.prompt_manager.generate_prompt(append='\n'.join(summarized_chunks)),
+                model=self.ai_model,
+                max_tokens=1000,
+            )
+            return self.ai_executor.generate(request=ai_request).content
         except AIError as e:
             raise AIError(f"An error occurred while summarizing the transcript: {str(e)}") from e
 

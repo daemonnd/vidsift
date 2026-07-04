@@ -6,8 +6,10 @@ from pydantic import ValidationError
 from vidsift.config.models import AppConfig
 from vidsift.models.ai_json_requirements import (AIJSONBaseRequirements,
                                                  AIJSONRuntimeRequirements)
+from vidsift.models.ai_models import AIRequest
 from vidsift.shared.AI.errors import (AIError, EmptyAIResponseError,
                                       InvalidAIResponseFormatError)
+from vidsift.shared.AI.executor import AIExecutor
 from vidsift.shared.AI.prompt_manager import PromptManager
 from vidsift.shared.logging.log_event_fields import LogEvent
 
@@ -27,7 +29,7 @@ class AIJsonOutputManager:
         """
         validation_prompt: PromptManager = PromptManager(self.system_prompt_filename, config=self.config)
         retry_system_prompt: PromptManager = PromptManager(self.retry_system_filename, config=self.config)
-        ai_executor: AIUsageManager = AIUsageManager("", config=self.config)
+        ai_executor: AIExecutor = AIExecutor(config=self.config.ai, api_key=None)
         use_full_validate: bool = True
 
         logger.debug(
@@ -73,7 +75,12 @@ class AIJsonOutputManager:
                 )
 
             try:
-                response: str = ai_executor.run_ai(prompt=prompt, model=requirements.ai_model)
+                ai_request: AIRequest = AIRequest(
+                    prompt=prompt,
+                    model=requirements.ai_model,
+                    max_tokens=1000,
+                )
+                response: str = str(ai_executor.generate(request=ai_request).content)
                 validated_response = self.validate_ai_response(ai_response=response)
 
 

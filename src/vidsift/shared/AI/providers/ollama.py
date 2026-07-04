@@ -1,11 +1,10 @@
 import requests
-from ollama import ChatResponse, Client, RequestError, ResponseError, list
-from pydantic import config
+from ollama import ChatResponse, Client, RequestError, ResponseError
+from ollama import list as ollama_list
 
-from vidsift.config.models import AIConfig, AppConfig
+from vidsift.config.models import AIConfig
 from vidsift.models.ai_models import AIRequest, AIResponse, ProviderName
-from vidsift.shared.AI.errors import (AIModelError, AIRequestError,
-                                      InvalidAIConfigError)
+from vidsift.shared.AI.errors import AIModelError, AIRequestError
 from vidsift.shared.AI.providers.base import AIProvider
 
 
@@ -16,23 +15,19 @@ class OllamaProvider(AIProvider):
     def _validate_data(self) -> None:
         if requests.get(self.config.base_url).status_code != 200:
             raise AIRequestError(f"Invalid base url: {self.config.base_url}")
-        models = list()
-        default_model_found = False
-        validation_model_found = False
-        summary_model_found = False
 
-        for model in models["models"]:
-            if model == self.config.default_model:
-                default_model_found = True
-            if model == self.config.validation_model:
-                validation_model_found = True
-            if model == self.config.summary_model:
-                summary_model_found = True
+        response = ollama_list()
+        models = response["models"] if isinstance(response, dict) else response.models
+
+        default_model_found = any(m.model == self.config.default_model for m in models)
+        validation_model_found = any(m.model == self.config.validation_model for m in models)
+        summary_model_found = any(m.model == self.config.summary_model for m in models)
+
         if not default_model_found:
             raise AIModelError(f"The default model {self.config.default_model} does not exist")
-        elif not validation_model_found:
+        if not validation_model_found:
             raise AIModelError(f"The validation model {self.config.validation_model} does not exist")
-        elif not summary_model_found:
+        if not summary_model_found:
             raise AIModelError(f"The summarization model {self.config.summary_model} does not exist")
 
     def generate(self, request: AIRequest) -> AIResponse:

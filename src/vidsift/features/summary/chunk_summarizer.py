@@ -2,8 +2,10 @@ import logging
 
 from vidsift.config.models import AppConfig
 from vidsift.features.summary.errors import SummaryError
+from vidsift.models.ai_models import AIRequest
 from vidsift.shared.AI.errors import AIError
-from vidsift.shared.AI.run_model import AIUsageManager
+from vidsift.shared.AI.executor import AIExecutor
+from vidsift.shared.AI.prompt_manager import PromptManager
 from vidsift.shared.logging.log_event_fields import LogEvent
 from vidsift.shared.one_retry import retry_once
 from vidsift.shared.text_normalizer import TextNormalizer
@@ -15,7 +17,8 @@ logger = logging.getLogger(__name__)
 class ChunkSummaryManager:
     def __init__(self, config: AppConfig):
         self.config: AppConfig = config
-        self.chunk_summary_ai: AIUsageManager = AIUsageManager(system_prompt_file_name="chunk_summary.md", config=self.config)
+        self.prompt_manager: PromptManager = PromptManager(system_prompt_file_name="chunk_summary.md", config=self.config)
+        self.ai_executor: AIExecutor = AIExecutor(config=self.config.ai, api_key=None)
         self.ai_model: str = config.ai.summary_model
         self.transcript_chunk_generator: TranscriptChunkGenerator = TranscriptChunkGenerator(char_chunk_size=self.config.summarization.char_chunk_size)
         self.text_normalizer: TextNormalizer = TextNormalizer()
@@ -39,12 +42,14 @@ class ChunkSummaryManager:
                 },
             )
 
-            summary: str = self.chunk_summary_ai.run_ai(
-                prompt=self.chunk_summary_ai.generate_prompt(
-                    append=chunk,
-                    )
-                , model=self.ai_model
+            ai_request: AIRequest = AIRequest(
+                prompt=self.prompt_manager.generate_prompt(
+                        append=chunk,
+                    ),
+                model=self.config.ai.summary_model,
+                max_tokens=150,
             )
+            summary = str(self.ai_executor.generate(request=ai_request).content)
 
             normalized_summary = self.text_normalizer.normalize(summary)
 

@@ -1,12 +1,12 @@
 from openai import OpenAI
 
-from vidsift.config.models import AppConfig
+from vidsift.config.models import AIConfig
 from vidsift.models.ai_models import AIRequest, AIResponse, ProviderName
 from vidsift.shared.AI.providers.base import AIProvider
 
 
 class LMStudioProvider(AIProvider):
-    def __init__(self, config: AppConfig) -> None:
+    def __init__(self, config: AIConfig) -> None:
         super().__init__(config)
         self.client = OpenAI(
             base_url=config.ai.base_url,
