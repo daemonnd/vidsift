@@ -8,7 +8,7 @@ from vidsift.models.ai_json_requirements import (AIJSONBaseRequirements,
                                                  AIJSONRuntimeRequirements)
 from vidsift.shared.AI.errors import (AIError, EmptyAIResponseError,
                                       InvalidAIResponseFormatError)
-from vidsift.shared.AI.run_model import AIUsageManager
+from vidsift.shared.AI.prompt_manager import PromptManager
 from vidsift.shared.logging.log_event_fields import LogEvent
 
 logger = logging.getLogger(__name__)
@@ -25,8 +25,8 @@ class AIJsonOutputManager:
         """
         Method to run the AI pipeline to get a valid JSON output from the AI, with retries if the output is not valid.
         """
-        validation_ai: AIUsageManager = AIUsageManager(self.system_prompt_filename, config=self.config)
-        retry_system_ai: AIUsageManager = AIUsageManager(self.retry_system_filename, config=self.config)
+        validation_prompt: PromptManager = PromptManager(self.system_prompt_filename, config=self.config)
+        retry_system_prompt: PromptManager = PromptManager(self.retry_system_filename, config=self.config)
         ai_executor: AIUsageManager = AIUsageManager("", config=self.config)
         use_full_validate: bool = True
 
@@ -54,7 +54,7 @@ class AIJsonOutputManager:
             # on the first attempt or if the ai response is empty (use_full_validate is true)
             if use_full_validate:
                 # get the prompt
-                prompt: str = validation_ai.generate_prompt(
+                prompt: str = validation_prompt.generate_prompt(
                     pattern=requirements.first_attempt_pattern,
                     replacement=requirements.first_attempt_replacement,
                     append=requirements.first_attempt_append,
@@ -63,8 +63,8 @@ class AIJsonOutputManager:
             # for the attempts that come after, when response and error message exist
             else:
                 # get the prompt
-                prompt: str = retry_system_ai.generate_prompt(
-                    system_prompt=retry_system_ai.generate_prompt(
+                prompt: str = retry_system_prompt.generate_prompt(
+                    system_prompt=retry_system_prompt.generate_prompt(
                         pattern="$ERROR_MESSAGE",
                         replacement=error_msg,
                     ),

@@ -52,13 +52,13 @@ class UrlCollector:
 
             return feedparser.parse(response.content)
         except ConnectError as e:
-            raise ConnectionError(f"Failed to connect to {url}: {e}")
+            raise ConnectionError(f"Failed to connect to {url}: {e}") from e 
         except ReadError as e:
-            raise ReadingError(f"Failed to read from {url}: {e}")
+            raise ReadingError(f"Failed to read from {url}: {e}") from e
         except DecodingError as e:
-            raise ReadingError(f"Failed to decode {url}: {e}")
+            raise ReadingError(f"Failed to decode {url}: {e}") from e
         except RequestError as e:
-            raise ConnectionError(f"Failed to do a request to {url}: {e}")
+            raise ConnectionError(f"Failed to do a request to {url}: {e}") from e
 
     def validate_feed_response(self, feed: FeedParserDict, channel_id: str) -> None:
         """

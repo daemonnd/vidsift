@@ -31,7 +31,7 @@ class VideoFetchingConfig(BaseModel):
 class AIConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
     host: str
-    provider: Literal["ollama", "openai", "anthropic", "lmstudio", "google_gemini", "xai"]
+    provider: Literal["ollama", "lmstudio", "openai", "anthropic", "cohere", "xai", "mistral", "google",  "microsoft", "custom"]
     default_model: str
     validation_model: str
     summary_model: str
