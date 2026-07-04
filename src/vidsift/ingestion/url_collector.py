@@ -6,10 +6,12 @@ import certifi
 import feedparser
 import httpx
 from feedparser import FeedParserDict
+from httpx import (ConnectError, DecodingError, HTTPStatusError, ReadError,
+                   RequestError)
 
 from vidsift.config.models import AppConfig
-from vidsift.ingestion.errors import (InvalidHTTPStatusError,
-                                      NonWellFormattedFeedError)
+from vidsift.ingestion.errors import (ConnectionError, InvalidHTTPStatusError,
+                                      NonWellFormattedFeedError, ReadingError)
 from vidsift.models.video import InvalidVideoError, Video
 from vidsift.shared.video_id_extractor import VideoIDExtractor
 
@@ -32,20 +34,31 @@ class UrlCollector:
         """
         Fetches the feed for a given channel ID and returns the parsed feed.
         Raises:
-            - HttpStatusError if the HTTP request fails or returns a non-200 status code.
+            - InvalidHTTPStatusError if the HTTP request fails or returns a non-200 status code.
+            - ConnectionError if the connection failed
+            - ReadingError is reading the response failed
         Returns:
             - the parsed xml feed as a FeedParserDict.
         """
         url = f"{YOUTUBE_BASE_RSS_URL}{channel_id}"
 
-        with httpx.Client(verify=certifi.where(), timeout=10.0) as client:
-            response = client.get(url)
-            try:
-                response.raise_for_status()
-            except httpx.HTTPStatusError as e:
-                raise InvalidHTTPStatusError(f"HTTP request failed for {url}: {e.response.status_code} {e.response.reason_phrase}")
+        try:
+            with httpx.Client(verify=certifi.where(), timeout=10.0) as client:
+                response = client.get(url)
+                try:
+                    response.raise_for_status()
+                except HTTPStatusError as e:
+                    raise InvalidHTTPStatusError(f"HTTP request failed for {url}: {e.response.status_code} {e.response.reason_phrase}")
 
-        return feedparser.parse(response.content)
+            return feedparser.parse(response.content)
+        except ConnectError as e:
+            raise ConnectionError(f"Failed to connect to {url}: {e}")
+        except ReadError as e:
+            raise ReadingError(f"Failed to read from {url}: {e}")
+        except DecodingError as e:
+            raise ReadingError(f"Failed to decode {url}: {e}")
+        except RequestError as e:
+            raise ConnectionError(f"Failed to do a request to {url}: {e}")
 
     def validate_feed_response(self, feed: FeedParserDict, channel_id: str) -> None:
         """
