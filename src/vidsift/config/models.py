@@ -1,3 +1,4 @@
+import json
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -30,6 +31,7 @@ class VideoFetchingConfig(BaseModel):
 class AIConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
     host: str
+    provider: Literal["ollama", "openai", "anthropic", "lmstudio", "google_gemini", "xai"]
     default_model: str
     validation_model: str
     summary_model: str
@@ -109,6 +111,15 @@ class YtDlpConfig(BaseModel):
     quiet: bool
     merge_output_format: str
     format: str
+    additional_args: str
+
+    @field_validator("additional_args")
+    @classmethod
+    def validate_additional_args(cls, v: str) -> str:
+        try:
+            return json.dumps(v)
+        except Exception as e:
+            raise ValueError(f"additional_args are not a JSON-formatted string: {str(e)}")
 
 class VideoProcessingConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
