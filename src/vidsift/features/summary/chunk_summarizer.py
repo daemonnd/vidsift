@@ -18,7 +18,7 @@ class ChunkSummaryManager:
     def __init__(self, config: AppConfig):
         self.config: AppConfig = config
         self.prompt_manager: PromptManager = PromptManager(system_prompt_file_name="chunk_summary.md", config=self.config)
-        self.ai_executor: AIExecutor = AIExecutor(config=self.config.ai, api_key=None)
+        self.ai_executor: AIExecutor = AIExecutor(config=self.config.ai)
         self.ai_model: str = config.ai.summary_model
         self.transcript_chunk_generator: TranscriptChunkGenerator = TranscriptChunkGenerator(char_chunk_size=self.config.summarization.char_chunk_size)
         self.text_normalizer: TextNormalizer = TextNormalizer()

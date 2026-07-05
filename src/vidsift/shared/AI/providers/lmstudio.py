@@ -7,10 +7,10 @@ from vidsift.shared.AI.providers.base import AIProvider
 
 
 class LMStudioProvider(AIProvider):
-    def __init__(self, config: AIConfig, api_key: str) -> None:
+    def __init__(self, config: AIConfig) -> None:
         self.client = lms.Client(api_host=config.base_url)
 
-        super().__init__(config, api_key=api_key)
+        super().__init__(config)
 
         self._validate_data()
 

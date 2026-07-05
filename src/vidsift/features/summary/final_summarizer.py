@@ -15,7 +15,7 @@ class FinalSummarizer:
         self.config: AppConfig = config
         self.prompt_manager: PromptManager = PromptManager(system_prompt_file_name="full_summary.md", config=self.config)
         self.ai_model: str = ai_model
-        self.ai_executor: AIExecutor = AIExecutor(config=config.ai, api_key=None)
+        self.ai_executor: AIExecutor = AIExecutor(config=config.ai)
 
     def summarize(self, summarized_chunks: list[str]) -> str:
         try:
@@ -24,7 +24,7 @@ class FinalSummarizer:
                 model=self.ai_model,
                 max_tokens=1000,
             )
-            return self.ai_executor.generate(request=ai_request).content
+            return str(self.ai_executor.generate(request=ai_request).content)
         except AIError as e:
             raise AIError(f"An error occurred while summarizing the transcript: {str(e)}") from e
 

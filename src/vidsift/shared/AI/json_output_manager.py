@@ -29,7 +29,7 @@ class AIJsonOutputManager:
         """
         validation_prompt: PromptManager = PromptManager(self.system_prompt_filename, config=self.config)
         retry_system_prompt: PromptManager = PromptManager(self.retry_system_filename, config=self.config)
-        ai_executor: AIExecutor = AIExecutor(config=self.config.ai, api_key=None)
+        ai_executor: AIExecutor = AIExecutor(config=self.config.ai)
         use_full_validate: bool = True
 
         logger.debug(
