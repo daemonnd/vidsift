@@ -10,7 +10,8 @@ from vidsift.shared.AI.providers.base import AIProvider
 
 class OllamaProvider(AIProvider):
     def __init__(self, config: AIConfig, api_key: str | None = None) -> None:
-        super().__init__(config)
+        super().__init__(config, api_key="dummy_api_key")
+        #self._validate_data()
 
     def _validate_data(self) -> None:
         if requests.get(self.config.base_url).status_code != 200:

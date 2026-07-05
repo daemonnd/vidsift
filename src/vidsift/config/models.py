@@ -37,15 +37,15 @@ class AIConfig(BaseModel):
     summary_model: str
     max_allowed_json_output_runs: int = Field(ge=0,le=5)
 
-    @field_validator("base_url")
-    @classmethod
-    def validate_host(cls, v: str) -> str:
-        if v.startswith("http://") or v.startswith("https://"):
-            pass
-        else:
-            raise ValueError("host must start with http:// or https://")
-
-        return v
+    #@field_validator("base_url")
+    #@classmethod
+    #def validate_host(cls, v: str) -> str:
+    #    if v.startswith("http://") or v.startswith("https://"):
+    #        pass
+    #    else:
+    #        raise ValueError("host must start with http:// or https://")
+    #
+    #    return v
 
 
 class PreValidationThresholdConfig(BaseModel):

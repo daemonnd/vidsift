@@ -9,9 +9,8 @@ class AIProvider(ABC):
     Provider Base class for AI.
     All AI providers should inherit from this class and implement the generate method.
     """
-    def __init__(self, config: AIConfig, api_key: str | None = None) -> None:
+    def __init__(self, config: AIConfig, api_key: str) -> None:
         self.config: AIConfig = config
-        self._validate_data()
 
     @abstractmethod
     def _validate_data(self) -> None:

@@ -19,11 +19,14 @@ from vidsift.shared.AI.providers.ollama import OllamaProvider
 
 
 class AIExecutor:
-    def __init__(self, config: AIConfig, api_key: str | None) -> None:
+    def __init__(self, config: AIConfig, api_key: str | None = "dummy_api_key") -> None:
         self.config: AIConfig = config
         match self.config.provider:
             case "ollama":
                 self.ai: AIProvider = OllamaProvider(config=config)
+            case "lmstudio":
+                self.ai: AIProvider = LMStudioProvider(config=config, api_key="dummy_api_key")
+
     def generate(self, request: AIRequest) -> AIResponse:
         try:
             response: AIResponse = self.ai.generate(request=request)
