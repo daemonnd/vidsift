@@ -103,23 +103,21 @@ class ChannelConfig(BaseModel):
             raise ValueError("channel_id must start with 'UC'")
 
         return v
-class YtDlpConfig(BaseModel):
+class YtDlpBaseConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
     max_retries: int | Literal["infinite"] = Field(ge=0)
     sleep_requests: int = Field(ge=0)
     cookies_from_browser: str
     quiet: bool
+class YtDlpDownloadConfig(BaseModel):
+    model_config = ConfigDict(frozen=True)
     merge_output_format: str
     format: str
-    additional_args: str
 
-    @field_validator("additional_args")
-    @classmethod
-    def validate_additional_args(cls, v: str) -> str:
-        try:
-            return json.dumps(v)
-        except Exception as e:
-            raise ValueError(f"additional_args are not a JSON-formatted string: {str(e)}")
+class YtDlpConfig(BaseModel):
+    model_config = ConfigDict(frozen=True)
+    base: YtDlpBaseConfig
+    download: YtDlpDownloadConfig
 
 class VideoProcessingConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
