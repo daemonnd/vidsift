@@ -36,14 +36,14 @@ class YtDlpTranscriptProvider(TranscriptProvider):
             "writeautomaticsub": True,
             "writesubtitles": True,
             "subtitlesformat": "vtt",
-            "cookiesfrombrowser": tuple([yt_dlp_config.cookies_from_browser]),
+            "cookiesfrombrowser": tuple([yt_dlp_config.base.cookies_from_browser]),
             "skip_download": True,
-            "sleep_interval_subtitles": yt_dlp_config.sleep_requests,
-            "sleep_interval_requests": yt_dlp_config.sleep_requests,
+            "sleep_interval_subtitles": yt_dlp_config.base.sleep_requests,
+            "sleep_interval_requests": yt_dlp_config.base.sleep_requests,
             "outtmpl": "/tmp/vidsift/%(id)s.%(lang)s.%(ext)s",
             "remote-components": "ejs/github",
-            "quiet": yt_dlp_config.quiet,
-            "max_retries": yt_dlp_config.max_retries,
+            "quiet": yt_dlp_config.base.quiet,
+            "max_retries": yt_dlp_config.base.max_retries,
         }
 
         logger.info(

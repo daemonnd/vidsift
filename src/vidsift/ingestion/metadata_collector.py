@@ -18,11 +18,11 @@ class MetadataCollector:
         yt_dlp_config = config.video_processing.yt_dlp
         self.video_id_extractor = VideoIDExtractor()
         ydl_opts: dict[str, Any] = {
-            "cookiesfrombrowser": tuple([yt_dlp_config.cookies_from_browser]),
+            "cookiesfrombrowser": tuple([yt_dlp_config.base.cookies_from_browser]),
             "skip_download": True,
-            "sleep_interval_requests": yt_dlp_config.sleep_requests,
+            "sleep_interval_requests": yt_dlp_config.base.sleep_requests,
             "no_playlist": True,
-            "quiet": yt_dlp_config.quiet,
+            "quiet": yt_dlp_config.base.quiet,
         }
         self.ydl: YoutubeDL = YoutubeDL(ydl_opts)
     def fetch_metadata(self, url: str):

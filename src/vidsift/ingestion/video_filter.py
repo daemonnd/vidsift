@@ -9,9 +9,9 @@ class VideoFilter:
     def __init__(self, config: AppConfig) -> None:
         yt_dlp_config = config.video_processing.yt_dlp
         self.ytl_opts = {
-            "cookies_from_browser": tuple([yt_dlp_config.cookies_from_browser]),
-            "sleep_interval_requests": yt_dlp_config.sleep_requests,
-            "quiet": yt_dlp_config.quiet,
+            "cookies_from_browser": tuple([yt_dlp_config.base.cookies_from_browser]),
+            "sleep_interval_requests": yt_dlp_config.base.sleep_requests,
+            "quiet": yt_dlp_config.base.quiet,
         }
     def check_is_livestream(self, vid: Video) -> bool:
         """
