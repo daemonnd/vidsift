@@ -1,3 +1,4 @@
+import json
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -23,25 +24,28 @@ class LoggingConfig(BaseModel):
     console: ConsoleLoggingConfig
     file: FileLoggingConfig
 
-
+class VideoFetchingConfig(BaseModel):
+    model_config = ConfigDict(frozen=True)
+    rss_bozo_level: Literal["permissive", "strict", "ignore", "debug"]
 
 class AIConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
-    host: str
+    base_url: str
+    provider: Literal["ollama", "lmstudio", "openai", "anthropic", "cohere", "xai", "mistral", "google",  "microsoft", "custom"]
     default_model: str
     validation_model: str
     summary_model: str
     max_allowed_json_output_runs: int = Field(ge=0,le=5)
 
-    @field_validator("host")
-    @classmethod
-    def validate_host(cls, v: str) -> str:
-        if v.startswith("http://") or v.startswith("https://"):
-            pass
-        else:
-            raise ValueError("host must start with http:// or https://")
-
-        return v
+    #@field_validator("base_url")
+    #@classmethod
+    #def validate_host(cls, v: str) -> str:
+    #    if v.startswith("http://") or v.startswith("https://"):
+    #        pass
+    #    else:
+    #        raise ValueError("host must start with http:// or https://")
+    #
+    #    return v
 
 
 class PreValidationThresholdConfig(BaseModel):
@@ -99,6 +103,21 @@ class ChannelConfig(BaseModel):
             raise ValueError("channel_id must start with 'UC'")
 
         return v
+class YtDlpBaseConfig(BaseModel):
+    model_config = ConfigDict(frozen=True)
+    max_retries: int | Literal["infinite"] = Field(ge=0)
+    sleep_requests: int = Field(ge=0)
+    cookies_from_browser: str
+    quiet: bool
+class YtDlpDownloadConfig(BaseModel):
+    model_config = ConfigDict(frozen=True)
+    merge_output_format: str
+    format: str
+
+class YtDlpConfig(BaseModel):
+    model_config = ConfigDict(frozen=True)
+    base: YtDlpBaseConfig
+    download: YtDlpDownloadConfig
 
 class VideoProcessingConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
@@ -106,11 +125,13 @@ class VideoProcessingConfig(BaseModel):
     days_uploaded_before: int = Field(ge=0)
     min_vid_delay: int = Field(ge=30)
     random_vid_delay: int = Field(ge=10)
+    yt_dlp: YtDlpConfig
 
 
 class AppConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
     logging: LoggingConfig
+    video_fetching: VideoFetchingConfig
     ai: AIConfig
     video_processing: VideoProcessingConfig
     validation: ValidationConfig

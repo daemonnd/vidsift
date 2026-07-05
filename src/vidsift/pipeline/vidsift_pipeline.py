@@ -61,19 +61,19 @@ class VidsiftOrchestrator:
         # video fetching
         self.video_data_collector: VideoDataCollection = VideoDataCollection(channel_id_list=channel_id_list, config=config)
         # video filtering
-        self.video_filter: VideoFilter = (video_filter or VideoFilter())
+        self.video_filter: VideoFilter = (video_filter or VideoFilter(config=config))
         # video cache
         self.video_db: VideoProcessingRepository = (video_db or VideoProcessingRepository(config=self.config))
         # validation
         self.video_validator: VideoValidator = (video_validator or VideoValidator(config))
         # transcript
-        self.transcript_service: TranscriptService = (transcript_service or TranscriptService())
+        self.transcript_service: TranscriptService = (transcript_service or TranscriptService(config))
         # summarization
         self.summarizer: SummarizationService = (summarizer or SummarizationService(config))
         # downloading
-        self.downloader: VideoDownloader = (downloader or VideoDownloader())
+        self.downloader: VideoDownloader = (downloader or VideoDownloader(config=config))
 
-        # delay 
+        # delay
         self.should_sleep: bool = should_sleep
 
     def run(self) -> None:
@@ -82,7 +82,7 @@ class VidsiftOrchestrator:
             logger.info(
                 "The vidsift orchestrator started.",
                 extra={"event": LogEvent.ORCHESTRATOR_STARTED},
-            )  # TODO: add debug mode when cli is implemented
+            )
 
             # before fetching and processing any new videos, process the interrupted / failed ones
             self.process_interrupted_videos()
@@ -115,7 +115,7 @@ class VidsiftOrchestrator:
             }
             for vid in video_generator:
                 if self.video_db.exists(video_id=vid.video_id):
-                    logger.info(
+                    logger.debug(
                         f"Skipping video with video id {vid.video_id} because it was already processed.",
                         extra={
                             "event": LogEvent.VIDEO_SKIPPED_EXISTING,
@@ -124,6 +124,7 @@ class VidsiftOrchestrator:
                         },
                     )
                     continue # no delay waiting
+                # check if the video is a livestream
                 try:
                     is_livestream = self.video_filter.check_is_livestream(vid=vid)
                 except VideoFilteringError as e:
@@ -161,9 +162,7 @@ class VidsiftOrchestrator:
                         video_id=vid.video_id
                     )
                     continue
-                print(f"Is live: {is_livestream}")
                 if is_livestream:
-                    print("is a livestream")
                     logger.info(
                         f"Skipped video with video id {vid.video_id} with title {vid.title} because it is a livestream",
                         extra={
@@ -183,6 +182,14 @@ class VidsiftOrchestrator:
                     self.video_db.update_after_done(video_id=vid.video_id, decision="discarded")
                     continue
 
+                logger.debug(
+                    f"Processing video with video id {vid.video_id} because it is not a livestream",
+                    extra={
+                        "event": LogEvent.PROCESSING_NON_LIVESTREAM,
+                        "video_id": vid.video_id,
+                        "channel_id": vid.channel_id
+                    }
+                )
                 self.video_db.create(vid=vid)
 
                 channel = channel_lookup[vid.channel_id]
@@ -235,7 +242,7 @@ class VidsiftOrchestrator:
                                 "channel_id": vid.channel_id
                             }
                         )
-                        self.process_validation_pipeline(vid=vid, create_db_entry=True)
+                        self.process_validation_pipeline(vid=vid, create_db_entry=False)
 
         finally:
             self.video_db.close()
@@ -468,10 +475,10 @@ class VidsiftOrchestrator:
     def process_validation_pipeline(self, vid: Video, create_db_entry: bool):
         try:
             if create_db_entry:
-                # not process the video if a db entry exists but the video is new
-                # check if the video has already been handled
+               # not process the video if a db entry exists but the video is new
+               # check if the video has already been handled
                 if self.video_db.exists(video_id=vid.video_id):
-                    logger.info(
+                    logger.debug(
                         f"Skipping video with video id {vid.video_id} because it was already processed.",
                         extra={
                             "event": LogEvent.VIDEO_SKIPPED_EXISTING,

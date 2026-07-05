@@ -14,21 +14,29 @@ dependency_level = "WARNING"
 enabled = true               # currently not possible to disable
 level = "DEBUG"
 dependency_level = "WARNING"
-rotation = "D"               # D: Daily, H: Hourly, M: every minute, S: every second
+rotation = "midnight"        # D: Daily, H: Hourly, M: every minute, S: every second, midnight: at midnight
 retain_days = 14             # for how many days the logs should be kept
 utc_time = false             # true: UTC time, false: local time
 
+# ============================================================
+# Video fetching
+# ============================================================
+[video_fetching]
+rss_bozo_level = "permissive" # permissive (log warning), strict (fail on bozo error), ignore (fully ignore bozo), debug (log bozo exception)
 
 # ============================================================
 # AI
 # ============================================================
 
 [ai]
-host = "http://localhost:11434"
+base_url = "http://localhost:11434"
+provider = "ollama"                 # ollama, lmstudio, openai, anthropic, xai, google_gemini
 default_model = "qwen3.5:9b"
 validation_model = "qwen3.5:9b"
 summary_model = "qwen3.5:9b"
 
+# how often AI can run and fail to output the requested JSON
+# for smaller local AI models, it is usually 2-3 times
 max_allowed_json_output_runs = 3
 
 
@@ -39,17 +47,36 @@ max_allowed_json_output_runs = 3
 # how often a video can fail in total before it gets marked as FAILED and gets abandoned
 # use vidsift videos list --status failed to list all the failed videos
 max_retry_attempts = 1
+
+# How recent videos should be.
+# The RSS feeds can contain month or even year old videos that may not be wanted
+# This limits the newly processed videos to the upload date between today and today - the value
+# This is especially useful when just having installed vidsift to set it low to not get videos that may
+# have already been watched
+# It does NOT affect interrupted or failed videos, only new ones
+days_uploaded_before = 7
+
 # how much seconds vidsift should sleep after having processed one video at minimum, (min_vid_delay)
 # then how much of random secods will be added (between 0 and random_vid_delay)
-
-
-days_uploaded_before = 4
 
 # int (< 30)
 min_vid_delay = 300 # 5 minutes
 # int(< 10)
 random_vid_delay = 240 # 4 minutes
 
+[video_processing.yt_dlp.base]
+# all of these settings are passed to yt-dlp, so you can use any yt-dlp setting here
+# yt-dlp is used for data fetching for one video (including filtering), transcript fetching, video download
+max_retries = 10
+sleep_requests = 10              # seconds
+cookies_from_browser = "firefox" # brave, chrome, chromium, edge, firefox, opera,  safari,  vivaldi,  whale
+quiet = true                     # wether yt-dlp should be quiet or not, if false, yt-dlp will print a lot of output to the console
+
+[video_processing.yt_dlp.download]
+# download-specific options for yt-dlp
+# used alongside base yt-dlp args for downloading
+merge_output_format = "mkv"         # output format for merged video and audio
+format = "bestvideo+bestaudio/best"
 
 # ============================================================
 # Validation
@@ -58,16 +85,18 @@ random_vid_delay = 240 # 4 minutes
 [validation]
 enabled = true
 
-transcript_chunk_char_size = 500
+# how many chars should roughly be in one transcript chunk
+# the amount of chars getting to the AI are a bit more than 5 x transcript_chunk_char_size
+transcript_chunk_char_size = 500 # (<100), int
 
 
 # ============================================================
 # Validation - Pre Validation
 # ============================================================
 
-[validation.pre_validation.max_allowed]
-title_punctuation_ratio = 0.07
-title_uppercase_ratio = 0.4
+[validation.pre_validation.max_allowed] # (0-1), float
+title_punctuation_ratio = 0.07   # how many punctuations (.?!) can be in the title to pass relative to the total char amount of the title
+title_uppercase_ratio = 0.4      # how many uppercase can chars there can be relative to the total char amount
 title_emoji_ratio = 0.15
 title_clickbait_ratio = 0.15
 transcript_clickbait_ratio = 0.1
@@ -79,7 +108,7 @@ title_punctuation_ratio = 0.04
 title_clickbait_ratio = 0.05
 transcript_clickbait_ratio = 0.02
 
-[validation.pre_validation.weights]
+[validation.pre_validation.weights] # (0-10), float
 title_uppercase_weight = 1.0
 title_emoji_weight = 1.0
 title_punctuation_weight = 0.5

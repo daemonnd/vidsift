@@ -83,7 +83,7 @@ class SummarizationService:
             vid=vid
         )
         logger.info(
-            f"Finished summarizing video with video id {vid.video_id}, the summary got saved to {dest_path}",
+            f"Finished summarizing video with video id '{vid.video_id}', the summary got saved to '{dest_path}'",
             extra={
                 "event": LogEvent.VIDEO_SUMMARIZATION_COMPLETED,
                 "video_id": vid.video_id,

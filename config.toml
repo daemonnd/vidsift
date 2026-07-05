@@ -18,13 +18,19 @@ rotation = "midnight"        # D: Daily, H: Hourly, M: every minute, S: every se
 retain_days = 14             # for how many days the logs should be kept
 utc_time = false             # true: UTC time, false: local time
 
+# ============================================================
+# Video fetching
+# ============================================================
+[video_fetching]
+rss_bozo_level = "permissive" # permissive (log warning), strict (fail on bozo error), ignore (fully ignore bozo), debug (log bozo exception)
 
 # ============================================================
 # AI
 # ============================================================
 
 [ai]
-host = "http://localhost:11434"
+base_url = "http://localhost:11434"
+provider = "ollama"                 # ollama, lmstudio, openai, anthropic, xai, google_gemini
 default_model = "qwen3.5:9b"
 validation_model = "qwen3.5:9b"
 summary_model = "qwen3.5:9b"
@@ -57,6 +63,20 @@ days_uploaded_before = 7
 min_vid_delay = 300 # 5 minutes
 # int(< 10)
 random_vid_delay = 240 # 4 minutes
+
+[video_processing.yt_dlp.base]
+# all of these settings are passed to yt-dlp, so you can use any yt-dlp setting here
+# yt-dlp is used for data fetching for one video (including filtering), transcript fetching, video download
+max_retries = 10
+sleep_requests = 10              # seconds
+cookies_from_browser = "firefox" # brave, chrome, chromium, edge, firefox, opera,  safari,  vivaldi,  whale
+quiet = true                     # wether yt-dlp should be quiet or not, if false, yt-dlp will print a lot of output to the console
+
+[video_processing.yt_dlp.download]
+# download-specific options for yt-dlp
+# used alongside base yt-dlp args for downloading
+merge_output_format = "mkv"         # output format for merged video and audio
+format = "bestvideo+bestaudio/best"
 
 # ============================================================
 # Validation

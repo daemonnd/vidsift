@@ -7,6 +7,10 @@ class InvalidAIResponseFormatError(AIError):
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
 
+class InvalidAIConfigError(AIError):
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)
+
 class EmptyAIResponseError(AIError):
     def __init__(self, *args: object) -> None:
         super().__init__(*args)

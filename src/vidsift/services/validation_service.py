@@ -75,7 +75,7 @@ class VideoValidator:
         pre_vali_calc_result, reason = self.pre_validation_score_calculator.calculate_score(result=pre_vali_result)
         if pre_vali_calc_result > 0.5:
             logger.info(
-                f"Video {vid.video_id} classified as likely clickbait.",
+                f"Video '{vid.video_id}' classified as likely clickbait.",
                 extra={
                     "event": LogEvent.VIDEO_VALIDATION_COMPLETED,
                     "video_id": vid.video_id,
@@ -109,12 +109,12 @@ class VideoValidator:
                     ai_model=self.config.ai.validation_model,
                     first_attempt_pattern="$CUSTOM_CHANNEL_INSTRUCTIONS",
                     first_attempt_replacement=get_custom_instructions(vid.author),
-                    first_attempt_append=f"title: {vid.title}\nauthor: {vid.author}\nurl: {vid.url}\nvideo ID: {vid.video_id}",
+                    first_attempt_append=f"title: {vid.title}\nauthor: {vid.author}\nurl: {vid.url}\nvideo ID: '{vid.video_id}'",
                 )
             )
         except AIError as e:
             logger.exception(
-                f"Metadata validation failed for video {vid.video_id}.",
+                f"Metadata validation failed for video '{vid.video_id}'.",
                 extra={
                     "event": LogEvent.VIDEO_VALIDATION_FAILED,
                     "video_id": vid.video_id,
@@ -122,10 +122,10 @@ class VideoValidator:
                     "validation_stage": "metadata",
                 },
             )
-            raise VideoValidationError(f"Metadata validation failed for video {vid.video_id} due to AI error: {str(e)}")
+            raise VideoValidationError(f"Metadata validation failed for video '{vid.video_id}' due to AI error: {str(e)}")
         except CustomInstructionsReadingError as e:
             logger.exception(
-                f"Could not read custom instructions for video {vid.video_id}: {str(e)}",
+                f"Could not read custom instructions for video '{vid.video_id}': {str(e)}",
                 extra={
                     "event": LogEvent.VIDEO_VALIDATION_FAILED,
                     "video_id": vid.video_id,
@@ -133,7 +133,7 @@ class VideoValidator:
                     "validation_stage": "metadata"
                 }
             )
-            raise VideoValidationError(f"Metadata validation failed for video {vid.video_id} due to Custom instructions reading error: {str(e)}")
+            raise VideoValidationError(f"Metadata validation failed for video '{vid.video_id}' due to Custom instructions reading error: {str(e)}")
 
     def validate_transcript(self, vid: Video, transcript: str) -> TranscriptValidationResult:
         """
@@ -162,7 +162,7 @@ class VideoValidator:
             )
         except AIError as e:
             logger.exception(
-                f"Transcript validation failed for video {vid.video_id}.",
+                f"Transcript validation failed for video '{vid.video_id}'.",
                 extra={
                     "event": LogEvent.VIDEO_VALIDATION_FAILED,
                     "video_id": vid.video_id,
@@ -170,10 +170,10 @@ class VideoValidator:
                     "validation_stage": "transcript",
                 },
             )
-            raise VideoValidationError(f"Transcript validation failed for video {vid.video_id} due to AI error: {str(e)}")
+            raise VideoValidationError(f"Transcript validation failed for video '{vid.video_id}' due to AI error: {str(e)}")
         except CustomInstructionsReadingError as e:
             logger.exception(
-                f"Could not read custom instructions for video {vid.video_id}: {str(e)}",
+                f"Could not read custom instructions for video '{vid.video_id}': {str(e)}",
                 extra={
                     "event": LogEvent.VIDEO_VALIDATION_FAILED,
                     "video_id": vid.video_id,
@@ -181,7 +181,7 @@ class VideoValidator:
                     "validation_stage": "metadata"
                 }
             )
-            raise VideoValidationError(f"Metadata validation failed for video {vid.video_id} due to Custom instructions reading error: {str(e)}")
+            raise VideoValidationError(f"Metadata validation failed for video '{vid.video_id}' due to Custom instructions reading error: {str(e)}")
 
     def validate_video(self, vid: Video, raw_transcript: str) -> ValidationResult:
 
@@ -195,7 +195,7 @@ class VideoValidator:
 
         if not pre_validation_res:
             logger.info(
-                f"Video {vid.video_id} discarded because of excessive clickbait indicators.",
+                f"Video '{vid.video_id}' discarded because of excessive clickbait indicators.",
                 extra={
                     "event": LogEvent.VIDEO_VALIDATION_COMPLETED,
                     "video_id": vid.video_id,
@@ -211,7 +211,7 @@ class VideoValidator:
             )
         else:
             logger.info(
-                f"Video {vid.video_id} passed pre-validation.",
+                f"Video '{vid.video_id}' passed pre-validation.",
                 extra={
                     "video_id": vid.video_id,
                     "channel_id": vid.channel_id,
@@ -219,7 +219,7 @@ class VideoValidator:
             )
 
         logger.info(
-            f"Starting metadata validation for video {vid.video_id}.",
+            f"Starting metadata validation for video '{vid.video_id}'.",
             extra={
                 "event": LogEvent.VIDEO_VALIDATION_STARTED,
                 "video_id": vid.video_id,
@@ -230,7 +230,7 @@ class VideoValidator:
         metadata_validation_result: MetadataValidationResult = self.validate_metadata(vid=vid)
         if metadata_validation_result.flags:
             logger.info(
-                f"Metadata validation detected flags for video {vid.video_id}.",
+                f"Metadata validation detected flags for video '{vid.video_id}'.",
                 extra={
                     "video_id": vid.video_id,
                     "channel_id": vid.channel_id,
@@ -257,7 +257,7 @@ class VideoValidator:
 
         # transcript validation
         logger.info(
-            f"Starting transcript validation for video {vid.video_id}.",
+            f"Starting transcript validation for video '{vid.video_id}'.",
             extra={
                 "video_id": vid.video_id,
                 "channel_id": vid.channel_id,
@@ -267,7 +267,7 @@ class VideoValidator:
         transcript_validation_result: TranscriptValidationResult = self.validate_transcript(vid=vid, transcript=transcript)
         if transcript_validation_result.flags:
             logger.info(
-                f"Transcript validation detected flags for video {vid.video_id}.",
+                f"Transcript validation detected flags for video '{vid.video_id}'.",
                 extra={
                     "video_id": vid.video_id,
                     "channel_id": vid.channel_id,

@@ -6,6 +6,7 @@ from typing import Any
 from yt_dlp import YoutubeDL
 from yt_dlp.utils import DownloadCancelled, DownloadError
 
+from vidsift.config.models import AppConfig
 from vidsift.features.transcript.errors import (TranscriptDownloadError,
                                                 TranscriptError,
                                                 TranscriptNotFoundError,
@@ -18,11 +19,13 @@ logger = logging.getLogger(__name__)
 
 
 class YtDlpTranscriptProvider(TranscriptProvider):
-    def __init__(self) -> None:
+    def __init__(self, config: AppConfig) -> None:
         super().__init__()
+        self.config = config
         Path("/tmp/vidsift/").mkdir(exist_ok=True, parents=True)
 
     def fetch_transcript(self, video_url: str, video_id: str) -> None:
+        yt_dlp_config = self.config.video_processing.yt_dlp
         """
         Writes transcript vtt to a file under /tmp/
         Raises:
@@ -33,11 +36,14 @@ class YtDlpTranscriptProvider(TranscriptProvider):
             "writeautomaticsub": True,
             "writesubtitles": True,
             "subtitlesformat": "vtt",
-            "cookiesfrombrowser": tuple(["firefox"]),
+            "cookiesfrombrowser": tuple([yt_dlp_config.base.cookies_from_browser]),
             "skip_download": True,
-            "sleep_interval_requests": 3,
+            "sleep_interval_subtitles": yt_dlp_config.base.sleep_requests,
+            "sleep_interval_requests": yt_dlp_config.base.sleep_requests,
             "outtmpl": "/tmp/vidsift/%(id)s.%(lang)s.%(ext)s",
             "remote-components": "ejs/github",
+            "quiet": yt_dlp_config.base.quiet,
+            "max_retries": yt_dlp_config.base.max_retries,
         }
 
         logger.info(

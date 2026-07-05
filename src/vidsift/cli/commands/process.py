@@ -66,14 +66,14 @@ def handle_process(args, config: AppConfig):
                     "video_id": VideoIDExtractor().extract_id(args.url)
                 }
             )
-            downloader: VideoDownloader = VideoDownloader()
+            downloader: VideoDownloader = VideoDownloader(config=config)
             downloader.download(
                 video_url=args.url,
                 output_path=Path(config.downloads.output_dir)
             )
             return
 
-        metadata_collector = MetadataCollector()
+        metadata_collector = MetadataCollector(config=config)
         try:
             vid: Video = metadata_collector.fetch_metadata(args.url)
         except InvalidVideoError:
