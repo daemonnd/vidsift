@@ -124,6 +124,7 @@ class VidsiftOrchestrator:
                         },
                     )
                     continue # no delay waiting
+                # check if the video is a livestream
                 try:
                     is_livestream = self.video_filter.check_is_livestream(vid=vid)
                 except VideoFilteringError as e:
@@ -181,6 +182,14 @@ class VidsiftOrchestrator:
                     self.video_db.update_after_done(video_id=vid.video_id, decision="discarded")
                     continue
 
+                logger.debug(
+                    f"Processing video with video id {vid.video_id} because it is not a livestream",
+                    extra={
+                        "event": LogEvent.PROCESSING_NON_LIVESTREAM,
+                        "video_id": vid.video_id,
+                        "channel_id": vid.channel_id
+                    }
+                )
                 self.video_db.create(vid=vid)
 
                 channel = channel_lookup[vid.channel_id]
@@ -233,7 +242,7 @@ class VidsiftOrchestrator:
                                 "channel_id": vid.channel_id
                             }
                         )
-                        self.process_validation_pipeline(vid=vid, create_db_entry=True)
+                        self.process_validation_pipeline(vid=vid, create_db_entry=False)
 
         finally:
             self.video_db.close()
@@ -466,8 +475,8 @@ class VidsiftOrchestrator:
     def process_validation_pipeline(self, vid: Video, create_db_entry: bool):
         try:
             if create_db_entry:
-                # not process the video if a db entry exists but the video is new
-                # check if the video has already been handled
+               # not process the video if a db entry exists but the video is new
+               # check if the video has already been handled
                 if self.video_db.exists(video_id=vid.video_id):
                     logger.debug(
                         f"Skipping video with video id {vid.video_id} because it was already processed.",

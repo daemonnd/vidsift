@@ -58,6 +58,7 @@ class LogEvent:
     # video filtering events
     LIVESTREAM_SKIPPED = "livestream_skipped"
     LIVESTREAM_CHECK_FAILED = "livestream_check_failed"
+    PROCESSING_NON_LIVESTREAM = "processing_non_livetream"
 
     # pre-validation events
     PRE_VALIDATION_STARTED = "pre_validation_started"
