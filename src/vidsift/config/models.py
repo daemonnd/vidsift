@@ -35,10 +35,26 @@ class AIConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
     base_url: str
     provider: Literal["ollama", "lmstudio", "openai", "anthropic", "cohere", "xai", "mistral", "google",  "microsoft", "custom"]
+
     default_model: str
+    default_model_context_length: int = Field(ge=1024)
+    default_model_max_tokens: int = Field(ge=100)
+
     validation_model: str
+    validation_model_context_length: int = Field(ge=1024)
+    validation_model_max_tokens: int = Field(ge=100)
+
     summary_model: str
+    summary_model_context_length: int = Field(ge=1024)
+    summary_model_max_tokens: int = Field(ge=100)
+
     max_allowed_json_output_runs: int = Field(ge=0,le=5)
+
+    metadata_validation_think: bool
+    transcript_validation_think: bool
+
+    chunk_summary_think: bool
+    overall_summary_think: bool
 
     #@field_validator("base_url")
     #@classmethod

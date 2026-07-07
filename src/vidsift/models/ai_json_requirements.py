@@ -16,6 +16,7 @@ class AIJSONBaseRequirements:
 @dataclass
 class AIJSONRuntimeRequirements:
     ai_model: str
+    thinking: bool
 
     first_attempt_pattern: str
     first_attempt_replacement: str = ""

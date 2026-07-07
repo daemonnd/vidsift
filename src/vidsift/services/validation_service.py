@@ -112,6 +112,7 @@ class VideoValidator:
                     first_attempt_pattern="$CUSTOM_CHANNEL_INSTRUCTIONS",
                     first_attempt_replacement=get_custom_instructions(self.channel_lookup[vid.channel_id].instruction),
                     first_attempt_append=f"title: {vid.title}\nauthor: {vid.author}\nurl: {vid.url}\nvideo ID: '{vid.video_id}'",
+                    thinking=self.config.ai.metadata_validation_think
                 )
             )
         except AIError as e:
@@ -160,6 +161,7 @@ class VideoValidator:
                     first_attempt_pattern="$CUSTOM_CHANNEL_INSTRUCTIONS",
                     first_attempt_replacement=get_custom_instructions(self.channel_lookup[vid.channel_id].instruction),
                     first_attempt_append=f"\n{chunks}",
+                    thinking=self.config.ai.transcript_validation_think
                 )
             )
         except AIError as e:

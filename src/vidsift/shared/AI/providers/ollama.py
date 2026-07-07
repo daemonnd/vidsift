@@ -38,8 +38,10 @@ class OllamaProvider(AIProvider):
                     messages=[{"role": "user", "content": request.prompt}],
                     options={
                         "temperature": request.temperature,
-                        "num_predict": request.max_tokens if request.max_tokens is not None else 100
-                    }
+                        "num_predict": request.max_tokens,
+                        "num_ctx": request.context_length
+                    },
+                think=AIRequest.thinking
                 )
         except ResponseError as e:
             raise AIModelError(f"An error occurred while running the AI model: {e}") from e

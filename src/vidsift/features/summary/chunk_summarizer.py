@@ -48,6 +48,8 @@ class ChunkSummaryManager:
                     ),
                 model=self.config.ai.summary_model,
                 max_tokens=150,
+                context_length=self.config.ai.summary_model_context_length,
+                thinking=self.config.ai.chunk_summary_think
             )
             summary = str(self.ai_executor.generate(request=ai_request).content)
 

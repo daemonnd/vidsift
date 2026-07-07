@@ -23,6 +23,8 @@ class FinalSummarizer:
                 prompt=self.prompt_manager.generate_prompt(append='\n'.join(summarized_chunks)),
                 model=self.ai_model,
                 max_tokens=1000,
+                context_length=self.config.ai.summary_model_context_length,
+                thinking=self.config.ai.overall_summary_think
             )
             return str(self.ai_executor.generate(request=ai_request).content)
         except AIError as e:
