@@ -238,7 +238,29 @@ class VidsiftOrchestrator:
                                 "channel_id": vid.channel_id
                             }
                         )
-                        transcript: str = self.fetch_transcript(vid)
+                        try:
+                            transcript: str = self.fetch_transcript(vid)
+                        except TranscriptError as e:
+                            error_msg: str = f"TranscriptError: Each transcript fetching provider failed: {str(e)}"
+                            logger.exception(
+                                error_msg,
+                                extra={
+                                    "event": LogEvent.TRANSCRIPT_FETCH_FAILED,
+                                    "video_id": vid.video_id,
+                                    "channel_id": vid.channel_id,
+                                },
+                            )
+                            # add the failure to the video database
+                            self.video_db.mark_failed(error_msg=error_msg, video_id=vid.video_id)
+                            logger.info("Moving on to the next video because of the previous TranscriptError...")
+                            sleep_delay(
+                                calculate_delay(
+                                    min_delay=self.config.video_processing.min_vid_delay,
+                                    random_delay=self.config.video_processing.random_vid_delay
+                                ),
+                                should_sleep=self.should_sleep
+                            )
+                            continue
                         self.execute_processing_step(
                             vid=vid,
                             step_type="summarize",
@@ -367,7 +389,7 @@ class VidsiftOrchestrator:
                 # add it to the video cache
                 self.video_db.update_after_done(video_id=vid.video_id, decision="discarded")
 
-    def fetch_transcript(self, vid: Video):
+    def fetch_transcript(self, vid: Video) -> str:
         # fetch the transcript
         logger.debug(
             f"Fetching the transcript of {vid.video_id}...", 
@@ -378,7 +400,16 @@ class VidsiftOrchestrator:
             }
 
         )
-        return self.transcript_service.get_transcript(vid)
+        transcript: str = self.transcript_service.get_transcript(vid)
+        logger.debug(
+            f"Finished fetching the transcript of {vid.video_id}",
+            extra={
+                "event": LogEvent.TRANSCRIPT_FETCH_COMPLETED,
+                "video_id": vid.video_id,
+                "channel_id": vid.channel_id
+            }
+        )
+        return transcript
 
     def resume_downloads(self):
         # download the videos with an interrupted download
@@ -470,6 +501,27 @@ class VidsiftOrchestrator:
                     ),
                 ):
                     continue
+            except TranscriptError as e:
+                error_msg: str = f"TranscriptError: Each transcript fetching provider failed: {str(e)}"
+                logger.exception(
+                    error_msg,
+                    extra={
+                        "event": LogEvent.TRANSCRIPT_FETCH_FAILED,
+                        "video_id": vid.video_id,
+                        "channel_id": vid.channel_id,
+                    },
+                )
+                # add the failure to the video database
+                self.video_db.mark_failed(error_msg=error_msg, video_id=vid.video_id)
+                logger.info("Moving on to the next video because of the previous TranscriptError...")
+                sleep_delay(
+                    calculate_delay(
+                        min_delay=self.config.video_processing.min_vid_delay,
+                        random_delay=self.config.video_processing.random_vid_delay
+                    ),
+                    should_sleep=self.should_sleep
+                )
+                continue
             except (SystemExit, KeyboardInterrupt):
                 self.should_sleep = False
                 raise # raise it to main, so that vidsift can exit
