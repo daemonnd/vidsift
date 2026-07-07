@@ -1,7 +1,9 @@
-import json
+from pathlib import Path
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from platformdirs import user_config_dir
+from pydantic import (BaseModel, ConfigDict, Field, field_validator,
+                      model_validator)
 
 
 class ConsoleLoggingConfig(BaseModel):
@@ -90,9 +92,10 @@ class DownloadsConfig(BaseModel):
 
 class ChannelConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
+
     id: str
-    name: str
     action: Literal["validate", "download", "summarize"]
+    instruction: str | None = None
 
     @field_validator("id")
     @classmethod
@@ -104,6 +107,38 @@ class ChannelConfig(BaseModel):
             raise ValueError("channel_id must start with 'UC'")
 
         return v
+
+    @model_validator(mode="after")
+    def validate_instruction(self) -> "ChannelConfig":
+        if self.action != "validate":
+            return self
+
+        if self.instruction is None:
+            raise ValueError(
+                "instruction is required when action is 'validate'"
+            )
+
+        vidsift_config_dir = Path(user_config_dir("vidsift"))
+        instruction_path = (
+            vidsift_config_dir
+            / "custom_channel_instructions"
+            / self.instruction
+        )
+
+        if not instruction_path.exists():
+            raise ValueError(
+                f"instruction does not exist: '{instruction_path}'"
+            )
+
+        if not instruction_path.is_file():
+            raise ValueError(
+                f"instruction must be a file, but '{instruction_path}' is not a file"
+            )
+
+        return self
+
+
+
 class YtDlpBaseConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
     max_retries: int | Literal["infinite"] = Field(ge=0)

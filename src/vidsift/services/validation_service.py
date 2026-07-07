@@ -4,7 +4,7 @@ File for managing the validation process and returning the score of the video
 import logging
 from dataclasses import asdict
 
-from vidsift.config.models import AppConfig
+from vidsift.config.models import AppConfig, ChannelConfig
 from vidsift.features.validation.decision_engine import DecisionEngine
 from vidsift.features.validation.errors import (CustomInstructionsReadingError,
                                                 VideoValidationError)
@@ -27,6 +27,7 @@ from vidsift.models.validation.validation_result import ValidationResult
 from vidsift.models.video import InvalidVideoError, Video
 from vidsift.shared.AI.errors import AIError
 from vidsift.shared.AI.json_output_manager import AIJsonOutputManager
+from vidsift.shared.channel_lookup import get_channel_lookup
 from vidsift.shared.logging.log_event_fields import LogEvent
 from vidsift.shared.text_normalizer import TextNormalizer
 
@@ -40,6 +41,7 @@ class VideoValidator:
         self.text_normalizer: TextNormalizer = TextNormalizer()
         self.pre_validation_score_calculator: PreValidationScoreCalculator = PreValidationScoreCalculator(config=self.config)
         self.transcript_chunk_provider: TranscriptChunkProvider = TranscriptChunkProvider(config=self.config)
+        self.channel_lookup: dict[str, ChannelConfig] = get_channel_lookup(self.config.channels)
 
     def pre_validate(self, vid: Video, transcript: str) -> bool:
         """
@@ -108,7 +110,7 @@ class VideoValidator:
                 AIJSONRuntimeRequirements(
                     ai_model=self.config.ai.validation_model,
                     first_attempt_pattern="$CUSTOM_CHANNEL_INSTRUCTIONS",
-                    first_attempt_replacement=get_custom_instructions(vid.channel_id),
+                    first_attempt_replacement=get_custom_instructions(self.channel_lookup[vid.channel_id].instruction),
                     first_attempt_append=f"title: {vid.title}\nauthor: {vid.author}\nurl: {vid.url}\nvideo ID: '{vid.video_id}'",
                 )
             )
@@ -156,7 +158,7 @@ class VideoValidator:
                 AIJSONRuntimeRequirements(
                     ai_model=self.config.ai.validation_model,
                     first_attempt_pattern="$CUSTOM_CHANNEL_INSTRUCTIONS",
-                    first_attempt_replacement=get_custom_instructions(vid.channel_id),
+                    first_attempt_replacement=get_custom_instructions(self.channel_lookup[vid.channel_id].instruction),
                     first_attempt_append=f"\n{chunks}",
                 )
             )

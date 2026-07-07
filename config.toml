@@ -144,17 +144,37 @@ output_dir = "/home/user/Videos/.vidsift/"
 # Channels
 # ============================================================
 
-[[channels]]
-id = "UC9x0AN7BWHpCDHSm9NiJFJQ"
-name = "NetworkChuck"
-action = "validate"
+# id: Channelid
+# 1. Go to channel homepage (for example https://www.youtube.com/@PewDiePie)
+# 2. Click on "more" below the subscriber amount
+# 3. (you may have to scroll down), click on share channel
+# 4. Click on "Copy channel ID"
+
+# actions:
+#   - download: downloads each video from the channel, skipping validation
+#   - validate: validate each new video, that decides wether the video will be downloaded, summarized or discarded
+#   - summarize: summarize each new video from the channel, skipping validation
+
+# instruction:
+# - optional for actions 'download' and 'summarize' cause it is not used for these actions
+# - required for action 'validate'
+# - value: filename of a file located at the user config dir / vidsift / custom_channel_instructions
+# - that file at user config dir / vidsift / custom_channel_instructions / [VALUE]
+#   are the custom channel instructions for validation where you can
+#   tell the AI how you want any video of that channel be validated
+# - it is allowed to use one file multiple times, for example use a file called linux_channels.md for all the channels about linux
+# - the file has to be a file that is plain text (read with mode 'r')
+
 
 [[channels]]
-id = "UCo71RUe6DX4w-Vd47rFLXPg"
-name = "typecraft_dev"
+id = "UC9x0AN7BWHpCDHSm9NiJFJQ" # NetworkChuck
 action = "download"
 
 [[channels]]
-id = "UC4JX40jDee_tINbkjycV4Sg"
-name = "TechWithTim"
+id = "UCo71RUe6DX4w-Vd47rFLXPg"   # typecraft_dev
+action = "validate"
+instruction = "linux_channels.md"
+
+[[channels]]
+id = "UC4JX40jDee_tINbkjycV4Sg" # TechWithTim
 action = "summarize"

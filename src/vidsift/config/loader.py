@@ -26,7 +26,7 @@ def load_config(config_path: Path = CONFIG_FILE_PATH) -> AppConfig:
     except IsADirectoryError as e:
         raise ConfigFileNotFoundError(f"The config file is a directory: {str(e)}") from e
     except FileNotFoundError as e:
-        raise ConfigFileNotFoundError(f"The config file has not been found at {config_path}: {str(e)}") from e
+        raise ConfigFileNotFoundError(f"The config file has not been found at {config_path}: {str(e)}. You may need to run `vidsift init` for getting the default config") from e
     except PermissionError as e:
         raise ConfigFilePermissionError(f"Permission Error while opening the config file at {config_path}: {str(e)}") from e
     except ValidationError as e:

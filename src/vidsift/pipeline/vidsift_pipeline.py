@@ -35,6 +35,7 @@ from vidsift.services.summarization_service import SummarizationService
 from vidsift.services.transcript_service import TranscriptService
 from vidsift.services.validation_service import VideoValidator
 from vidsift.services.video_data_collection_service import VideoDataCollection
+from vidsift.shared.channel_lookup import get_channel_lookup
 from vidsift.shared.delay_calculator import calculate_delay, sleep_delay
 from vidsift.shared.logging.log_event_fields import LogEvent
 from vidsift.shared.video_discovery_source import DiscoverySource
@@ -108,12 +109,7 @@ class VidsiftOrchestrator:
 
 
             # process new videos
-            channel_lookup: dict = {}
-            channels: list[ChannelConfig] = self.config.channels
-            channel_lookup = {
-                channel.id: channel
-                for channel in channels
-            }
+            channel_lookup = get_channel_lookup(self.config.channels)
             for vid, discovery_type in video_generator:
                 if self.video_db.exists(video_id=vid.video_id):
                     logger.debug(
