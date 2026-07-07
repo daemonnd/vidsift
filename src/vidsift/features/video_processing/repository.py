@@ -29,11 +29,11 @@ class VideoProcessingRepository:
         self.cur.execute("""CREATE TABLE IF NOT EXISTS processed_videos (
             video_id TEXT PRIMARY KEY,
 
-            title TEXT NOT NULL,
-            url TEXT NOT NULL,
-            author TEXT NOT NULL,
+            title TEXT,
+            url TEXT,
+            author TEXT,
             channel_id TEXT NOT NULL,
-            published TEXT NOT NULL,
+            published TEXT,
 
             status TEXT NOT NULL,
 

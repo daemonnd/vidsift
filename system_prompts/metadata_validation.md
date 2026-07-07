@@ -27,6 +27,8 @@ confidence:
 - 2 = reasonably confident
 - 1 = uncertain, mixed signals, or insufficient metadata
 
+If some metadata such as author and upload date is missing, do not rate it worse. Rate it based on what you have, not based on what is present and what not.
+
 Important rules:
 
 - Topic relevance does NOT imply trustworthiness.
