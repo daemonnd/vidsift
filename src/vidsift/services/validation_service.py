@@ -108,7 +108,7 @@ class VideoValidator:
                 AIJSONRuntimeRequirements(
                     ai_model=self.config.ai.validation_model,
                     first_attempt_pattern="$CUSTOM_CHANNEL_INSTRUCTIONS",
-                    first_attempt_replacement=get_custom_instructions(vid.author),
+                    first_attempt_replacement=get_custom_instructions(vid.channel_id),
                     first_attempt_append=f"title: {vid.title}\nauthor: {vid.author}\nurl: {vid.url}\nvideo ID: '{vid.video_id}'",
                 )
             )
@@ -156,7 +156,7 @@ class VideoValidator:
                 AIJSONRuntimeRequirements(
                     ai_model=self.config.ai.validation_model,
                     first_attempt_pattern="$CUSTOM_CHANNEL_INSTRUCTIONS",
-                    first_attempt_replacement=get_custom_instructions(vid.author),
+                    first_attempt_replacement=get_custom_instructions(vid.channel_id),
                     first_attempt_append=f"\n{chunks}",
                 )
             )

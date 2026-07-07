@@ -25,7 +25,6 @@ class VideoFilter:
             raise VideoFilteringError(f"Error while checking if video is livestream: {e}")
         else:
             live_status = data.get("live_status")
-            print(f"live status of vid '{vid.video_id}': '{live_status}'")
             if live_status == "not_live":
                 return False
             return True
