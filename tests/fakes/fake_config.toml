@@ -24,6 +24,11 @@ utc_time = false             # true: UTC time, false: local time
 [video_fetching]
 rss_bozo_level = "permissive" # permissive (log warning), strict (fail on bozo error), ignore (fully ignore bozo), debug (log bozo exception)
 
+# how many videos should be fetched when falling back to yt-dlp. 
+# With not enough, some videos might get skipped. 
+# But with too much, it takes longer and amplifies the risk of being blocked
+yt_dlp_video_amount = 10
+
 # ============================================================
 # AI
 # ============================================================
