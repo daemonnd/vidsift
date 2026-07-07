@@ -9,7 +9,6 @@ Tasks:
 """
 import logging
 
-from platformdirs import user_log_dir
 from pydantic import ValidationError
 
 from vidsift.cli.main import parse_args
@@ -19,6 +18,8 @@ from vidsift.config.errors import (ConfigError, ConfigFileNotFoundError,
 from vidsift.config.loader import load_config
 from vidsift.config.models import AppConfig
 from vidsift.models.video import InvalidVideoError
+from vidsift.runtime.check_basic_requirements import BasicInit
+from vidsift.runtime.errors import BasicInitError
 from vidsift.shared.logging.bootstrap_logger import setup_bootstrap_logging
 from vidsift.shared.logging.config import configure_logging
 from vidsift.shared.logging.log_event_fields import LogEvent
@@ -42,6 +43,15 @@ class VidsiftCLI:
 
         # parse CLI flags
         self.args = parse_args()
+
+        # check if basic requirements are there
+        try:
+            basic_init: BasicInit = BasicInit()
+            basic_init.check_files(args=self.args)
+        except BasicInitError as e:
+            self.logger.exception(f"BasicInitError: {str(e)}. Run 'vidsift init' first to setup basic config and other files")
+            exit(1)
+
         # load config.toml
 
         try:
