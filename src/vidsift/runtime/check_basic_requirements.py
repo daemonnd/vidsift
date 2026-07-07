@@ -3,9 +3,8 @@ import os
 from argparse import Namespace
 from pathlib import Path
 
-from platformdirs import user_bin_dir, user_config_dir, user_data_dir
+from platformdirs import user_config_dir, user_data_dir, user_log_dir
 
-from vidsift.config.models import AppConfig
 from vidsift.runtime.errors import BasicInitError
 
 logger = logging.getLogger(__name__)
@@ -35,6 +34,15 @@ class BasicInit:
             raise BasicInitError(f"The config file '{config_file}' does not exist")
         if not os.access(config_file, mode=os.R_OK):
             raise BasicInitError(f"Reading permissions for the vidsift config file '{config_file}' are missing")
+
+    def check_log_dir(self) -> None:
+        vidsift_log_dir: Path = Path(user_log_dir("vidsift"))
+        if not vidsift_log_dir.exists():
+            raise BasicInitError(f"The log dir of vidsift '{vidsift_log_dir}' does not exists")
+        if not vidsift_log_dir.is_dir():
+            raise BasicInitError(f"The log dir of vidsift '{vidsift_log_dir}' is not a dir")
+        if not os.access(vidsift_log_dir, mode=os.W_OK):
+            raise BasicInitError(f"Writing permissions for the vidsift log dir '{vidsift_log_dir}' are missing")
 
 
 
