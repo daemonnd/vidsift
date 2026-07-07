@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 YOUTUBE_BASE_RSS_URL: str = "https://www.youtube.com/feeds/videos.xml?channel_id="
 id_extractor = VideoIDExtractor()
 
-class UrlCollector:
+class RSSUrlCollector:
     def __init__(self, channel_id_list: list[str], config: AppConfig) -> None:
         self.config: AppConfig = config
 

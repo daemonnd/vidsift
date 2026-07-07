@@ -27,6 +27,7 @@ class LoggingConfig(BaseModel):
 class VideoFetchingConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
     rss_bozo_level: Literal["permissive", "strict", "ignore", "debug"]
+    yt_dlp_video_amount: int = Field(ge=0)
 
 class AIConfig(BaseModel):
     model_config = ConfigDict(frozen=True)

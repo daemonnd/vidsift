@@ -37,6 +37,7 @@ from vidsift.services.validation_service import VideoValidator
 from vidsift.services.video_data_collection_service import VideoDataCollection
 from vidsift.shared.delay_calculator import calculate_delay, sleep_delay
 from vidsift.shared.logging.log_event_fields import LogEvent
+from vidsift.shared.video_discovery_source import DiscoverySource
 
 logger = logging.getLogger(__name__)
 
@@ -94,7 +95,7 @@ class VidsiftOrchestrator:
                         "event": LogEvent.RSS_FETCH_STARTED,
                     }
                 )
-                video_generator: Generator[Video, None, None] = self.video_data_collector.get_videos_to_process()
+                video_generator: Generator[tuple[Video, DiscoverySource], None, None] = self.video_data_collector.get_videos_to_process()
             except VideoDataCollectionError as e:
                 logger.exception(
                     f"VideoDataCollectionError: Failed to collect the necessary data about the videos to process: {str(e)}",
@@ -113,7 +114,7 @@ class VidsiftOrchestrator:
                 channel.id: channel
                 for channel in channels
             }
-            for vid in video_generator:
+            for vid, discovery_type in video_generator:
                 if self.video_db.exists(video_id=vid.video_id):
                     logger.debug(
                         f"Skipping video with video id {vid.video_id} because it was already processed.",
@@ -125,62 +126,77 @@ class VidsiftOrchestrator:
                     )
                     continue # no delay waiting
                 # check if the video is a livestream
-                try:
-                    is_livestream = self.video_filter.check_is_livestream(vid=vid)
-                except VideoFilteringError as e:
-                    if "This live event will begin in" in str(e):
-                        if str(e).endswith("minutes.") or str(e).endswith("hours.") or str(e).endswith("days."):
-                            logger.info(
-                                f"Skipped video with video id {vid.video_id} with title '{vid.title}' because it is a livestream that will begin in the future",
-                                extra={
-                                    "event": LogEvent.LIVESTREAM_SKIPPED,
-                                    "video_id": vid.video_id,
-                                    "channel_id": vid.channel_id
-                                }
-                            )
-                            self.video_db.create(vid=vid)
-                            self.video_db.save_validation_result(
-                                video_id=vid.video_id,
-                                decision="discarded",
-                                quality_score=0.0,
-                                topic_match_score=0.0,
-                                reason="The video is a livestream that will begin in the future"
-                            )
-                            self.video_db.update_after_done(video_id=vid.video_id, decision="discarded")
-                            continue
-                    logger.exception(
-                        f"VideoFilteringError: Failed to check if video is a livestream: {str(e)}",
-                        extra={
-                            "event": LogEvent.LIVESTREAM_CHECK_FAILED,
-                            "video_id": vid.video_id,
-                            "channel_id": vid.channel_id
-                        }
-                    )
-                    self.video_db.create(vid=vid)
-                    self.video_db.mark_failed(
-                        error_msg=repr(e),
-                        video_id=vid.video_id
-                    )
-                    continue
-                if is_livestream:
-                    logger.info(
-                        f"Skipped video with video id {vid.video_id} with title {vid.title} because it is a livestream",
-                        extra={
-                            "event": LogEvent.LIVESTREAM_SKIPPED,
-                            "video_id": vid.video_id,
-                            "channel_id": vid.channel_id
-                        }
-                    )
-                    self.video_db.create(vid=vid)
-                    self.video_db.save_validation_result(
-                        video_id=vid.video_id,
-                        decision="discarded",
-                        quality_score=0.0,
-                        topic_match_score=0.0,
-                        reason="The video is a livestream"
-                    )
-                    self.video_db.update_after_done(video_id=vid.video_id, decision="discarded")
-                    continue
+                # does not do the livestream check for fallback (assumed that it is only videos)
+                if discovery_type == DiscoverySource.RSS:
+                    try:
+                        is_livestream = self.video_filter.check_is_livestream(vid=vid)
+                    except VideoFilteringError as e:
+                        if "This live event will begin in" in str(e):
+                            if str(e).endswith("minutes.") or str(e).endswith("hours.") or str(e).endswith("days."):
+                                logger.info(
+                                    f"Skipped video with video id {vid.video_id} with title '{vid.title}' because it is a livestream that will begin in the future",
+                                    extra={
+                                        "event": LogEvent.LIVESTREAM_SKIPPED,
+                                        "video_id": vid.video_id,
+                                        "channel_id": vid.channel_id
+                                    }
+                                )
+                                self.video_db.create(vid=vid)
+                                self.video_db.save_validation_result(
+                                    video_id=vid.video_id,
+                                    decision="discarded",
+                                    quality_score=0.0,
+                                    topic_match_score=0.0,
+                                    reason="The video is a livestream that will begin in the future"
+                                )
+                                self.video_db.update_after_done(video_id=vid.video_id, decision="discarded")
+                                continue
+                        logger.exception(
+                            f"VideoFilteringError: Failed to check if video is a livestream: {str(e)}",
+                            extra={
+                                "event": LogEvent.LIVESTREAM_CHECK_FAILED,
+                                "video_id": vid.video_id,
+                                "channel_id": vid.channel_id
+                            }
+                        )
+                        self.video_db.create(vid=vid)
+                        self.video_db.mark_failed(
+                            error_msg=repr(e),
+                            video_id=vid.video_id
+                        )
+                        continue
+                    except Exception as e:
+                        logger.exception(
+                            f"Failed to check wether video with video id {vid.video_id} is a livestream: {str(e)}",
+                            extra={
+                                "event": LogEvent.LIVESTREAM_CHECK_FAILED,
+                                "video_id": vid.video_id,
+                                "channel_id": vid.channel_id
+                            }
+                        )
+                        continue
+                    except BaseException:
+                        raise
+
+                    if is_livestream:
+                        logger.info(
+                            f"Skipped video with video id {vid.video_id} with title {vid.title} because it is a livestream",
+                            extra={
+                                "event": LogEvent.LIVESTREAM_SKIPPED,
+                                "video_id": vid.video_id,
+                                "channel_id": vid.channel_id
+                            }
+                        )
+                        self.video_db.create(vid=vid)
+                        self.video_db.save_validation_result(
+                            video_id=vid.video_id,
+                            decision="discarded",
+                            quality_score=0.0,
+                            topic_match_score=0.0,
+                            reason="The video is a livestream"
+                        )
+                        self.video_db.update_after_done(video_id=vid.video_id, decision="discarded")
+                        continue
 
                 logger.debug(
                     f"Processing video with video id {vid.video_id} because it is not a livestream",
@@ -472,7 +488,7 @@ class VidsiftOrchestrator:
             }
         )
 
-    def process_validation_pipeline(self, vid: Video, create_db_entry: bool):
+    def process_validation_pipeline(self, vid: Video, create_db_entry: bool, validate_metadata: bool = True):
         try:
             if create_db_entry:
                # not process the video if a db entry exists but the video is new
@@ -515,6 +531,7 @@ class VidsiftOrchestrator:
             )
             try:
                 video_validation_result = self.video_validator.validate_video(vid=vid, raw_transcript=transcript)
+
             except VideoValidationError as e: 
                 # logs are handled by the validator, because the logs are more specific like this
                 self.video_db.mark_failed(
