@@ -28,17 +28,18 @@ class AIExecutor:
                 self.ai: AIProvider = LMStudioProvider(config=config)
 
     def generate(self, request: AIRequest) -> AIResponse:
+        print(f"thinking: {request.thinking}")
         try:
             response: AIResponse = self.ai.generate(request=request)
         except AIError:
             raise
         except Exception as e:
-            raise AIError(f"{type(e)}: {str(e)}")
+            raise AIError(f"{type(e).__name__}: {str(e)}")
         else:
             if not response.content or not response.content.replace(" ", ""):
                 raise EmptyAIResponseError("The response of the AI is empty")
             else:
-                return response # has to be a str because of the previous checks
+                return response # response.content has to be a str because of the previous checks
     def get_provider_name(self) -> ProviderName:
         return self.ai.get_provider_name()
 

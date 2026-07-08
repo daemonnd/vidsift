@@ -78,7 +78,7 @@ class AIJsonOutputManager:
                 ai_request: AIRequest = AIRequest(
                     prompt=prompt,
                     model=requirements.ai_model,
-                    max_tokens=10000,
+                    max_tokens=self.config.ai.validation_model_max_tokens,
                     context_length=self.config.ai.validation_model_context_length,
                     thinking=requirements.thinking
                 )

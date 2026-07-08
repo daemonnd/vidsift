@@ -31,40 +31,43 @@ class VideoFetchingConfig(BaseModel):
     rss_bozo_level: Literal["permissive", "strict", "ignore", "debug"]
     yt_dlp_video_amount: int = Field(ge=0)
 
-class AIConfig(BaseModel):
+class SpecificAITaskConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
+    reference: str
+    context_length: int = Field(ge=1024)
+    max_tokens: int = Field(ge=50)
+    thinking: bool
+
+    @model_validator(mode="after")
+    def validate_context(self):
+        if self.max_tokens > self.context_length:
+            raise ValueError(f"max_tokens value of {self.max_tokens} cannot exeed context_length which is {self.context_length}")
+
+        return self
+
+
+
+class AITasksConfig(BaseModel):
+    model_config = ConfigDict(frozen=True)
+ 
+    # validation
+    metadata_validation: SpecificAITaskConfig
+    transcript_validation: SpecificAITaskConfig
+
+    # summary
+    chunk_summary: SpecificAITaskConfig
+    overall_summary: SpecificAITaskConfig
+
+
+class AIConfig(BaseModel):
+    # context can't be more than max tokens
+    model_config = ConfigDict(frozen=True)
+
     base_url: str
-    provider: Literal["ollama", "lmstudio", "openai", "anthropic", "cohere", "xai", "mistral", "google",  "microsoft", "custom"]
-
-    default_model: str
-    default_model_context_length: int = Field(ge=1024)
-    default_model_max_tokens: int = Field(ge=100)
-
-    validation_model: str
-    validation_model_context_length: int = Field(ge=1024)
-    validation_model_max_tokens: int = Field(ge=100)
-
-    summary_model: str
-    summary_model_context_length: int = Field(ge=1024)
-    summary_model_max_tokens: int = Field(ge=100)
+    provider: Literal["ollama", "lmstudio"]
+    tasks: AITasksConfig
 
     max_allowed_json_output_runs: int = Field(ge=0,le=5)
-
-    metadata_validation_think: bool
-    transcript_validation_think: bool
-
-    chunk_summary_think: bool
-    overall_summary_think: bool
-
-    #@field_validator("base_url")
-    #@classmethod
-    #def validate_host(cls, v: str) -> str:
-    #    if v.startswith("http://") or v.startswith("https://"):
-    #        pass
-    #    else:
-    #        raise ValueError("host must start with http:// or https://")
-    #
-    #    return v
 
 
 class PreValidationThresholdConfig(BaseModel):

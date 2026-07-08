@@ -27,6 +27,6 @@ class AIRequest:
 
 @dataclass
 class AIResponse:
-    content: str | None
+    content: str
     provider: ProviderName
     model: str

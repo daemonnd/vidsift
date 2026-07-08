@@ -37,28 +37,37 @@ yt_dlp_video_amount = 10
 base_url = "http://localhost:11434"
 provider = "ollama"                 # ollama, lmstudio
 
-default_model = "qwen3.5:9b"
-default_model_context_length = 8192
-default_model_max_tokens = 5000
 
-validation_model = "qwen3.5:9b"
-validation_model_context_length = 8192
-validation_model_max_tokens = 7000
+[ai.tasks.metadata_validation]
+reference = "qwen3.5:9b"
+context_length = 8192
+thinking = false         # when validating the metadata
+max_tokens = 500
 
-summary_model = "qwen3.5:9b"
-summary_model_context_length = 16384
-summary_model_max_tokens = 8000
+
+[ai.tasks.transcript_validation]
+reference = "qwen3.5:9b"
+context_length = 8192
+thinking = true          # when validating some transcript chunks
+max_tokens = 7000
+
+
+[ai.tasks.chunk_summary]
+reference = "qwen3.5:9b"
+context_length = 8192
+max_tokens = 500
+thinking = false         # when summarizing one transcript chunk
+
+
+[ai.tasks.overall_summary]
+reference = "qwen3.5:9b"
+context_length = 8192
+max_tokens = 7000
+thinking = true          # when summarizing the summaries of the transcript chunks
 
 # how often AI can run and fail to output the requested JSON
 # for smaller local AI models, it is usually 2-3 times
 max_allowed_json_output_runs = 3
-
-# for which tasks the model should think vs when not
-metadata_validation_think = false  # when validating the metadata
-transcript_validation_think = true # when validating some transcript chunks
-
-chunk_summary_think = false    # when summarizing one transcript chunk
-overally_summary_think = false # when summarizing the summaries of the transcript chunks
 
 
 # ============================================================
