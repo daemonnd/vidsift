@@ -46,7 +46,6 @@ class SpecificAITaskConfig(BaseModel):
         return self
 
 
-
 class AITasksConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
  

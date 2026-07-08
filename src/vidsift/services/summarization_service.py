@@ -22,7 +22,7 @@ class SummarizationService:
     def __init__(self, config: AppConfig) -> None:
         self.config: AppConfig = config
         self.chunk_summarizer: ChunkSummaryManager = ChunkSummaryManager(config=self.config)
-        self.final_summarizer: FinalSummarizer = FinalSummarizer(ai_model=self.config.ai.summary_model, config=self.config)
+        self.final_summarizer: FinalSummarizer = FinalSummarizer(config=self.config)
         self.text_normalizer: TextNormalizer = TextNormalizer()
 
     def summarize_all_chunks(self, transcript: str, video_id: str) -> list[str]:

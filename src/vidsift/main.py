@@ -93,16 +93,34 @@ class VidsiftCLI:
             )
 
         if self.args.global_ai_model is not None:
-            ai_config = config.ai.model_copy(
+            metadata_validation = config.ai.tasks.metadata_validation.model_copy(
+                update={"reference": self.args.global_ai_model}
+            )
+
+            transcript_validation = config.ai.tasks.transcript_validation.model_copy(
+                update={"reference": self.args.global_ai_model}
+            )
+
+            chunk_summary = config.ai.tasks.chunk_summary.model_copy(
+                update={"reference": self.args.global_ai_model}
+            )
+
+            overall_summary = config.ai.tasks.overall_summary.model_copy(
+                update={"reference": self.args.global_ai_model}
+            )
+
+            tasks_config = config.ai.tasks.model_copy(
                 update={
-                    "default_model": self.args.global_ai_model,
-                    "validation_model": self.args.global_ai_model,
-                    "summary_model": self.args.global_ai_model
+                    "metadata_validation": metadata_validation,
+                    "transcript_validation": transcript_validation,
+                    "chunk_summary": chunk_summary,
+                    "overall_summary": overall_summary,
                 }
             )
-            config = config.model_copy(
-                update={"ai": ai_config}
-            )
+
+            ai_config = config.ai.model_copy(update={"tasks": tasks_config})
+
+            config = config.model_copy(update={"ai": ai_config})
 
         self.config: AppConfig = config
         try:

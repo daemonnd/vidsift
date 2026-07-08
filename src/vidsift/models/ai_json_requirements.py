@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 
+from vidsift.models.ai_models import AIRequest
 from vidsift.models.validation.metadata_validation_result import \
     MetadataValidationResult
 from vidsift.models.validation.transcript_validation_result import \
@@ -15,8 +16,7 @@ class AIJSONBaseRequirements:
 
 @dataclass
 class AIJSONRuntimeRequirements:
-    ai_model: str
-    thinking: bool
+    ai_request: AIRequest
 
     first_attempt_pattern: str
     first_attempt_replacement: str = ""

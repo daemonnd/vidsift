@@ -18,6 +18,7 @@ from vidsift.features.validation.transcript_validator.transcript_chunk_provider 
     TranscriptChunkProvider
 from vidsift.models.ai_json_requirements import (AIJSONBaseRequirements,
                                                  AIJSONRuntimeRequirements)
+from vidsift.models.ai_models import AIRequest
 from vidsift.models.validation.metadata_validation_result import \
     MetadataValidationResult
 from vidsift.models.validation.pre_validation_result import PreValidationResult
@@ -105,14 +106,20 @@ class VideoValidator:
                 output_format_instance=MetadataValidationResult,
             )
         )
+        metadata_ai_config = self.config.ai.tasks.metadata_validation
         try:
             return ai_manager.run_ai_pipeline(
                 AIJSONRuntimeRequirements(
-                    ai_model=self.config.ai.validation_model,
+                    ai_request=AIRequest(
+                        prompt="", 
+                        model=metadata_ai_config.reference,
+                        max_tokens=metadata_ai_config.max_tokens,
+                        context_length=metadata_ai_config.context_length,
+                        thinking=metadata_ai_config.thinking,
+                    ),
                     first_attempt_pattern="$CUSTOM_CHANNEL_INSTRUCTIONS",
-                    first_attempt_replacement=get_custom_instructions(self.channel_lookup[vid.channel_id].instruction),
+                    first_attempt_replacement=get_custom_instructions(str(self.channel_lookup[vid.channel_id].instruction)),
                     first_attempt_append=f"title: {vid.title}\nauthor: {vid.author}\nurl: {vid.url}\nvideo ID: '{vid.video_id}'",
-                    thinking=self.config.ai.metadata_validation_think
                 )
             )
         except AIError as e:
@@ -154,14 +161,20 @@ class VideoValidator:
                 output_format_instance=TranscriptValidationResult,
             )
         )
+        transcript_ai_config = self.config.ai.tasks.transcript_validation
         try:
             return ai_manager.run_ai_pipeline(
                 AIJSONRuntimeRequirements(
-                    ai_model=self.config.ai.validation_model,
+                    ai_request=AIRequest(
+                        prompt="",
+                        model=transcript_ai_config.reference,
+                        max_tokens=transcript_ai_config.max_tokens,
+                        context_length=transcript_ai_config.context_length,
+                        thinking=transcript_ai_config.thinking,
+                    ),
                     first_attempt_pattern="$CUSTOM_CHANNEL_INSTRUCTIONS",
                     first_attempt_replacement=get_custom_instructions(self.channel_lookup[vid.channel_id].instruction),
                     first_attempt_append=f"\n{chunks}",
-                    thinking=self.config.ai.transcript_validation_think
                 )
             )
         except AIError as e:

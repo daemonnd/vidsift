@@ -19,7 +19,6 @@ class ChunkSummaryManager:
         self.config: AppConfig = config
         self.prompt_manager: PromptManager = PromptManager(system_prompt_file_name="chunk_summary.md", config=self.config)
         self.ai_executor: AIExecutor = AIExecutor(config=self.config.ai)
-        self.ai_model: str = config.ai.summary_model
         self.transcript_chunk_generator: TranscriptChunkGenerator = TranscriptChunkGenerator(char_chunk_size=self.config.summarization.char_chunk_size)
         self.text_normalizer: TextNormalizer = TextNormalizer()
 
@@ -32,12 +31,16 @@ class ChunkSummaryManager:
         Returns: 
         - str of the summary
         """
+        chunk_summary_ai_config = self.config.ai.tasks.chunk_summary
         try:
             logger.debug(
                 "Chunk summarization started.",
                 extra={
                     "event": LogEvent.CHUNK_SUMMARIZATION_STARTED,
-                    "model": self.ai_model,
+                    "model": chunk_summary_ai_config.reference,
+                    "context_length": chunk_summary_ai_config.context_length,
+                    "thinking": chunk_summary_ai_config.thinking,
+                    "max_tokens": chunk_summary_ai_config.max_tokens,
                     "chunk_length": len(chunk),
                 },
             )
@@ -46,10 +49,10 @@ class ChunkSummaryManager:
                 prompt=self.prompt_manager.generate_prompt(
                         append=chunk,
                     ),
-                model=self.config.ai.summary_model,
-                max_tokens=150,
-                context_length=self.config.ai.summary_model_context_length,
-                thinking=self.config.ai.chunk_summary_think
+                model=chunk_summary_ai_config.reference,
+                max_tokens=chunk_summary_ai_config.max_tokens,
+                context_length=chunk_summary_ai_config.context_length,
+                thinking=chunk_summary_ai_config.thinking
             )
             summary = str(self.ai_executor.generate(request=ai_request).content)
 
@@ -61,7 +64,10 @@ class ChunkSummaryManager:
                 "Chunk summarization failed.",
                 extra={
                     "event": LogEvent.CHUNK_SUMMARIZATION_FAILED,
-                    "model": self.ai_model,
+                    "model": chunk_summary_ai_config.reference,
+                    "context_length": chunk_summary_ai_config.context_length,
+                    "thinking": chunk_summary_ai_config.thinking,
+                    "max_tokens": chunk_summary_ai_config.max_tokens,
                     "chunk_length": len(chunk),
                 },
                 exc_info=True,
@@ -73,7 +79,10 @@ class ChunkSummaryManager:
                 "Chunk summarization completed.",
                 extra={
                     "event": LogEvent.CHUNK_SUMMARIZATION_COMPLETED,
-                    "model": self.ai_model,
+                    "model": chunk_summary_ai_config.reference,
+                    "context_length": chunk_summary_ai_config.context_length,
+                    "thinking": chunk_summary_ai_config.thinking,
+                    "max_tokens": chunk_summary_ai_config.max_tokens,
                     "chunk_length": len(chunk),
                     "summary_length": len(normalized_summary),
                 },
