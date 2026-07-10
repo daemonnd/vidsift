@@ -24,25 +24,31 @@ class LMStudioProvider(AIProvider):
 
         model_ids = {model.model_key for model in models}
 
-        if self.config.default_model not in model_ids:
+        if self.config.tasks.metadata_validation.reference not in model_ids:
             raise AIModelError(
-                f"Default model missing: {self.config.default_model}"
+                f"Metadata validation model missing: {self.config.tasks.metadata_validation.reference}"
             )
-
-        if self.config.validation_model not in model_ids:
+        if self.config.tasks.transcript_validation.reference not in model_ids:
             raise AIModelError(
-                f"Validation model missing: {self.config.validation_model}"
+                f"Transcript validation model missing: {self.config.tasks.transcript_validation.reference}"
             )
-
-        if self.config.summary_model not in model_ids:
+        if self.config.tasks.chunk_summary.reference not in model_ids:
             raise AIModelError(
-                f"Summary model missing: {self.config.summary_model}"
+                f"Chunk summary model missing: {self.config.tasks.chunk_summary.reference}"
+            )
+        if self.config.tasks.overall_summary.reference not in model_ids:
+            raise AIModelError(
+                f"Overall summary model missing: {self.config.tasks.overall_summary.reference}"
             )
 
     def generate(self, request: AIRequest) -> AIResponse:
         try:
-            model = self.client.llm.model(request.model)
-
+            model = self.client.llm.model(
+                request.model,
+                config={
+                    "contextLength": request.context_length,
+                },
+            )
             response = model.respond(
                 request.prompt,
                 config={
