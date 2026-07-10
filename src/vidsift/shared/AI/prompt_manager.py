@@ -10,7 +10,7 @@ from vidsift.config.models import AppConfig
 class PromptManager:
     def __init__(self, system_prompt_file_name: str, config: AppConfig) -> None:
         self.config: AppConfig = config
-        self.sys_prompt_file: Path = Path(Path().home() / ".config" / "vidsift" / "prompts" / system_prompt_file_name)
+        self.sys_prompt_file: Path = Path(Path().home() / ".config" / "vidsift" / "system_prompts" / system_prompt_file_name)
         if not system_prompt_file_name:
             self.system_prompt: str = ""
         else:
