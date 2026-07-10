@@ -44,9 +44,56 @@ class BasicInit:
         if not os.access(vidsift_log_dir, mode=os.W_OK):
             raise BasicInitError(f"Writing permissions for the vidsift log dir '{vidsift_log_dir}' are missing")
 
+    def check_prompts(self) -> None:
+        vidsift_prompts_dir: Path = Path(user_config_dir("vidsift")) / "system_prompts"
+
+        if not vidsift_prompts_dir.exists():
+            raise BasicInitError(
+                f"The prompt dir of vidsift '{vidsift_prompts_dir}' does not exist"
+            )
+
+        if not vidsift_prompts_dir.is_dir():
+            raise BasicInitError(
+                f"The prompt dir of vidsift '{vidsift_prompts_dir}' is not a dir"
+            )
+
+        if not os.access(vidsift_prompts_dir, mode=os.R_OK):
+            raise BasicInitError(
+                f"Reading permissions for the vidsift prompt dir '{vidsift_prompts_dir}' are missing"
+            )
+
+        required_prompts: list[str] = [
+            "chunk_summary.md",
+            "full_summary.md",
+            "metadata_retry.md",
+            "metadata_validation.md",
+            "transcript_retry.md",
+            "transcript_validation.md",
+        ]
+
+        for prompt_name in required_prompts:
+            prompt_file = vidsift_prompts_dir / prompt_name
+
+            if not prompt_file.exists():
+                raise BasicInitError(
+                    f"Required prompt file '{prompt_file}' does not exist"
+                )
+
+            if not prompt_file.is_file():
+                raise BasicInitError(
+                    f"Required prompt path '{prompt_file}' is not a file"
+                )
+
+            if not os.access(prompt_file, mode=os.R_OK):
+                raise BasicInitError(
+                    f"Reading permissions for the prompt file '{prompt_file}' are missing"
+                )
+
+
 
 
     def check_files(self, args: Namespace) -> None:
         self.args = args
         self.check_data_dir()
         self.check_config_dir()
+        self.check_prompts()
