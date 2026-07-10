@@ -6,12 +6,12 @@
 # DEBUG, INFO, WARNING, ERROR, CRITICAL
 [logging]
 [logging.console]
-enabled = true               # currently not possible to disable
+#enabled = true               # currently not possible to disable
 level = "DEBUG"
 dependency_level = "WARNING"
 
 [logging.file]
-enabled = true               # currently not possible to disable
+#enabled = true               # currently not possible to disable
 level = "DEBUG"
 dependency_level = "WARNING"
 rotation = "midnight"        # D: Daily, H: Hourly, M: every minute, S: every second, midnight: at midnight
@@ -34,21 +34,26 @@ yt_dlp_video_amount = 10
 # ============================================================
 
 [ai]
+# how often AI can run and fail to output the requested JSON
+# for smaller local AI models, it is usually 2-3 times
+max_allowed_json_output_runs = 3
+
+
 base_url = "http://localhost:11434"
 provider = "ollama"                 # ollama, lmstudio
 
 
 [ai.tasks.metadata_validation]
-reference = "qwen3.5:9b"
-context_length = 8192
-thinking = false         # when validating the metadata
-max_tokens = 500
+reference = "qwen3.5:9b" # ai model name
+context_length = 8192    # the context length that the ai should get
+thinking = false         # only works with ollama, for lmstudio it has to be configured at the server side
+max_tokens = 500         # how many tokens the AI can max. output. cannot exeed the context length
 
 
 [ai.tasks.transcript_validation]
 reference = "qwen3.5:9b"
 context_length = 8192
-thinking = true          # when validating some transcript chunks
+thinking = true
 max_tokens = 7000
 
 
@@ -56,18 +61,14 @@ max_tokens = 7000
 reference = "qwen3.5:9b"
 context_length = 8192
 max_tokens = 500
-thinking = false         # when summarizing one transcript chunk
+thinking = false
 
 
 [ai.tasks.overall_summary]
 reference = "qwen3.5:9b"
 context_length = 8192
 max_tokens = 7000
-thinking = true          # when summarizing the summaries of the transcript chunks
-
-# how often AI can run and fail to output the requested JSON
-# for smaller local AI models, it is usually 2-3 times
-max_allowed_json_output_runs = 3
+thinking = true
 
 
 # ============================================================
@@ -113,7 +114,7 @@ format = "bestvideo+bestaudio/best"
 # ============================================================
 
 [validation]
-enabled = true
+#enabled = true
 
 # how many chars should roughly be in one transcript chunk
 # the amount of chars getting to the AI are a bit more than 5 x transcript_chunk_char_size
@@ -151,7 +152,7 @@ transcript_clickbait_weight = 2.5
 # ============================================================
 
 [summarization]
-enabled = true
+#enabled = true
 char_chunk_size = 10000
 output_dir = "/home/user/Documents/vidsift/"
 
@@ -161,7 +162,7 @@ output_dir = "/home/user/Documents/vidsift/"
 # ============================================================
 
 [downloads]
-enabled = true
+#enabled = true
 output_dir = "/home/user/Videos/.vidsift/"
 
 
