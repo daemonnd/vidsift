@@ -20,16 +20,20 @@ class OllamaProvider(AIProvider):
         response = ollama_list()
         models = response["models"] if isinstance(response, dict) else response.models
 
-        default_model_found = any(m.model == self.config.default_model for m in models)
-        validation_model_found = any(m.model == self.config.validation_model for m in models)
-        summary_model_found = any(m.model == self.config.summary_model for m in models)
+        metadata_validation_model = any(m.model == self.config.tasks.metadata_validation.reference for m in models)
+        transcript_validation_model = any(m.model == self.config.tasks.transcript_validation.reference for m in models)
+        chunk_summary_model = any(m.model == self.config.tasks.chunk_summary.reference for m in models)
+        overall_summary_model = any(m.model == self.config.tasks.overall_summary.reference for m in models)
 
-        if not default_model_found:
-            raise AIModelError(f"The default model {self.config.default_model} does not exist")
-        if not validation_model_found:
-            raise AIModelError(f"The validation model {self.config.validation_model} does not exist")
-        if not summary_model_found:
-            raise AIModelError(f"The summarization model {self.config.summary_model} does not exist")
+        if not metadata_validation_model:
+            raise AIModelError(f"The metadata validation model {self.config.tasks.metadata_validation.reference} does not exist")
+        if not transcript_validation_model:
+            raise AIModelError(f"The transcript validation model {self.config.tasks.transcript_validation.reference} does not exist")
+        if not chunk_summary_model:
+            raise AIModelError(f"The chunk summary model {self.config.tasks.chunk_summary.reference} does not exist")
+        if not overall_summary_model:
+            raise AIModelError(f"The overall summary model {self.config.tasks.chunk_summary.reference} does not exist")
+
 
     def generate(self, request: AIRequest) -> AIResponse:
         try:
