@@ -28,7 +28,6 @@ class AIExecutor:
                 self.ai: AIProvider = LMStudioProvider(config=config)
 
     def generate(self, request: AIRequest) -> AIResponse:
-        print(f"thinking: {request.thinking}")
         try:
             response: AIResponse = self.ai.generate(request=request)
         except AIError:

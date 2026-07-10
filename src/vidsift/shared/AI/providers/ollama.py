@@ -11,7 +11,7 @@ from vidsift.shared.AI.providers.base import AIProvider
 class OllamaProvider(AIProvider):
     def __init__(self, config: AIConfig) -> None:
         super().__init__(config)
-        #self._validate_data()
+        self._validate_data()
 
     def _validate_data(self) -> None:
         if requests.get(self.config.base_url).status_code != 200:
@@ -43,15 +43,6 @@ class OllamaProvider(AIProvider):
                     },
                 think=request.thinking
                 )
-            print(f"response: {response}")
-            print(f"response message: {response.message}")
-            print(f"message content: {response.message.content}")
-            print(f"done reason: {response.done_reason}")
-            print(f"prompt eval count: {response.prompt_eval_count}")
-            print(f"eval count: {response.eval_count}")
-            print(f"done: {response.done}")
-            print(f"max output tokens: {request.max_tokens}")
-            print(f"model config: {response.model_config}")
         except ResponseError as e:
             raise AIModelError(f"An error occurred while running the AI model: {e}") from e
         except RequestError as e:
