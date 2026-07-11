@@ -46,7 +46,6 @@ class YtDlpUrlCollector:
                     video_id=video.get("id"),
                     channel_id=channel_id
                 )
-                print(f"VIDEO: {vid}")
                 yield vid
         except Exception as e:
             raise VideoDataCollectionError(str(e)) from e

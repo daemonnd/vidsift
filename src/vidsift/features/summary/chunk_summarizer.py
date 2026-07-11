@@ -75,7 +75,7 @@ class ChunkSummaryManager:
             raise SummaryError(f"An error occurred during chunk summarization: {e}") from e
 
         else:
-            logger.info(
+            logger.debug(
                 "Chunk summarization completed.",
                 extra={
                     "event": LogEvent.CHUNK_SUMMARIZATION_COMPLETED,
