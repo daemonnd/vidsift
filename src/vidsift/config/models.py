@@ -93,19 +93,19 @@ class PreValidationConfig(BaseModel):
 
 class ValidationConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
-    enabled: bool
+    #enabled: bool
     transcript_chunk_char_size: int = Field(ge=100)
     pre_validation: PreValidationConfig
 
 class SummarizationConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
-    enabled: bool
+    #enabled: bool
     char_chunk_size: int = Field(ge=100)
     output_dir: str
 
 class DownloadsConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
-    enabled: bool
+    #enabled: bool
     output_dir: str
 
 class ChannelConfig(BaseModel):
