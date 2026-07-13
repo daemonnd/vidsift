@@ -204,3 +204,8 @@ instruction = "linux_channels.md"
 [[channels]]
 id = "UC4JX40jDee_tINbkjycV4Sg" # TechWithTim
 action = "summarize"
+
+[[channels]]
+id = "UCjjjjjjjjjjjjjjjjjjjjjj" # fake channel
+action = "validate"
+instruction = "test"

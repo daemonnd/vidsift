@@ -536,96 +536,38 @@ class VidsiftOrchestrator:
             }
         )
 
-    def process_validation_pipeline(self, vid: Video, create_db_entry: bool, validate_metadata: bool = True):
-        try:
-            if create_db_entry:
-               # not process the video if a db entry exists but the video is new
-               # check if the video has already been handled
-                if self.video_db.exists(video_id=vid.video_id):
-                    logger.debug(
-                        f"Skipping video with video id {vid.video_id} because it was already processed.",
-                        extra={
-                            "event": LogEvent.VIDEO_SKIPPED_EXISTING,
-                            "video_id": vid.video_id,
-                            "channel_id": vid.channel_id,
-                        },
-                    )
-                    return # no delay waiting
-
-                # update the database, set the status to VALIDATING
-                # only do that for new videos
-                self.video_db.create(vid=vid)
-                logger.debug(f"current status: {self.video_db.get(vid.video_id)}")
-                logger.info(
-                    "Video processing started.",
+    def process_validation_pipeline(self, vid: Video, create_db_entry: bool):
+        if create_db_entry:
+            # not process the video if a db entry exists but the video is new
+            # check if the video has already been handled
+            if self.video_db.exists(video_id=vid.video_id):
+                logger.debug(
+                    f"Skipping video with video id {vid.video_id} because it was already processed.",
                     extra={
-                        "event": LogEvent.VIDEO_PROCESSING_STARTED,
+                        "event": LogEvent.VIDEO_SKIPPED_EXISTING,
                         "video_id": vid.video_id,
                         "channel_id": vid.channel_id,
                     },
                 )
+                return # no delay waiting
 
-            # fetch the transcript
-            transcript: str = self.fetch_transcript(vid=vid)
-
-            # get the validation result
+            # update the database, set the status to VALIDATING
+            # only do that for new videos
+            self.video_db.create(vid=vid)
+            logger.debug(f"current status: {self.video_db.get(vid.video_id)}")
             logger.info(
-                f"Starting validation for video {vid.video_id}.",
+                "Video processing started.",
                 extra={
-                    "event": LogEvent.VIDEO_VALIDATION_STARTED,
+                    "event": LogEvent.VIDEO_PROCESSING_STARTED,
                     "video_id": vid.video_id,
                     "channel_id": vid.channel_id,
                 },
             )
-            try:
-                video_validation_result = self.video_validator.validate_video(vid=vid, raw_transcript=transcript)
 
-            except VideoValidationError as e: 
-                # logs are handled by the validator, because the logs are more specific like this
-                self.video_db.mark_failed(
-                    error_msg=repr(e),
-                    video_id=vid.video_id
-                )
-                return
-
-            except InvalidVideoError:
-                raise
-            else:
-                logger.info(
-                    f"Validation completed for video {vid.video_id} with decision '{video_validation_result.decision}'",
-                    extra={
-                        "event": LogEvent.VIDEO_VALIDATION_COMPLETED,
-                        "video_id": vid.video_id,
-                        "channel_id": vid.channel_id,
-                        "decision": video_validation_result.decision,
-                        "score": video_validation_result.content_quality_score,
-                        "topic_match_score": video_validation_result.topic_match_score,
-                        "reason": video_validation_result.summary_reason,
-                    },
-                )
-
-            # update the database after validation
-            self.video_db.save_validation_result(
-                video_id=vid.video_id,
-                decision=video_validation_result.decision,
-                quality_score=video_validation_result.content_quality_score,
-                topic_match_score=video_validation_result.topic_match_score,
-                reason=str(video_validation_result.summary_reason)
-            )
-
-            # take action on video based on the validation result
-            self.take_action_on_video(
-                vid=vid,
-                video_validation_result=video_validation_result,
-                transcript=transcript,
-            )
-            sleep_delay(
-                calculate_delay(
-                    min_delay=self.config.video_processing.min_vid_delay,
-                    random_delay=self.config.video_processing.random_vid_delay
-                ),
-                should_sleep=self.should_sleep
-            )
+        try:
+            # fetch the transcript
+            transcript: str = self.fetch_transcript(vid=vid)
+            print("exception did not occur")
 
         except TranscriptError as e:
             error_msg: str = f"TranscriptError: Each transcript fetching provider failed: {str(e)}"
@@ -648,6 +590,67 @@ class VidsiftOrchestrator:
                 should_sleep=self.should_sleep
             )
             return
+
+        print("this hsould not be printed")
+        # get the validation result
+        logger.info(
+            f"Starting validation for video {vid.video_id}.",
+            extra={
+                "event": LogEvent.VIDEO_VALIDATION_STARTED,
+                "video_id": vid.video_id,
+                "channel_id": vid.channel_id,
+            },
+        )
+        try:
+            video_validation_result = self.video_validator.validate_video(vid=vid, raw_transcript=transcript)
+
+        except VideoValidationError as e: 
+            # logs are handled by the validator, because the logs are more specific like this
+            self.video_db.mark_failed(
+                error_msg=repr(e),
+                video_id=vid.video_id
+            )
+            return
+
+        except InvalidVideoError:
+            raise
+        else:
+            logger.info(
+                f"Validation completed for video {vid.video_id} with decision '{video_validation_result.decision}'",
+                extra={
+                    "event": LogEvent.VIDEO_VALIDATION_COMPLETED,
+                    "video_id": vid.video_id,
+                    "channel_id": vid.channel_id,
+                    "decision": video_validation_result.decision,
+                    "score": video_validation_result.content_quality_score,
+                    "topic_match_score": video_validation_result.topic_match_score,
+                    "reason": video_validation_result.summary_reason,
+                },
+            )
+
+        # update the database after validation
+        self.video_db.save_validation_result(
+            video_id=vid.video_id,
+            decision=video_validation_result.decision,
+            quality_score=video_validation_result.content_quality_score,
+            topic_match_score=video_validation_result.topic_match_score,
+            reason=str(video_validation_result.summary_reason)
+        )
+
+        # take action on video based on the validation result
+        self.take_action_on_video(
+            vid=vid,
+            video_validation_result=video_validation_result,
+            transcript=transcript,
+        )
+        sleep_delay(
+            calculate_delay(
+                min_delay=self.config.video_processing.min_vid_delay,
+                random_delay=self.config.video_processing.random_vid_delay
+            ),
+            should_sleep=self.should_sleep
+        )
+
 
     def process_interrupted_videos(self):
         logger.info(
