@@ -2,7 +2,8 @@ from typing import Literal
 
 from vidsift.features.summary.errors import SummaryError
 from vidsift.features.transcript.errors import TranscriptError
-from vidsift.features.validation.errors import VideoValidationError
+from vidsift.features.validation.errors import (CustomInstructionsReadingError,
+                                                VideoValidationError)
 from vidsift.models.validation.validation_result import ValidationResult
 from vidsift.models.video import Video
 
@@ -53,3 +54,12 @@ class FakeSummarizer:
 
     def summarize(self, raw_transcript: str, vid: Video):
         self.was_called = True
+
+class FakeInstructionProvider:
+    def __init__(self):
+        self.was_called = False
+    def get(self, intructions_filename: str, fail: bool = False):
+        self.was_called = True
+        if fail:
+            raise CustomInstructionsReadingError("could not read custom instructions")
+        return "awesome custom instructions"

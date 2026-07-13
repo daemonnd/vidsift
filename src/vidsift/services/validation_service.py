@@ -9,7 +9,7 @@ from vidsift.features.validation.decision_engine import DecisionEngine
 from vidsift.features.validation.errors import (CustomInstructionsReadingError,
                                                 VideoValidationError)
 from vidsift.features.validation.instruction_provider import \
-    get_custom_instructions
+    InstructionProvider
 from vidsift.features.validation.pre_validation.metrics_counter import \
     PreValidator
 from vidsift.features.validation.pre_validation.score_calculator import \
@@ -36,13 +36,18 @@ logger = logging.getLogger(__name__)
 
 
 class VideoValidator:
-    def __init__(self, config: AppConfig) -> None:
+    def __init__(
+        self,
+        config: AppConfig,
+        instruction_provider: InstructionProvider | None = None
+    ) -> None:
         self.config: AppConfig = config
         self.pre_validator: PreValidator = PreValidator()
         self.text_normalizer: TextNormalizer = TextNormalizer()
         self.pre_validation_score_calculator: PreValidationScoreCalculator = PreValidationScoreCalculator(config=self.config)
         self.transcript_chunk_provider: TranscriptChunkProvider = TranscriptChunkProvider(config=self.config)
         self.channel_lookup: dict[str, ChannelConfig] = get_channel_lookup(self.config.channels)
+        self.instruction_provider = (instruction_provider or InstructionProvider())
 
     def pre_validate(self, vid: Video, transcript: str) -> bool:
         """
@@ -118,7 +123,7 @@ class VideoValidator:
                         thinking=metadata_ai_config.thinking,
                     ),
                     first_attempt_pattern="$CUSTOM_CHANNEL_INSTRUCTIONS",
-                    first_attempt_replacement=get_custom_instructions(str(self.channel_lookup[vid.channel_id].instruction)),
+                    first_attempt_replacement=self.instruction_provider.get(str(self.channel_lookup[vid.channel_id].instruction)),
                     first_attempt_append=f"title: {vid.title}\nauthor: {vid.author}\nurl: {vid.url}\nvideo ID: '{vid.video_id}'",
                 )
             )
@@ -173,7 +178,7 @@ class VideoValidator:
                         thinking=transcript_ai_config.thinking,
                     ),
                     first_attempt_pattern="$CUSTOM_CHANNEL_INSTRUCTIONS",
-                    first_attempt_replacement=get_custom_instructions(self.channel_lookup[vid.channel_id].instruction),
+                    first_attempt_replacement=self.instruction_provider.get(self.channel_lookup[vid.channel_id].instruction),
                     first_attempt_append=f"\n{chunks}",
                 )
             )
