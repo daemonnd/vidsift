@@ -135,24 +135,6 @@ class ChannelConfig(BaseModel):
             raise ValueError(
                 "instruction is required when action is 'validate'"
             )
-
-        vidsift_config_dir = Path(user_config_dir("vidsift"))
-        instruction_path = (
-            vidsift_config_dir
-            / "custom_channel_instructions"
-            / self.instruction
-        )
-
-        if not instruction_path.exists():
-            raise ValueError(
-                f"instruction does not exist: '{instruction_path}'"
-            )
-
-        if not instruction_path.is_file():
-            raise ValueError(
-                f"instruction must be a file, but '{instruction_path}' is not a file"
-            )
-
         return self
 
 
