@@ -4,6 +4,7 @@ from pathlib import Path
 from sqlite3 import Connection, Cursor, IntegrityError, OperationalError
 from typing import Generator, Literal
 
+from platformdirs import user_data_dir
 from pydantic import ValidationError
 
 from vidsift.config.models import AppConfig
@@ -18,9 +19,10 @@ class VideoProcessingRepository:
     def __init__(self,  config: AppConfig, db_path: Path | None = None) -> None:
         self.config: AppConfig = config
         if db_path is None:
-            self.db_path: Path = Path(Path.home() / ".local" / "share" / "vidsift" / "processed_videos.db")
+            self.db_path: Path = (Path(user_data_dir()) / "vidsift" / "processed_videos.db")
         else:
             self.db_path: Path = db_path
+
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         self.open()
         self._initialize_database()

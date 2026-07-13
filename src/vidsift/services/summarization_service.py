@@ -77,6 +77,15 @@ class SummarizationService:
         """
         transcript: str = self.text_normalizer.normalize(raw_transcript)
         summaries: list[str] = self.summarize_all_chunks(transcript=transcript, video_id=vid.video_id)
+        if len(summaries) == 0:
+            logger.info(
+                f"Video with video id {vid.video_id} did not contain any important information for a summary, skipping",
+                extra={
+                    "event": LogEvent.VIDEO_SUMMARIZATION_SKIPPED,
+                    "video_id": vid.video_id,
+                    "channel_id": vid.channel_id
+                }
+            )
         final_summary: str = self.summarize_overall(summaries=summaries)
         dest_path: Path = self.store_summary(
             summary=final_summary,

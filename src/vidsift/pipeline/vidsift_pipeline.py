@@ -125,6 +125,14 @@ class VidsiftOrchestrator:
                 # does not do the livestream check for fallback (assumed that it is only videos)
                 if discovery_type == DiscoverySource.RSS:
                     try:
+                        logger.debug(
+                            f"Cheching wether video with video id '{vid.video_id}' is a livestream",
+                            extra={
+                                "event": LogEvent.LIVESTREAM_CHECK_STARTED,
+                                "video_id": vid.video_id,
+                                "channel_id": vid.channel_id
+                            }
+                        )
                         is_livestream = self.video_filter.check_is_livestream(vid=vid)
                     except VideoFilteringError as e:
                         if "This live event will begin in" in str(e):
@@ -132,7 +140,8 @@ class VidsiftOrchestrator:
                                 logger.info(
                                     f"Skipped video with video id {vid.video_id} with title '{vid.title}' because it is a livestream that will begin in the future",
                                     extra={
-                                        "event": LogEvent.LIVESTREAM_SKIPPED,
+                                        "event": LogEvent.LIVESTREAM_CHECK_COMPLETED,
+                                        "is_livestream": True,
                                         "video_id": vid.video_id,
                                         "channel_id": vid.channel_id
                                     }
@@ -178,7 +187,8 @@ class VidsiftOrchestrator:
                         logger.info(
                             f"Skipped video with video id {vid.video_id} with title {vid.title} because it is a livestream",
                             extra={
-                                "event": LogEvent.LIVESTREAM_SKIPPED,
+                                "event": LogEvent.LIVESTREAM_CHECK_COMPLETED,
+                                "is_livestream": is_livestream,
                                 "video_id": vid.video_id,
                                 "channel_id": vid.channel_id
                             }
@@ -197,7 +207,8 @@ class VidsiftOrchestrator:
                 logger.debug(
                     f"Processing video with video id {vid.video_id} because it is not a livestream",
                     extra={
-                        "event": LogEvent.PROCESSING_NON_LIVESTREAM,
+                        "event": LogEvent.LIVESTREAM_CHECK_COMPLETED,
+                        "is_livestream": False,
                         "video_id": vid.video_id,
                         "channel_id": vid.channel_id
                     }
