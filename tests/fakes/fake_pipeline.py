@@ -112,3 +112,26 @@ class FakeInstructionProvider:
         if fail:
             raise CustomInstructionsReadingError("could not read custom instructions")
         return "awesome custom instructions"
+
+class FakeOrchestrator:
+    def __init__(self, fail_after: int | None = None) -> None:
+        self.fail_after = fail_after
+        self.calls = 0
+    def run(self):
+        self.calls += 1
+        if self.fail_after:
+            if self.calls == self.fail_after:
+                raise RuntimeError("failed")
+
+class FakeRunManager:
+    def __init__(self) -> None:
+        self.runs_started = 0
+        self.runs_ended = 0
+    def start_run(
+        self,
+        run_type: Literal["manual_pipeline_run", "manual_video_run", "schedule_run"],
+        sleep_interval: float = 5,
+    ):
+        self.runs_started += 1
+    def end_run(self):
+        self.runs_ended += 1
