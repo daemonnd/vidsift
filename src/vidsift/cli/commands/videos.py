@@ -51,6 +51,17 @@ def register_videos(subparsers):
         func=handle_videos_set_status
     )
 
+    videos_delete_one = videos_subparsers.add_parser(
+        "delete-video",
+        help="Delete a video from the database so it can be reprocessed"
+    )
+    videos_delete_one.add_argument(
+        "--video-id",
+        help="ID of the target video",
+        required=True
+    )
+    videos_delete_one.set_defaults(func=handle_videos_delete)
+
     return videos_parser
 
 def handle_videos_list(args, config):
@@ -88,6 +99,15 @@ def handle_videos_set_status(args, config):
             else:
                 repo.set_status(args.video_id, target_status, reset_attempts=False)
 
+    finally:
+        repo.close()
+
+def handle_videos_delete(args, config):
+    repo = VideoProcessingRepository(config=config)
+    try:
+        repo.del_row(
+            video_id=args.video_id
+        )
     finally:
         repo.close()
 

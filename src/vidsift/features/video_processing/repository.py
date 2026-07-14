@@ -9,7 +9,7 @@ from pydantic import ValidationError
 
 from vidsift.config.models import AppConfig
 from vidsift.features.video_processing.errors import (
-    DBWritingError, VideoProcessingDataValidationError)
+    DBWritingError, VideoIDNotFoundError, VideoProcessingDataValidationError)
 from vidsift.models.video import Video
 from vidsift.models.video_record import (VideoProcessingRecord,
                                          VideoProcessingStatus)
@@ -148,6 +148,30 @@ class VideoProcessingRepository:
             raise DBWritingError(f"Failed to write to DB while updating the status after the video with id {video_id} has been {decision}, because a database operand violated a constraint: {str(e)}") from e
         except OperationalError as e:
             raise DBWritingError(f"Failed to write to DB while updating the status after the video with id {video_id} has been {decision}, because of an operational Error: {str(e)}") from e
+
+    def del_row(self, video_id: str):
+        """
+        Method to delete a row so that the video can later be processed again
+        """
+        try:
+            if not self.exists(video_id):
+                raise VideoIDNotFoundError(f"There is no row with the video id {video_id} in the database, it cannot be removed")
+
+            self.cur.execute("""
+            DELETE FROM processed_videos
+            WHERE video_id = ?
+            """, (video_id,))
+            self.conn.commit()
+            if self.cur.rowcount != 1:
+                raise DBWritingError(
+                    f"Expected to update 1 row for {video_id}, "
+                    f"updated {self.cur.rowcount}"
+                )
+        except IntegrityError as e:
+            raise DBWritingError(f"Failed to write to DB while deleting row with video id {video_id} because a database operand violated a constraint: {str(e)}")
+        except OperationalError as e:
+            raise DBWritingError(f"Failed to write to DB while deleting row with video id {video_id} because of an operational Error: {str(e)}") from e
+
 
 
     def mark_failed(self, error_msg: str, video_id: str):
