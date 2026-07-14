@@ -602,7 +602,6 @@ class VidsiftOrchestrator:
             )
             return
 
-        print("this hsould not be printed")
         # get the validation result
         logger.info(
             f"Starting validation for video {vid.video_id}.",
