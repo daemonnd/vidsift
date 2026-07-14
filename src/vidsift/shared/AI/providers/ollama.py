@@ -1,6 +1,7 @@
 import requests
 from ollama import ChatResponse, Client, RequestError, ResponseError
 from ollama import list as ollama_list
+from requests.exceptions import ConnectionError
 
 from vidsift.config.models import AIConfig
 from vidsift.models.ai_models import AIRequest, AIResponse, ProviderName
@@ -14,8 +15,11 @@ class OllamaProvider(AIProvider):
         self._validate_data()
 
     def _validate_data(self) -> None:
-        if requests.get(self.config.base_url).status_code != 200:
-            raise AIRequestError(f"Invalid base url: {self.config.base_url}")
+        try:
+            if requests.get(self.config.base_url).status_code != 200:
+                raise AIRequestError(f"Invalid base url: {self.config.base_url}")
+        except ConnectionError as e:
+            raise AIRequestError(f"Failed to connect to base url '{self.config.base_url}': {str(e)}") from e
 
         response = ollama_list()
         models = response["models"] if isinstance(response, dict) else response.models
