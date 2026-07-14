@@ -152,7 +152,6 @@ class ChunkSummaryManager:
                 )
                 continue
 
-            continue
             summaries.append(summary)
 
         logger.debug(
