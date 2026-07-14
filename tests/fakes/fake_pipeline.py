@@ -34,29 +34,40 @@ class FakeVideoFilter:
 
 class FailingSummarizer:
     def __init__(self):
-        self.was_called = False
+        self.summarize_calls = 0
 
     def summarize(self, raw_transcript: str, vid: Video):
-        self.was_called = True
+        self.summarize_calls += 1
         raise SummaryError("summary failed")
 
 class FakeValidator:
-    def __init__(self, decision: Literal["downloaded", "summarized", "discarded"], should_fail: bool = False) -> None:
-        self.decision: Literal["downloaded", "summarized", "discarded"] = decision
-        self.was_called: bool = False
+    def __init__(
+        self,
+        decision: Literal["downloaded", "summarized", "discarded"] | None = None,
+        decisions: list[Literal["downloaded", "summarized", "discarded"]] | None = None,
+        should_fail: bool = False,
+    ):
+        self.decision = decision
+        self.decisions = decisions or []
         self.validate_calls = 0
-        self.should_fail: bool = should_fail
+        self.should_fail = should_fail
 
     def validate_video(self, vid, raw_transcript):
         self.validate_calls += 1
-        self.was_called: bool = True
+
         if self.should_fail:
-            raise VideoValidationError("oh, no, this failed :(")
+            raise VideoValidationError("oh no")
+
+        if self.decisions:
+            decision = self.decisions.pop(0)
+        else:
+            decision = self.decision
+
         return ValidationResult(
-            decision=self.decision,
+            decision=decision,
             content_quality_score=2.5,
             topic_match_score=2.7,
-            summary_reason={"test": "test"}
+            summary_reason={"test": "test"},
         )
 
 class FakeTranscriptService:

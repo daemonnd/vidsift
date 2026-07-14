@@ -173,3 +173,133 @@ def test_transcript_failure_stops_processing(
     assert failing_transcript_service.transcript_calls == 1
     assert video_validator.validate_calls == 0
     assert downloader.download_calls == 0
+
+def test_validation_summarizes_video(
+    fake_config: AppConfig,
+    vid: Video,
+    transcript_service: FakeTranscriptService,
+    downloader: FakeDownloader,
+    summarizer: FakeSummarizer,
+    video_db: VideoProcessingRepository,
+    video_filter: FakeVideoFilter,
+):
+    validator = FakeValidator(decision="summarized")
+
+    orchestrator = VidsiftOrchestrator(
+        config=fake_config,
+        video_validator=validator,
+        transcript_service=transcript_service,
+        summarizer=summarizer,
+        downloader=downloader,
+        video_db=video_db,
+        video_filter=video_filter,
+        should_sleep=False,
+    )
+
+    orchestrator.video_data_collector = FakeDataCollector(
+        channel_id_list=[vid.channel_id],
+        config=fake_config,
+        videos=[(vid, DiscoverySource.RSS)],
+    )
+
+    orchestrator.run()
+
+    assert validator.validate_calls == 1
+    assert transcript_service.transcript_calls == 1
+    assert summarizer.summarize_calls == 1
+    assert downloader.download_calls == 0
+
+def test_validation_discards_video(
+    fake_config: AppConfig,
+    vid: Video,
+    transcript_service: FakeTranscriptService,
+    downloader: FakeDownloader,
+    summarizer: FakeSummarizer,
+    video_db: VideoProcessingRepository,
+    video_filter: FakeVideoFilter,
+):
+    validator = FakeValidator(decision="discarded")
+
+    orchestrator = VidsiftOrchestrator(
+        config=fake_config,
+        video_validator=validator,
+        transcript_service=transcript_service,
+        summarizer=summarizer,
+        downloader=downloader,
+        video_db=video_db,
+        video_filter=video_filter,
+        should_sleep=False,
+    )
+
+    orchestrator.video_data_collector = FakeDataCollector(
+        channel_id_list=[vid.channel_id],
+        config=fake_config,
+        videos=[(vid, DiscoverySource.RSS)],
+    )
+
+    orchestrator.run()
+
+    assert validator.validate_calls == 1
+    assert transcript_service.transcript_calls == 1
+    assert summarizer.summarize_calls == 0
+    assert downloader.download_calls == 0
+
+def test_multiple_videos_take_independent_actions(
+    fake_config: AppConfig,
+    transcript_service: FakeTranscriptService,
+    downloader: FakeDownloader,
+    summarizer: FakeSummarizer,
+    video_db: VideoProcessingRepository,
+    video_filter: FakeVideoFilter,
+):
+    validator = FakeValidator(
+        decisions=[
+            "downloaded",
+            "summarized",
+        ]
+    )
+
+    vid1 = Video(
+        title="video1",
+        url="url1",
+        author="author",
+        channel_id="UCjjjjjjjjjjjjjjjjjjjjjj",
+        published="today",
+        video_id="11111111111",
+    )
+
+    vid2 = Video(
+        title="video2",
+        url="url2",
+        author="author",
+        channel_id="UCjjjjjjjjjjjjjjjjjjjjjj",
+        published="today",
+        video_id="22222222222",
+    )
+
+    orchestrator = VidsiftOrchestrator(
+        config=fake_config,
+        video_validator=validator,
+        transcript_service=transcript_service,
+        summarizer=summarizer,
+        downloader=downloader,
+        video_db=video_db,
+        video_filter=video_filter,
+        should_sleep=False,
+    )
+
+    orchestrator.video_data_collector = FakeDataCollector(
+        channel_id_list=[vid1.channel_id],
+        config=fake_config,
+        videos=[
+            (vid1, DiscoverySource.RSS),
+            (vid2, DiscoverySource.RSS),
+        ],
+    )
+
+    orchestrator.run()
+
+    assert validator.validate_calls == 2
+    assert transcript_service.transcript_calls == 2
+    assert downloader.download_calls == 1
+    assert summarizer.summarize_calls == 1
