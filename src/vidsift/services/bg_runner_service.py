@@ -43,6 +43,11 @@ class BgRunnserService(VidsiftService):
             self.service.stop_service()
         except ServiceError:
             raise
+    def restart_service(self) -> None:
+        try:
+            self.service.restart_service()
+        except ServiceError:
+            raise
     def get_status(self) -> None:
         try:
             print(f"Status of the vidsift service: '{self.service.get_status()}'")
