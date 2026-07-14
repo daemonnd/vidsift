@@ -40,6 +40,19 @@ class FailingSummarizer:
         self.summarize_calls += 1
         raise SummaryError("summary failed")
 
+
+class FakeChunkSummarizer:
+    def summarize_all_chunks(self, transcript: str, video_id: str):
+        return []
+class FakeFinalSummarizer:
+    def __init__(self) -> None:
+        self.summarize_calls = 0
+    def summarize(self, summaries: list[str]):
+        self.summarize_calls += 1
+        return "summary"
+
+
+
 class FakeValidator:
     def __init__(
         self,
