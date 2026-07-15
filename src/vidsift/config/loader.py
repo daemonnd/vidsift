@@ -5,6 +5,7 @@ import tomllib
 from pathlib import Path
 from tomllib import TOMLDecodeError
 
+from platformdirs import user_config_dir
 from pydantic import ValidationError
 
 from vidsift.config.errors import (ConfigFileNotFoundError,
@@ -12,7 +13,7 @@ from vidsift.config.errors import (ConfigFileNotFoundError,
                                    ConfigValidationError, InvalidConfigError)
 from vidsift.config.models import AppConfig
 
-CONFIG_FILE_PATH: Path = Path(Path.home() / ".config" / "vidsift" / "config.toml")
+CONFIG_FILE_PATH: Path = (Path(user_config_dir("vidsift")) / "config.toml")
 
 
 def load_config(config_path: Path = CONFIG_FILE_PATH) -> AppConfig:

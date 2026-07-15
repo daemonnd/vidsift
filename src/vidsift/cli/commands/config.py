@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from platformdirs import user_config_dir
 from rich.console import Console
 
 
@@ -25,7 +26,7 @@ def register_config(subparsers):
 
 def handle_config(args, config):
     if args.file:
-        CONFIG_FILE_PATH: Path = Path(Path.home() / ".config" / "vidsift" / "config.toml")
+        CONFIG_FILE_PATH: Path = (Path(user_config_dir("vidsift")) / "config.toml")
         if args.config:
             CONFIG_FILE_PATH = args.config
         print(f"Config file: {CONFIG_FILE_PATH}\n")
@@ -33,7 +34,7 @@ def handle_config(args, config):
             print(f.read())
 
     elif args.filepath:
-        CONFIG_FILE_PATH: Path = Path(Path.home() / ".config" / "vidsift" / "config.toml")
+        CONFIG_FILE_PATH: Path = (Path(user_config_dir("vidsift")) / "config.toml")
         if args.config:
             CONFIG_FILE_PATH = args.config
         print(f"Config file: {CONFIG_FILE_PATH}")
