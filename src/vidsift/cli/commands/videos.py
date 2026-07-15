@@ -52,7 +52,7 @@ def register_videos(subparsers):
     )
 
     videos_delete_one = videos_subparsers.add_parser(
-        "delete-video",
+        "rm",
         help="Delete a video from the database so it can be reprocessed"
     )
     videos_delete_one.add_argument(
