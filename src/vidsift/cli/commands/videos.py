@@ -1,3 +1,6 @@
+from pathlib import Path
+
+from platformdirs import user_data_dir
 from rich.console import Console
 
 from vidsift.features.video_processing.repository import \
@@ -8,11 +11,16 @@ from vidsift.models.video_record import VideoProcessingStatus
 def register_videos(subparsers):
     videos_parser = subparsers.add_parser(
         "videos",
-        help="Edit view or video processed videos",
+        help="Edit or view processed and processing videos",
     )
+    videos_parser.add_argument(
+        "--show-db-path",
+        help="Show the absolute path to the video processing database",
+        action="store_true"
+    )
+    videos_parser.set_defaults(func=handle_db_path_print)
     videos_subparsers = videos_parser.add_subparsers(
         dest="videos_command",
-        required=True
     )
     video_list = videos_subparsers.add_parser(
         "list",
@@ -111,3 +119,5 @@ def handle_videos_delete(args, config):
     finally:
         repo.close()
 
+def handle_db_path_print(args, config):
+    print((Path(user_data_dir("vidsift")) / "processed_videos.db"))
