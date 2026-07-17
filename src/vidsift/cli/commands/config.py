@@ -37,7 +37,7 @@ def handle_config(args, config):
         CONFIG_FILE_PATH: Path = (Path(user_config_dir("vidsift")) / "config.toml")
         if args.config:
             CONFIG_FILE_PATH = args.config
-        print(f"Config file: {CONFIG_FILE_PATH}")
+        print(CONFIG_FILE_PATH)
 
 
     else:

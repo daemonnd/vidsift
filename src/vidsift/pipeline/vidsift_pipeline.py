@@ -578,8 +578,6 @@ class VidsiftOrchestrator:
         try:
             # fetch the transcript
             transcript: str = self.fetch_transcript(vid=vid)
-            print("exception did not occur")
-
         except TranscriptError as e:
             error_msg: str = f"TranscriptError: Each transcript fetching provider failed: {str(e)}"
             logger.exception(

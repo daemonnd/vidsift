@@ -179,12 +179,13 @@ class VidsiftCLI:
                 )
                 exit(130)
             else:
-                self.logger.info(
-                    "Orchestrator terminated successfully.",
-                    extra={
-                        "event": LogEvent.ORCHESTRATOR_STOPPED
-                    }
-                )
+                if self.args.command in ["run", "schedule", "process"]:
+                    self.logger.info(
+                        "Orchestrator terminated successfully.",
+                        extra={
+                            "event": LogEvent.ORCHESTRATOR_STOPPED
+                        }
+                    )
                 exit(0)
         else:
             self.logger.critical("No command provided, nothing to run")
