@@ -39,6 +39,16 @@ yt_dlp_video_amount = 10
 max_allowed_json_output_runs = 3
 
 
+# IMPORTANT:
+# use this option only for testing if possible
+# only set to true if the AI validation does not allow the current ai config,
+# not recommended to enable for daily usage cause it bypasses checks and
+# it will only be revealed wether it works or not after the ai has been called,
+# so vidsift runs for nothing and then fails because of ai failure
+# AI Failures are not treated as hard, so it will keep failing over and over again
+skip_ai_checks = false # not recommended for running in the background because of the aforementioned reason
+
+
 base_url = "http://localhost:11434"
 provider = "ollama"                 # ollama, lmstudio
 

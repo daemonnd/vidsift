@@ -138,6 +138,13 @@ class VidsiftCLI:
             config = config.model_copy(update={"ai": ai_config})
 
 
+        if self.args.skip_ai_checks is not None:
+            ai_config = config.ai.model_copy(
+                update={
+                    "skip_ai_checks": self.args.skip_ai_checks,
+                }
+            )
+            config = config.model_copy(update={"ai": ai_config})
         return config
 
     def _validate_config(self, config: AppConfig):

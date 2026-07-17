@@ -35,6 +35,12 @@ def parse_args():
         help="Set the AI model for all AI usages"
     )
 
+    parser.add_argument(
+        "--skip-ai-checks",
+        help="Skip checks for AI availibility and existence, not recommended for running in the background",
+        action="store_true"
+    )
+
     subparsers = parser.add_subparsers(
         dest="command",
         required=True,

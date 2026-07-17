@@ -67,6 +67,7 @@ class AIConfig(BaseModel):
     tasks: AITasksConfig
 
     max_allowed_json_output_runs: int = Field(ge=0,le=5)
+    skip_ai_checks: bool = False
 
 
 class PreValidationThresholdConfig(BaseModel):

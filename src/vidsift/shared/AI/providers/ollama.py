@@ -15,11 +15,12 @@ class OllamaProvider(AIProvider):
         self._validate_data()
 
     def _validate_data(self) -> None:
-        try:
-            if requests.get(self.config.base_url).status_code != 200:
-                raise AIRequestError(f"Invalid base url: {self.config.base_url}")
-        except ConnectionError as e:
-            raise AIRequestError(f"Failed to connect to base url '{self.config.base_url}': {str(e)}") from e
+        if not self.config.skip_ai_checks:
+            try:
+                if requests.get(self.config.base_url).status_code != 200:
+                    raise AIRequestError(f"Invalid base url: {self.config.base_url}")
+            except ConnectionError as e:
+                raise AIRequestError(f"Failed to connect to base url '{self.config.base_url}': {str(e)}") from e
 
         response = ollama_list()
         models = response["models"] if isinstance(response, dict) else response.models
