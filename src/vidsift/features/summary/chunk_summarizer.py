@@ -6,8 +6,8 @@ from vidsift.models.ai_models import AIRequest
 from vidsift.shared.AI.errors import AIError
 from vidsift.shared.AI.executor import AIExecutor
 from vidsift.shared.AI.prompt_manager import PromptManager
+from vidsift.shared.decorators import retry_once
 from vidsift.shared.logging.log_event_fields import LogEvent
-from vidsift.shared.one_retry import retry_once
 from vidsift.shared.text_normalizer import TextNormalizer
 from vidsift.shared.transcript_chunk_generator import TranscriptChunkGenerator
 

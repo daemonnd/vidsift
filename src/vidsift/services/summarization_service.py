@@ -11,8 +11,8 @@ from vidsift.features.summary.final_summarizer import FinalSummarizer
 from vidsift.features.validation.errors import EmptyTranscriptError
 from vidsift.models.video import Video
 from vidsift.shared.AI.errors import AIError
+from vidsift.shared.decorators import retry_once
 from vidsift.shared.logging.log_event_fields import LogEvent
-from vidsift.shared.one_retry import retry_once
 from vidsift.shared.text_normalizer import TextNormalizer
 
 logger = logging.getLogger(__name__)
