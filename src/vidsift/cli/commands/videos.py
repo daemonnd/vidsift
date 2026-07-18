@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 from platformdirs import user_data_dir
@@ -6,6 +7,7 @@ from rich.console import Console
 from vidsift.features.video_processing.repository import \
     VideoProcessingRepository
 from vidsift.models.video_record import VideoProcessingStatus
+from vidsift.shared.text_normalizer import TextNormalizer
 
 
 def register_videos(subparsers):
@@ -30,6 +32,16 @@ def register_videos(subparsers):
         "-s", "--status",
         help="filter by processing status ('downloading', 'summarizing', 'done', 'failed', 'validating'",
         choices=["downloading", "summarizing", "done", "failed", "validating"]
+    )
+
+    video_list.add_argument(
+        "--video-id",
+        help="only show the db entry with the matching video id"
+    )
+
+    video_list.add_argument(
+        "--channel-id",
+        help="only show the db entries with the matching channel id"
     )
 
     video_list.set_defaults(
@@ -74,13 +86,21 @@ def register_videos(subparsers):
 
 def handle_videos_list(args, config):
     repo = VideoProcessingRepository(config=config)
+    console = Console()
     try:
         if args.status:
             videos = repo.get_by_status(args.status)
+        elif args.video_id:
+            result = repo.get(video_id=args.video_id)
+            if result is None:
+                console.print("Error: no rows found for search criteria")
+            console.print(result)
+            return
+        elif args.channel_id:
+            videos = repo.get_by_channelid(channel_id=args.channel_id)
         else:
             videos = repo.get_all()
 
-        console = Console()
 
         for video in videos:
             console.print(video)

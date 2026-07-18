@@ -271,6 +271,20 @@ class VideoProcessingRepository:
             except ValidationError as e:
                 raise VideoProcessingDataValidationError(f"Failed to get the data of a video because of a ValidationError, database seems corrupt: {str(e)}") from e
 
+    def get_by_channelid(self, channel_id: str) -> Generator[VideoProcessingRecord, None, None]:
+        parameters: tuple = (channel_id,)
+        rows = self.cur.execute("""
+        SELECT * FROM processed_videos
+        WHERE channel_id = ?
+        """, parameters).fetchall()
+        if not rows:
+            return None
+        for row in rows:
+            try:
+                yield VideoProcessingRecord.model_validate(dict(row))
+            except ValidationError as e:
+                raise VideoProcessingDataValidationError(f"Failed to get the data of a video because of a ValidationError, database seems corrupt: {str(e)}") from e
+
     def get_all(self) -> Generator[VideoProcessingRecord, None, None]:
         rows = self.cur.execute("""
         SELECT * FROM processed_videos
