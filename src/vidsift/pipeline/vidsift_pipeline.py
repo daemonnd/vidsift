@@ -192,28 +192,8 @@ class VidsiftOrchestrator:
                             "channel_id": vid.channel_id
                         }
                     )
-                    try:
-                        transcript: str = self.fetch_transcript(vid)
-                    except TranscriptError as e:
-                        error_msg: str = f"TranscriptError: Each transcript fetching provider failed: {str(e)}"
-                        logger.exception(
-                            error_msg,
-                            extra={
-                                "event": LogEvent.TRANSCRIPT_FETCH_FAILED,
-                                "video_id": vid.video_id,
-                                "channel_id": vid.channel_id,
-                            },
-                        )
-                        # add the failure to the video database
-                        self.video_db.mark_failed(error_msg=error_msg, video_id=vid.video_id)
-                        logger.info("Moving on to the next video because of the previous TranscriptError...")
-                        sleep_delay(
-                            calculate_delay(
-                                min_delay=self.config.video_processing.min_vid_delay,
-                                random_delay=self.config.video_processing.random_vid_delay
-                            ),
-                            should_sleep=self.should_sleep
-                        )
+                    transcript = self.manage_transcript_fetch(vid=vid)
+                    if transcript is None:
                         return
                     self.execute_processing_step(
                         vid=vid,
@@ -467,13 +447,7 @@ class VidsiftOrchestrator:
                     output_path=Path(self.config.downloads.output_dir)
                 ),
             )
-            sleep_delay(
-                calculate_delay(
-                    min_delay=self.config.video_processing.min_vid_delay,
-                    random_delay=self.config.video_processing.random_vid_delay
-                ),
-                should_sleep=self.should_sleep
-            )
+            self.cooldown()
         logger.debug(
             "Check for videos where the download got interrupted... Done",
             extra={
@@ -537,6 +511,49 @@ class VidsiftOrchestrator:
             }
         )
 
+    def manage_transcript_fetch(self, vid: Video) -> str | None:
+        """
+        Method that manages the entire transcript fetching process, logs errors and creates db entries.
+        Returns None on failure, the transcript as a string on success
+        """
+        try:
+            # fetch the transcript
+            logger.debug(
+                f"Fetching the transcript of {vid.video_id}...", 
+                extra={
+                    "event": LogEvent.TRANSCRIPT_FETCH_STARTED,
+                    "video_id": vid.video_id,
+                    "channel_id": vid.channel_id,
+                }
+
+            )
+            transcript: str = self.transcript_service.get_transcript(vid)
+            logger.debug(
+                f"Finished fetching the transcript of {vid.video_id}",
+                extra={
+                    "event": LogEvent.TRANSCRIPT_FETCH_COMPLETED,
+                    "video_id": vid.video_id,
+                    "channel_id": vid.channel_id
+                }
+            )
+        except TranscriptError as e:
+            error_msg: str = f"TranscriptError: Each transcript fetching provider failed: {str(e)}"
+            logger.exception(
+                error_msg,
+                extra={
+                    "event": LogEvent.TRANSCRIPT_FETCH_FAILED,
+                    "video_id": vid.video_id,
+                    "channel_id": vid.channel_id,
+                },
+            )
+            # add the failure to the video database
+            self.video_db.mark_failed(error_msg=error_msg, video_id=vid.video_id)
+            logger.info("Moving on to the next video because of the previous TranscriptError...")
+            self.cooldown()
+            return
+        else:
+            return transcript
+
     def resume_summaries(self):
         # restart the summarization action for the videos where the summary got interrupted
         logger.debug("Check for videos where the summarization got interrupted...")
@@ -552,7 +569,9 @@ class VidsiftOrchestrator:
                 },
             )
             try:
-                transcript: str = self.fetch_transcript(vid=vid)
+                transcript = self.manage_transcript_fetch(vid=vid)
+                if transcript is None:
+                    continue
                 if not self.execute_processing_step(
                     vid=vid,
                     step_type="summarize",
@@ -564,38 +583,11 @@ class VidsiftOrchestrator:
                     ),
                 ):
                     continue
-            except TranscriptError as e:
-                error_msg: str = f"TranscriptError: Each transcript fetching provider failed: {str(e)}"
-                logger.exception(
-                    error_msg,
-                    extra={
-                        "event": LogEvent.TRANSCRIPT_FETCH_FAILED,
-                        "video_id": vid.video_id,
-                        "channel_id": vid.channel_id,
-                    },
-                )
-                # add the failure to the video database
-                self.video_db.mark_failed(error_msg=error_msg, video_id=vid.video_id)
-                logger.info("Moving on to the next video because of the previous TranscriptError...")
-                sleep_delay(
-                    calculate_delay(
-                        min_delay=self.config.video_processing.min_vid_delay,
-                        random_delay=self.config.video_processing.random_vid_delay
-                    ),
-                    should_sleep=self.should_sleep
-                )
-                continue
             except (SystemExit, KeyboardInterrupt):
                 self.should_sleep = False
                 raise # raise it to main, so that vidsift can exit
             finally:
-                sleep_delay(
-                    calculate_delay(
-                        min_delay=self.config.video_processing.min_vid_delay,
-                        random_delay=self.config.video_processing.random_vid_delay
-                    ),
-                    should_sleep=self.should_sleep
-                )
+                self.cooldown()
         logger.debug(
             "Check for videos where the summarization got interrupted... Done",
             extra={
@@ -631,31 +623,9 @@ class VidsiftOrchestrator:
                 },
             )
 
-        try:
-            # fetch the transcript
-            transcript: str = self.fetch_transcript(vid=vid)
-        except TranscriptError as e:
-            error_msg: str = f"TranscriptError: Each transcript fetching provider failed: {str(e)}"
-            logger.exception(
-                error_msg,
-                extra={
-                    "event": LogEvent.TRANSCRIPT_FETCH_FAILED,
-                    "video_id": vid.video_id,
-                    "channel_id": vid.channel_id,
-                },
-            )
-            # add the failure to the video database
-            self.video_db.mark_failed(error_msg=error_msg, video_id=vid.video_id)
-            logger.info("Moving on to the next video because of the previous TranscriptError...")
-            sleep_delay(
-                calculate_delay(
-                    min_delay=self.config.video_processing.min_vid_delay,
-                    random_delay=self.config.video_processing.random_vid_delay
-                ),
-                should_sleep=self.should_sleep
-            )
+        transcript = self.manage_transcript_fetch(vid=vid)
+        if transcript is None:
             return
-
         # get the validation result
         logger.info(
             f"Starting validation for video {vid.video_id}.",
@@ -707,13 +677,7 @@ class VidsiftOrchestrator:
             video_validation_result=video_validation_result,
             transcript=transcript,
         )
-        sleep_delay(
-            calculate_delay(
-                min_delay=self.config.video_processing.min_vid_delay,
-                random_delay=self.config.video_processing.random_vid_delay
-            ),
-            should_sleep=self.should_sleep
-        )
+        self.cooldown()
 
 
     def process_interrupted_videos(self):
@@ -730,4 +694,13 @@ class VidsiftOrchestrator:
             extra={
                 "event": LogEvent.INTERRUPTED_PROCESSING_COMPLETED
             }
+        )
+
+    def cooldown(self):
+        sleep_delay(
+            calculate_delay(
+                min_delay=self.config.video_processing.min_vid_delay,
+                random_delay=self.config.video_processing.random_vid_delay
+            ),
+            should_sleep=self.should_sleep
         )
