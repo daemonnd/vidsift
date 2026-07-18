@@ -73,6 +73,30 @@ class SchtasksService(VidsiftService):
         except subprocess.CalledProcessError as e:
             raise ServiceExecutionError(f"Failed to stop service: {e}") from e
 
+    def restart_service(self) -> None:
+        try:
+            subprocess.run(
+                [
+                    "schtasks",
+                    "/End",
+                    "/TN",
+                    self.TASK_NAME,
+                ],
+                check=True,
+            )
+
+            subprocess.run(
+                [
+                    "schtasks",
+                    "/Run",
+                    "/TN",
+                    self.TASK_NAME,
+                ],
+                check=True,
+            )
+        except subprocess.CalledProcessError as e:
+            raise ServiceExecutionError(f"Failed to restart service: {e}") from e
+
     def get_status(self) -> str | None:
         try:
             result = subprocess.run(

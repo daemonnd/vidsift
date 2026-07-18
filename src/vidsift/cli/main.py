@@ -1,6 +1,7 @@
 from argparse import ArgumentParser
 
 from vidsift.cli.commands.config import register_config
+from vidsift.cli.commands.init import register_init
 from vidsift.cli.commands.process import register_process
 from vidsift.cli.commands.run import register_run
 from vidsift.cli.commands.schedule import register_schedule
@@ -34,12 +35,19 @@ def parse_args():
         help="Set the AI model for all AI usages"
     )
 
+    parser.add_argument(
+        "--skip-ai-checks",
+        help="Skip checks for AI availibility and existence, not recommended for running in the background",
+        action="store_true"
+    )
+
     subparsers = parser.add_subparsers(
         dest="command",
         required=True,
         help="use vidsift <command> --help for more details about the commands"
     )
 
+    init_parser = register_init(subparsers)
     run_parser = register_run(subparsers)
     config_parser = register_config(subparsers)
     process_parser = register_process(subparsers)

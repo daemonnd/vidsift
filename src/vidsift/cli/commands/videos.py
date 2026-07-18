@@ -1,18 +1,28 @@
+import json
+from pathlib import Path
+
+from platformdirs import user_data_dir
 from rich.console import Console
 
 from vidsift.features.video_processing.repository import \
     VideoProcessingRepository
 from vidsift.models.video_record import VideoProcessingStatus
+from vidsift.shared.text_normalizer import TextNormalizer
 
 
 def register_videos(subparsers):
     videos_parser = subparsers.add_parser(
         "videos",
-        help="Edit view or video processed videos",
+        help="Edit or view processed and processing videos",
     )
+    videos_parser.add_argument(
+        "--show-db-path",
+        help="Show the absolute path to the video processing database",
+        action="store_true"
+    )
+    videos_parser.set_defaults(func=handle_db_path_print)
     videos_subparsers = videos_parser.add_subparsers(
         dest="videos_command",
-        required=True
     )
     video_list = videos_subparsers.add_parser(
         "list",
@@ -22,6 +32,16 @@ def register_videos(subparsers):
         "-s", "--status",
         help="filter by processing status ('downloading', 'summarizing', 'done', 'failed', 'validating'",
         choices=["downloading", "summarizing", "done", "failed", "validating"]
+    )
+
+    video_list.add_argument(
+        "--video-id",
+        help="only show the db entry with the matching video id"
+    )
+
+    video_list.add_argument(
+        "--channel-id",
+        help="only show the db entries with the matching channel id"
     )
 
     video_list.set_defaults(
@@ -51,17 +71,36 @@ def register_videos(subparsers):
         func=handle_videos_set_status
     )
 
+    videos_delete_one = videos_subparsers.add_parser(
+        "rm",
+        help="Delete a video from the database so it can be reprocessed"
+    )
+    videos_delete_one.add_argument(
+        "--video-id",
+        help="ID of the target video",
+        required=True
+    )
+    videos_delete_one.set_defaults(func=handle_videos_delete)
+
     return videos_parser
 
 def handle_videos_list(args, config):
     repo = VideoProcessingRepository(config=config)
+    console = Console()
     try:
         if args.status:
             videos = repo.get_by_status(args.status)
+        elif args.video_id:
+            result = repo.get(video_id=args.video_id)
+            if result is None:
+                console.print("Error: no rows found for search criteria")
+            console.print(result)
+            return
+        elif args.channel_id:
+            videos = repo.get_by_channelid(channel_id=args.channel_id)
         else:
             videos = repo.get_all()
 
-        console = Console()
 
         for video in videos:
             console.print(video)
@@ -91,3 +130,14 @@ def handle_videos_set_status(args, config):
     finally:
         repo.close()
 
+def handle_videos_delete(args, config):
+    repo = VideoProcessingRepository(config=config)
+    try:
+        repo.del_row(
+            video_id=args.video_id
+        )
+    finally:
+        repo.close()
+
+def handle_db_path_print(args, config):
+    print((Path(user_data_dir("vidsift")) / "processed_videos.db"))

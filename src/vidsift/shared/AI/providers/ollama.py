@@ -1,6 +1,7 @@
 import requests
 from ollama import ChatResponse, Client, RequestError, ResponseError
 from ollama import list as ollama_list
+from requests.exceptions import ConnectionError
 
 from vidsift.config.models import AIConfig
 from vidsift.models.ai_models import AIRequest, AIResponse, ProviderName
@@ -11,25 +12,33 @@ from vidsift.shared.AI.providers.base import AIProvider
 class OllamaProvider(AIProvider):
     def __init__(self, config: AIConfig) -> None:
         super().__init__(config)
-        #self._validate_data()
+        self._validate_data()
 
     def _validate_data(self) -> None:
-        if requests.get(self.config.base_url).status_code != 200:
-            raise AIRequestError(f"Invalid base url: {self.config.base_url}")
+        if not self.config.skip_ai_checks:
+            try:
+                if requests.get(self.config.base_url).status_code != 200:
+                    raise AIRequestError(f"Invalid base url: {self.config.base_url}")
+            except ConnectionError as e:
+                raise AIRequestError(f"Failed to connect to base url '{self.config.base_url}': {str(e)}") from e
 
         response = ollama_list()
         models = response["models"] if isinstance(response, dict) else response.models
 
-        default_model_found = any(m.model == self.config.default_model for m in models)
-        validation_model_found = any(m.model == self.config.validation_model for m in models)
-        summary_model_found = any(m.model == self.config.summary_model for m in models)
+        metadata_validation_model = any(m.model == self.config.tasks.metadata_validation.reference for m in models)
+        transcript_validation_model = any(m.model == self.config.tasks.transcript_validation.reference for m in models)
+        chunk_summary_model = any(m.model == self.config.tasks.chunk_summary.reference for m in models)
+        overall_summary_model = any(m.model == self.config.tasks.overall_summary.reference for m in models)
 
-        if not default_model_found:
-            raise AIModelError(f"The default model {self.config.default_model} does not exist")
-        if not validation_model_found:
-            raise AIModelError(f"The validation model {self.config.validation_model} does not exist")
-        if not summary_model_found:
-            raise AIModelError(f"The summarization model {self.config.summary_model} does not exist")
+        if not metadata_validation_model:
+            raise AIModelError(f"The metadata validation model {self.config.tasks.metadata_validation.reference} does not exist")
+        if not transcript_validation_model:
+            raise AIModelError(f"The transcript validation model {self.config.tasks.transcript_validation.reference} does not exist")
+        if not chunk_summary_model:
+            raise AIModelError(f"The chunk summary model {self.config.tasks.chunk_summary.reference} does not exist")
+        if not overall_summary_model:
+            raise AIModelError(f"The overall summary model {self.config.tasks.chunk_summary.reference} does not exist")
+
 
     def generate(self, request: AIRequest) -> AIResponse:
         try:
@@ -38,8 +47,10 @@ class OllamaProvider(AIProvider):
                     messages=[{"role": "user", "content": request.prompt}],
                     options={
                         "temperature": request.temperature,
-                        "num_predict": request.max_tokens if request.max_tokens is not None else 100
-                    }
+                        "num_predict": request.max_tokens,
+                        "num_ctx": request.context_length
+                    },
+                think=request.thinking
                 )
         except ResponseError as e:
             raise AIModelError(f"An error occurred while running the AI model: {e}") from e

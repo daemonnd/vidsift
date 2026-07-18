@@ -43,7 +43,7 @@ class PreValidationScoreCalculator:
             return True, f"title_punctuation_ratio is {result.title_punctuation_ratio}, which is above the threshold of 0.1"
         if result.title_clickbait_ratio > self.max_allowed.title_clickbait_ratio:
             return True, f"title_clickbait_ratio is {result.title_clickbait_ratio}, which is above the threshold of 0.15"
-        if result.title_emoji_ratio > self.max_allowed.title_punctuation_ratio:
+        if result.title_emoji_ratio > self.max_allowed.title_emoji_ratio:
             return True, f"title_emoji_ratio is {result.title_emoji_ratio}, which is above the threshold of 0.2"
         if result.transcript_clickbait_ratio > self.max_allowed.transcript_clickbait_ratio:
             return True, f"transcript_clickbait_ratio is {result.transcript_clickbait_ratio}, which is above the threshold of 0.1"

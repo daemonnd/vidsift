@@ -1,7 +1,9 @@
-import json
+from pathlib import Path
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from platformdirs import user_config_dir
+from pydantic import (BaseModel, ConfigDict, Field, field_validator,
+                      model_validator)
 
 
 class ConsoleLoggingConfig(BaseModel):
@@ -29,24 +31,43 @@ class VideoFetchingConfig(BaseModel):
     rss_bozo_level: Literal["permissive", "strict", "ignore", "debug"]
     yt_dlp_video_amount: int = Field(ge=0)
 
-class AIConfig(BaseModel):
+class SpecificAITaskConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
-    base_url: str
-    provider: Literal["ollama", "lmstudio", "openai", "anthropic", "cohere", "xai", "mistral", "google",  "microsoft", "custom"]
-    default_model: str
-    validation_model: str
-    summary_model: str
-    max_allowed_json_output_runs: int = Field(ge=0,le=5)
+    reference: str
+    context_length: int = Field(ge=1024)
+    max_tokens: int = Field(ge=50)
+    thinking: bool
 
-    #@field_validator("base_url")
-    #@classmethod
-    #def validate_host(cls, v: str) -> str:
-    #    if v.startswith("http://") or v.startswith("https://"):
-    #        pass
-    #    else:
-    #        raise ValueError("host must start with http:// or https://")
-    #
-    #    return v
+    @model_validator(mode="after")
+    def validate_context(self):
+        if self.max_tokens > self.context_length:
+            raise ValueError(f"max_tokens value of {self.max_tokens} cannot exeed context_length which is {self.context_length}")
+
+        return self
+
+
+class AITasksConfig(BaseModel):
+    model_config = ConfigDict(frozen=True)
+ 
+    # validation
+    metadata_validation: SpecificAITaskConfig
+    transcript_validation: SpecificAITaskConfig
+
+    # summary
+    chunk_summary: SpecificAITaskConfig
+    overall_summary: SpecificAITaskConfig
+
+
+class AIConfig(BaseModel):
+    # context can't be more than max tokens
+    model_config = ConfigDict(frozen=True)
+
+    base_url: str
+    provider: Literal["ollama", "lmstudio"]
+    tasks: AITasksConfig
+
+    max_allowed_json_output_runs: int = Field(ge=0,le=5)
+    skip_ai_checks: bool = False
 
 
 class PreValidationThresholdConfig(BaseModel):
@@ -73,26 +94,27 @@ class PreValidationConfig(BaseModel):
 
 class ValidationConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
-    enabled: bool
+    #enabled: bool
     transcript_chunk_char_size: int = Field(ge=100)
     pre_validation: PreValidationConfig
 
 class SummarizationConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
-    enabled: bool
+    #enabled: bool
     char_chunk_size: int = Field(ge=100)
     output_dir: str
 
 class DownloadsConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
-    enabled: bool
+    #enabled: bool
     output_dir: str
 
 class ChannelConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
+
     id: str
-    name: str
     action: Literal["validate", "download", "summarize"]
+    instruction: str | None = None
 
     @field_validator("id")
     @classmethod
@@ -104,6 +126,20 @@ class ChannelConfig(BaseModel):
             raise ValueError("channel_id must start with 'UC'")
 
         return v
+
+    @model_validator(mode="after")
+    def validate_instruction(self) -> "ChannelConfig":
+        if self.action != "validate":
+            return self
+
+        if self.instruction is None:
+            raise ValueError(
+                "instruction is required when action is 'validate'"
+            )
+        return self
+
+
+
 class YtDlpBaseConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
     max_retries: int | Literal["infinite"] = Field(ge=0)

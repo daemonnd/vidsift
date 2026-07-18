@@ -34,15 +34,41 @@ yt_dlp_video_amount = 10
 # ============================================================
 
 [ai]
-base_url = "http://localhost:11434"
-provider = "ollama"                 # ollama, lmstudio, openai, anthropic, xai, google_gemini
-default_model = "qwen3.5:9b"
-validation_model = "qwen3.5:9b"
-summary_model = "qwen3.5:9b"
-
 # how often AI can run and fail to output the requested JSON
 # for smaller local AI models, it is usually 2-3 times
 max_allowed_json_output_runs = 3
+
+
+base_url = "http://localhost:11434"
+provider = "ollama"                 # ollama, lmstudio
+
+
+[ai.tasks.metadata_validation]
+reference = "qwen3.5:9b" # ai model name
+context_length = 8192    # the context length that the ai should get
+thinking = false         # only works with ollama, for lmstudio it has to be configured at the server side
+max_tokens = 500         # how many tokens the AI can max. output. cannot exeed the context length
+
+
+[ai.tasks.transcript_validation]
+reference = "qwen3.5:9b"
+context_length = 8192
+thinking = true
+max_tokens = 7000
+
+
+[ai.tasks.chunk_summary]
+reference = "qwen3.5:9b"
+context_length = 8192
+max_tokens = 500
+thinking = false
+
+
+[ai.tasks.overall_summary]
+reference = "qwen3.5:9b"
+context_length = 8192
+max_tokens = 7000
+thinking = true
 
 
 # ============================================================
@@ -88,7 +114,7 @@ format = "bestvideo+bestaudio/best"
 # ============================================================
 
 [validation]
-enabled = true
+#enabled = true
 
 # how many chars should roughly be in one transcript chunk
 # the amount of chars getting to the AI are a bit more than 5 x transcript_chunk_char_size
@@ -126,7 +152,7 @@ transcript_clickbait_weight = 2.5
 # ============================================================
 
 [summarization]
-enabled = true
+#enabled = true
 char_chunk_size = 10000
 output_dir = "/home/user/Documents/vidsift/"
 
@@ -136,7 +162,7 @@ output_dir = "/home/user/Documents/vidsift/"
 # ============================================================
 
 [downloads]
-enabled = true
+#enabled = true
 output_dir = "/home/user/Videos/.vidsift/"
 
 
@@ -144,17 +170,42 @@ output_dir = "/home/user/Videos/.vidsift/"
 # Channels
 # ============================================================
 
-[[channels]]
-id = "UC9x0AN7BWHpCDHSm9NiJFJQ"
-name = "NetworkChuck"
-action = "validate"
+# id: Channelid
+# 1. Go to channel homepage (for example https://www.youtube.com/@PewDiePie)
+# 2. Click on "more" below the subscriber amount
+# 3. (you may have to scroll down), click on share channel
+# 4. Click on "Copy channel ID"
+
+# actions:
+#   - download: downloads each video from the channel, skipping validation
+#   - validate: validate each new video, that decides wether the video will be downloaded, summarized or discarded
+#   - summarize: summarize each new video from the channel, skipping validation
+
+# instruction:
+# - optional for actions 'download' and 'summarize' cause it is not used for these actions
+# - required for action 'validate'
+# - value: filename of a file located at the user config dir / vidsift / custom_channel_instructions
+# - that file at user config dir / vidsift / custom_channel_instructions / [VALUE]
+#   are the custom channel instructions for validation where you can
+#   tell the AI how you want any video of that channel be validated
+# - it is allowed to use one file multiple times, for example use a file called linux_channels.md for all the channels about linux
+# - the file has to be a file that is plain text (read with mode 'r')
+
 
 [[channels]]
-id = "UCo71RUe6DX4w-Vd47rFLXPg"
-name = "typecraft_dev"
+id = "UC9x0AN7BWHpCDHSm9NiJFJQ" # NetworkChuck
 action = "download"
 
 [[channels]]
-id = "UC4JX40jDee_tINbkjycV4Sg"
-name = "TechWithTim"
+id = "UCo71RUe6DX4w-Vd47rFLXPg"   # typecraft_dev
+action = "validate"
+instruction = "linux_channels.md"
+
+[[channels]]
+id = "UC4JX40jDee_tINbkjycV4Sg" # TechWithTim
 action = "summarize"
+
+[[channels]]
+id = "UCjjjjjjjjjjjjjjjjjjjjjj" # fake channel
+action = "validate"
+instruction = "test"

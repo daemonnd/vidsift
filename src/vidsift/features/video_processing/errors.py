@@ -9,3 +9,7 @@ class VideoProcessingDataValidationError(VideoProcessingError):
 class DBWritingError(VideoProcessingError):
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
+
+class VideoIDNotFoundError(VideoProcessingError):
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)

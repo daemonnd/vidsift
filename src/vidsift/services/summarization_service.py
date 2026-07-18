@@ -11,8 +11,8 @@ from vidsift.features.summary.final_summarizer import FinalSummarizer
 from vidsift.features.validation.errors import EmptyTranscriptError
 from vidsift.models.video import Video
 from vidsift.shared.AI.errors import AIError
+from vidsift.shared.decorators import retry_once
 from vidsift.shared.logging.log_event_fields import LogEvent
-from vidsift.shared.one_retry import retry_once
 from vidsift.shared.text_normalizer import TextNormalizer
 
 logger = logging.getLogger(__name__)
@@ -22,7 +22,7 @@ class SummarizationService:
     def __init__(self, config: AppConfig) -> None:
         self.config: AppConfig = config
         self.chunk_summarizer: ChunkSummaryManager = ChunkSummaryManager(config=self.config)
-        self.final_summarizer: FinalSummarizer = FinalSummarizer(ai_model=self.config.ai.summary_model, config=self.config)
+        self.final_summarizer: FinalSummarizer = FinalSummarizer(config=self.config)
         self.text_normalizer: TextNormalizer = TextNormalizer()
 
     def summarize_all_chunks(self, transcript: str, video_id: str) -> list[str]:
@@ -77,6 +77,15 @@ class SummarizationService:
         """
         transcript: str = self.text_normalizer.normalize(raw_transcript)
         summaries: list[str] = self.summarize_all_chunks(transcript=transcript, video_id=vid.video_id)
+        if len(summaries) == 0:
+            logger.info(
+                f"Video with video id {vid.video_id} did not contain any important information for a summary, skipping",
+                extra={
+                    "event": LogEvent.VIDEO_SUMMARIZATION_SKIPPED,
+                    "video_id": vid.video_id,
+                    "channel_id": vid.channel_id
+                }
+            )
         final_summary: str = self.summarize_overall(summaries=summaries)
         dest_path: Path = self.store_summary(
             summary=final_summary,

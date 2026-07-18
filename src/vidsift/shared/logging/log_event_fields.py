@@ -32,6 +32,8 @@ class LogEvent:
     INTERRUPTED_PROCESSING_STARTED = "interrupted_processing_started"
     INTERRUPTED_PROCESSING_COMPLETED = "interrupted_processing_completed"
 
+    LIVESTREAM_CHECK_RESUME_STARTED = "livestream_check_resume_started"
+    LIVESTREAM_CHECK_RESUME_COMPLETED = "livestream_check_resume_completed"
     VALIDATION_RESUME_STARTED = "validation_resume_started"
     VALIDATION_RESUME_COMPLETED = "validation_resume_completed"
     DOWNLOAD_RESUME_STARTED = "download_resume_started"
@@ -61,9 +63,9 @@ class LogEvent:
     YT_DLP_FETCH_COMPLETED = "yt_dlp_fetch_completed"
 
     # video filtering events
-    LIVESTREAM_SKIPPED = "livestream_skipped"
+    LIVESTREAM_CHECK_STARTED = "livestream_check_started"
+    LIVESTREAM_CHECK_COMPLETED = "livestream_check_completed"
     LIVESTREAM_CHECK_FAILED = "livestream_check_failed"
-    PROCESSING_NON_LIVESTREAM = "processing_non_livetream"
 
     # pre-validation events
     PRE_VALIDATION_STARTED = "pre_validation_started"
@@ -113,6 +115,7 @@ class LogEvent:
     VIDEO_SUMMARIZATION_STARTED = "video_summarization_started"
     VIDEO_SUMMARIZATION_COMPLETED = "video_summarization_completed"
     VIDEO_SUMMARIZATION_FAILED = "video_summarization_failed"
+    VIDEO_SUMMARIZATION_SKIPPED = "video_summarization_skipped"
 
     # scheduler events
     SCHEDULER_STARTED = "scheduler_started"

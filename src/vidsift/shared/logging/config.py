@@ -41,7 +41,6 @@ def configure_logging(config: AppConfig):
         backupCount=file_config.retain_days,
         utc=file_config.utc_time
     )
-    print(file_handler.rolloverAt)
 
     # get filter instances
     console_dependeny_filter: ConsoleDependencyFilter = ConsoleDependencyFilter(console_config=console_config)

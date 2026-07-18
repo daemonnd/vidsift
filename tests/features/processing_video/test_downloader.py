@@ -55,8 +55,8 @@ def test_download_video_marks_done(db, validator, vid_downloader, set_up_transcr
             config=fake_config
         )
     orchestrator.process_validation_pipeline(vid=vid, create_db_entry=True)
-    assert downloader.was_called is True
-    assert summarizer.was_called is False
+    assert downloader.download_calls == 1
+    assert summarizer.summarize_calls == 0
 
     cached = db.get(vid.video_id)
     assert cached is not None
@@ -81,8 +81,8 @@ def test_summary(db, set_up_transcript_service,  summarization_service, vid_down
     )
     orchestrator.process_validation_pipeline(vid=vid, create_db_entry=True)
 
-    assert summarizer.was_called is True
-    assert not downloader.was_called
+    assert summarizer.summarize_calls == 1
+    assert downloader.download_calls == 0
     cached = db.get(vid.video_id)
     assert cached is not None
     assert cached.decision == "summarized"
@@ -106,8 +106,8 @@ def test_discard(db, summarization_service, vid_downloader, set_up_transcript_se
     )
     orchestrator.process_validation_pipeline(vid=vid, create_db_entry=True)
 
-    assert not summarizer.was_called
-    assert not downloader.was_called
+    assert summarizer.summarize_calls == 0
+    assert downloader.download_calls == 0
     cached = db.get(vid.video_id)
     assert cached is not None
     assert cached.decision == "discarded"
@@ -133,9 +133,9 @@ def test_failing_get_transcript(db, summarization_service, vid_downloader, vid, 
 
     orchestrator.process_validation_pipeline(vid=vid, create_db_entry=True)
 
-    assert not summarizer.was_called
-    assert not downloader.was_called
-    assert not validator.was_called
+    assert summarizer.summarize_calls == 0
+    assert downloader.download_calls == 0
+    assert validator.validate_calls == 0
     cached = db.get(vid.video_id)
     assert cached is not None
     assert "TranscriptError" in cached.last_error
@@ -178,9 +178,9 @@ def test_failing_validate_video(
         create_db_entry=True
     )
 
-    assert validator.was_called
-    assert not summarizer.was_called
-    assert not downloader.was_called
+    assert validator.validate_calls == 1
+    assert summarizer.summarize_calls == 0
+    assert downloader.download_calls == 0
 
     cached = db.get(vid.video_id)
 
@@ -225,9 +225,9 @@ def test_failing_summary(
         create_db_entry=True
     )
 
-    assert validator.was_called
-    assert summarizer.was_called
-    assert not downloader.was_called
+    assert validator.validate_calls == 1
+    assert summarizer.summarize_calls == 1
+    assert downloader.download_calls == 0
 
     cached: VideoProcessingRecord = db.get(vid.video_id)
 
@@ -277,6 +277,6 @@ def test_existing_video_is_skipped(
         create_db_entry=True
     )
 
-    assert not validator.was_called
-    assert not downloader.was_called
-    assert not summarizer.was_called
+    assert summarizer.summarize_calls == 0
+    assert downloader.download_calls == 0
+    assert validator.validate_calls == 0

@@ -2,7 +2,7 @@ from typing import Generator
 
 from yt_dlp import YoutubeDL
 
-from vidsift.config.models import AppConfig, YtDlpBaseConfig
+from vidsift.config.models import AppConfig, ChannelConfig, YtDlpBaseConfig
 from vidsift.ingestion.errors import VideoDataCollectionError
 from vidsift.models.video import Video
 
@@ -10,6 +10,7 @@ from vidsift.models.video import Video
 class YtDlpUrlCollector:
     def __init__(self, config: AppConfig) -> None:
         super().__init__()
+        self.config: AppConfig = config
         yt_dlp_config: YtDlpBaseConfig = config.video_processing.yt_dlp.base
         ydl_opts = {
             "cookiesfrombrowser": tuple([yt_dlp_config.cookies_from_browser]),
@@ -21,6 +22,12 @@ class YtDlpUrlCollector:
             "sleep_interval": yt_dlp_config.sleep_requests
         }
         self.ydl: YoutubeDL = YoutubeDL(ydl_opts)
+        self.channel_lookup: dict = {}
+        channels: list[ChannelConfig] = self.config.channels
+        self.channel_lookup = {
+            channel.id: channel
+            for channel in channels
+        }
 
     def get_channel_url(self, channel_id: str) -> str:
         return f"https://www.youtube.com/channel/{channel_id}/videos" # only videos
@@ -34,12 +41,11 @@ class YtDlpUrlCollector:
                 vid =  Video(
                     title=str(video.get("title")),
                     url=f"https://www.youtube.com/watch?v={video.get("id")}",
-                    author=str(video.get("uploader")),
+                    author=str(),#self.channel_lookup.get(""),
                     published=str(video.get("upload_date")),
                     video_id=video.get("id"),
                     channel_id=channel_id
                 )
-                print(f"VIDEO: {vid}")
                 yield vid
         except Exception as e:
             raise VideoDataCollectionError(str(e)) from e

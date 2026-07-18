@@ -4,11 +4,12 @@ from pathlib import Path
 from sqlite3 import Connection, Cursor, IntegrityError, OperationalError
 from typing import Generator, Literal
 
+from platformdirs import user_data_dir
 from pydantic import ValidationError
 
 from vidsift.config.models import AppConfig
 from vidsift.features.video_processing.errors import (
-    DBWritingError, VideoProcessingDataValidationError)
+    DBWritingError, VideoIDNotFoundError, VideoProcessingDataValidationError)
 from vidsift.models.video import Video
 from vidsift.models.video_record import (VideoProcessingRecord,
                                          VideoProcessingStatus)
@@ -18,9 +19,10 @@ class VideoProcessingRepository:
     def __init__(self,  config: AppConfig, db_path: Path | None = None) -> None:
         self.config: AppConfig = config
         if db_path is None:
-            self.db_path: Path = Path(Path.home() / ".local" / "share" / "vidsift" / "processed_videos.db")
+            self.db_path: Path = (Path(user_data_dir("vidsift")) / "processed_videos.db")
         else:
             self.db_path: Path = db_path
+
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         self.open()
         self._initialize_database()
@@ -52,7 +54,7 @@ class VideoProcessingRepository:
 
     def create(self, vid: Video):
         """
-        Method for setting the status to VALIDATING after a video got discovered
+        Method for setting the status to LIVESTREAM_CHECKING after a video got discovered
         """
         try:
             parameters: tuple = (
@@ -62,7 +64,7 @@ class VideoProcessingRepository:
                 vid.author,
                 vid.channel_id,
                 vid.published,
-                VideoProcessingStatus.VALIDATING.value,
+                VideoProcessingStatus.LIVESTREAM_CHECKING.value,
                 0,
                 None,
                 None,
@@ -76,17 +78,17 @@ class VideoProcessingRepository:
             (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", parameters)
             self.conn.commit()
         except IntegrityError as e:
-            raise DBWritingError(f"Failed to write to DB while setting the status to VALIDATING because a database operand violated a constraint: {str(e)}") from e
+            raise DBWritingError(f"Failed to write to DB while setting the status to LIVESTREAM_CHECKING because a database operand violated a constraint: {str(e)}") from e
         except OperationalError as e:
-            raise DBWritingError(f"Failed to write to DB while setting the status to VALIDATING because of an operational Error: {str(e)}") from e
+            raise DBWritingError(f"Failed to write to DB while setting the status to LIVESTREAM_CHECKING because of an operational Error: {str(e)}") from e
 
     def save_validation_result(self, 
-                video_id: str,
-                decision: Literal["downloaded", "summarized", "discarded"],
-                quality_score: float,
-                topic_match_score: float,
-                reason: str
-            ):
+            video_id: str,
+            decision: Literal["downloaded", "summarized", "discarded"],
+            quality_score: float,
+            topic_match_score: float,
+            reason: str
+        ):
         """
         Method to add the validation data to the table entry and update the status to ether DONE, DOWNLOADING or SUMMARIZING
         """
@@ -147,8 +149,32 @@ class VideoProcessingRepository:
         except OperationalError as e:
             raise DBWritingError(f"Failed to write to DB while updating the status after the video with id {video_id} has been {decision}, because of an operational Error: {str(e)}") from e
 
+    def del_row(self, video_id: str):
+        """
+        Method to delete a row so that the video can later be processed again
+        """
+        try:
+            if not self.exists(video_id):
+                raise VideoIDNotFoundError(f"There is no row with the video id {video_id} in the database, it cannot be removed")
 
-    def mark_failed(self, error_msg: str, video_id: str):
+            self.cur.execute("""
+            DELETE FROM processed_videos
+            WHERE video_id = ?
+            """, (video_id,))
+            self.conn.commit()
+            if self.cur.rowcount != 1:
+                raise DBWritingError(
+                    f"Expected to update 1 row for {video_id}, "
+                    f"updated {self.cur.rowcount}"
+                )
+        except IntegrityError as e:
+            raise DBWritingError(f"Failed to write to DB while deleting row with video id {video_id} because a database operand violated a constraint: {str(e)}")
+        except OperationalError as e:
+            raise DBWritingError(f"Failed to write to DB while deleting row with video id {video_id} because of an operational Error: {str(e)}") from e
+
+
+
+    def mark_failed(self, error_msg: str, video_id: str, target_status: VideoProcessingStatus = VideoProcessingStatus.FAILED):
         """
         Method to mart a download / summary / validation as failed, updates last_error and sets the status to FAILED
         Method to add 1 to the retry attempts.
@@ -165,7 +191,7 @@ class VideoProcessingRepository:
                 retry_count = 0
             if int(retry_count) >= self.config.video_processing.max_retry_attempts:
                 # if it exeeds / is equal to the max allowed attempts
-                parameters: tuple = (VideoProcessingStatus.FAILED.value, error_msg, video_id)
+                parameters: tuple = (target_status, error_msg, video_id)
                 self.cur.execute("""
                 UPDATE processed_videos
                 SET status = ?,
@@ -228,7 +254,7 @@ class VideoProcessingRepository:
         else:
             return False
 
-    def get_by_status(self, status: Literal["downloading", "summarizing", "done", "failed", "validating"]) -> Generator[VideoProcessingRecord, None, None]:
+    def get_by_status(self, status: Literal["downloading", "summarizing", "done", "failed", "validating", "livestream_checking"]) -> Generator[VideoProcessingRecord, None, None]:
         """
         Method to get a list of the videos interrupted
         """
@@ -236,6 +262,20 @@ class VideoProcessingRepository:
         rows = self.cur.execute("""
         SELECT * FROM processed_videos
         WHERE status = ?
+        """, parameters).fetchall()
+        if not rows:
+            return None
+        for row in rows:
+            try:
+                yield VideoProcessingRecord.model_validate(dict(row))
+            except ValidationError as e:
+                raise VideoProcessingDataValidationError(f"Failed to get the data of a video because of a ValidationError, database seems corrupt: {str(e)}") from e
+
+    def get_by_channelid(self, channel_id: str) -> Generator[VideoProcessingRecord, None, None]:
+        parameters: tuple = (channel_id,)
+        rows = self.cur.execute("""
+        SELECT * FROM processed_videos
+        WHERE channel_id = ?
         """, parameters).fetchall()
         if not rows:
             return None

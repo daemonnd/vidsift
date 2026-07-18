@@ -4,19 +4,18 @@ import pytest
 
 from tests.fakes.fake_pipeline import (FailingSummarizer,
                                        FailingTranscriptService,
-                                       FakeChunkSummarizer, FakeDataCollector,
-                                       FakeDownloader, FakeFinalSummarizer,
+                                       FakeDataCollector, FakeDownloader,
                                        FakeSummarizer, FakeTranscriptService,
                                        FakeValidator, FakeVideoFilter)
 from vidsift.config.loader import load_config
 from vidsift.config.models import AppConfig
 from vidsift.features.video_processing.repository import \
     VideoProcessingRepository
+from vidsift.ingestion.errors import VideoDataCollectionError
 from vidsift.models.video import Video
 from vidsift.models.video_record import (VideoProcessingRecord,
                                          VideoProcessingStatus)
 from vidsift.pipeline.vidsift_pipeline import VidsiftOrchestrator
-from vidsift.services.summarization_service import SummarizationService
 from vidsift.services.video_data_collection_service import VideoDataCollection
 from vidsift.shared.video_discovery_source import DiscoverySource
 
@@ -47,7 +46,7 @@ def vid():
 
 @pytest.fixture()
 def fake_config():
-    return load_config(Path(f"{Path(__file__).parent.parent.parent}/fakes/fake_config.toml"))
+    return load_config(Path(f"{Path(__file__).parent.parent}/fakes/fake_config.toml"))
 
 @pytest.fixture()
 def data_collector(fake_config: AppConfig):
@@ -56,7 +55,8 @@ def data_collector(fake_config: AppConfig):
             "UC9x0AN7BWHpCDHSm9NiJFJQ",
             "UC9x0AN7BWHpCDHSm9NiJFJQ"
         ],
-        config=fake_config
+        config=fake_config,
+        videos=[]
     )
 
 @pytest.fixture()
@@ -80,28 +80,82 @@ def default_orchestrator(fake_config, video_validator, transcript_service, summa
         should_sleep=False
     )
 
-
-def test_no_important_info_summary(
-    fake_config: AppConfig,
+def test_resume_validating_videos(
     vid: Video,
-    failing_transcript_service: FailingTranscriptService,
+    data_collector: FakeDataCollector,
     downloader: FakeDownloader,
     video_validator: FakeValidator,
     video_db: VideoProcessingRepository,
-    video_filter: FakeVideoFilter,
-    monkeypatch
+    summarizer: FakeSummarizer,
+    default_orchestrator: VidsiftOrchestrator
 ):
-    """
-    Tests if each chunk does not contain important information,
-    if then the final summarizer does not run cause there is no important information
-    """
-    summarizer = SummarizationService(config=fake_config)
-    summarizer.chunk_summarizer = FakeChunkSummarizer()
-    # if it fails, it does not use real ai
-    summarizer.final_summarizer = FakeFinalSummarizer()
-    summarizer.summarize(
-        raw_transcript="raw_transcript",
-        vid=vid
+    video_db.open()
+    video_db.create(vid=vid)
+    video_db.set_status(
+        video_id=vid.video_id,
+        status=VideoProcessingStatus.VALIDATING
     )
-    summarizer.final_summarizer.summarize_calls == 0
+    assert video_db.exists(vid.video_id)
 
+    default_orchestrator.video_data_collector = data_collector
+
+    default_orchestrator.run()
+
+    assert video_validator.validate_calls == 1
+    assert downloader.download_calls == 1
+    assert summarizer.summarize_calls == 0
+
+    video_db.open()
+    assert video_db.get(video_id=vid.video_id).status == VideoProcessingStatus.DONE
+
+
+def test_resume_downloading_videos(
+    vid: Video,
+    data_collector: FakeDataCollector,
+    downloader: FakeDownloader,
+    video_db: VideoProcessingRepository,
+    default_orchestrator: VidsiftOrchestrator,
+):
+    video_db.open()
+
+    video_db.create(vid)
+    video_db.set_status(
+        video_id=vid.video_id,
+        status=VideoProcessingStatus.DOWNLOADING,
+    )
+
+    default_orchestrator.video_data_collector = data_collector
+
+    default_orchestrator.run()
+
+    assert downloader.download_calls == 1
+
+    video_db.open()
+    assert video_db.get(video_id=vid.video_id).status == VideoProcessingStatus.DONE
+
+
+def test_resume_summarizing_videos(
+    vid: Video,
+    data_collector: FakeDataCollector,
+    transcript_service: FakeTranscriptService,
+    summarizer: FakeSummarizer,
+    video_db: VideoProcessingRepository,
+    default_orchestrator: VidsiftOrchestrator,
+):
+    video_db.open()
+
+    video_db.create(vid)
+    video_db.set_status(
+        video_id=vid.video_id,
+        status=VideoProcessingStatus.SUMMARIZING,
+    )
+
+    default_orchestrator.video_data_collector = data_collector
+
+    default_orchestrator.run()
+
+    assert transcript_service.transcript_calls == 1
+    assert summarizer.summarize_calls == 1
+
+    video_db.open()
+    assert video_db.get(video_id=vid.video_id).status == VideoProcessingStatus.DONE
