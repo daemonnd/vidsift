@@ -18,7 +18,7 @@ from pathlib import Path
 from sys import exit
 from typing import Generator, Literal
 
-from vidsift.config.models import AppConfig, ChannelConfig
+from vidsift.config.models import AppConfig
 from vidsift.features.download.downloader import VideoDownloader
 from vidsift.features.transcript.errors import TranscriptError
 from vidsift.features.validation.errors import VideoValidationError
@@ -129,6 +129,7 @@ class VidsiftOrchestrator:
                             f"Cheching wether video with video id '{vid.video_id}' is a livestream",
                             extra={
                                 "event": LogEvent.LIVESTREAM_CHECK_STARTED,
+                                "discovery_source": discovery_type.value,
                                 "video_id": vid.video_id,
                                 "channel_id": vid.channel_id
                             }
@@ -209,6 +210,7 @@ class VidsiftOrchestrator:
                     extra={
                         "event": LogEvent.LIVESTREAM_CHECK_COMPLETED,
                         "is_livestream": False,
+                        "discovery_source": discovery_type.value,
                         "video_id": vid.video_id,
                         "channel_id": vid.channel_id
                     }
