@@ -161,62 +161,59 @@ class VidsiftOrchestrator:
             vid: Video,
             channel_lookup: dict[str, ChannelConfig]
         ):
-        try:
-            channel = channel_lookup[vid.channel_id]
-            match channel.action:
-                case "download":
-                    logger.info(
-                        f"Processing video with video id {vid.video_id} from {vid.author} with action download",
-                        extra={
-                            "event": LogEvent.VIDEO_DOWNLOAD_STARTED,
-                            "video_id": vid.video_id,
-                            "channel_id": vid.channel_id
-                        }
+        channel = channel_lookup[vid.channel_id]
+        match channel.action:
+            case "download":
+                logger.info(
+                    f"Processing video with video id {vid.video_id} from {vid.author} with action download",
+                    extra={
+                        "event": LogEvent.VIDEO_DOWNLOAD_STARTED,
+                        "video_id": vid.video_id,
+                        "channel_id": vid.channel_id
+                    }
+                )
+                self.execute_processing_step(
+                    vid=vid,
+                    step_type="download",
+                    success_decision="downloaded",
+                    starting_status=VideoProcessingStatus.DOWNLOADING,
+                    action=lambda: self.downloader.download(
+                        video_url=vid.url,
+                        output_path=Path(self.config.downloads.output_dir)
                     )
-                    self.execute_processing_step(
-                        vid=vid,
-                        step_type="download",
-                        success_decision="downloaded",
-                        starting_status=VideoProcessingStatus.DOWNLOADING,
-                        action=lambda: self.downloader.download(
-                            video_url=vid.url,
-                            output_path=Path(self.config.downloads.output_dir)
-                        )
+                )
+            case "summarize":
+                logger.info(
+                    f"Processing video with video id {vid.video_id} from {vid.author} with action summarize",
+                    extra={
+                        "event": LogEvent.VIDEO_SUMMARIZATION_STARTED,
+                        "video_id": vid.video_id,
+                        "channel_id": vid.channel_id
+                    }
+                )
+                transcript = self.manage_transcript_fetch(vid=vid)
+                if transcript is None:
+                    return
+                self.execute_processing_step(
+                    vid=vid,
+                    step_type="summarize",
+                    starting_status=VideoProcessingStatus.SUMMARIZING,
+                    success_decision="summarized",
+                    action=lambda: self.summarizer.summarize(
+                        raw_transcript=transcript,
+                        vid=vid
                     )
-                case "summarize":
-                    logger.info(
-                        f"Processing video with video id {vid.video_id} from {vid.author} with action summarize",
-                        extra={
-                            "event": LogEvent.VIDEO_SUMMARIZATION_STARTED,
-                            "video_id": vid.video_id,
-                            "channel_id": vid.channel_id
-                        }
-                    )
-                    transcript = self.manage_transcript_fetch(vid=vid)
-                    if transcript is None:
-                        return
-                    self.execute_processing_step(
-                        vid=vid,
-                        step_type="summarize",
-                        starting_status=VideoProcessingStatus.SUMMARIZING,
-                        success_decision="summarized",
-                        action=lambda: self.summarizer.summarize(
-                            raw_transcript=transcript,
-                            vid=vid
-                        )
-                    )
-                case "validate":
-                    logger.info(
-                        f"Processing video with video id {vid.video_id} from {vid.author} with action validate",
-                        extra={
-                            "event": LogEvent.VIDEO_VALIDATION_STARTED,
-                            "video_id": vid.video_id,
-                            "channel_id": vid.channel_id
-                        }
-                    )
-                    self.process_validation_pipeline(vid=vid, create_db_entry=False)
-        finally:
-            self.video_db.close()
+                )
+            case "validate":
+                logger.info(
+                    f"Processing video with video id {vid.video_id} from {vid.author} with action validate",
+                    extra={
+                        "event": LogEvent.VIDEO_VALIDATION_STARTED,
+                        "video_id": vid.video_id,
+                        "channel_id": vid.channel_id
+                    }
+                )
+                self.process_validation_pipeline(vid=vid, create_db_entry=False)
 
     def should_skip_processing(self, vid: Video, discovery_type: DiscoverySource, channel_lookup: dict[str, ChannelConfig]) -> bool:
         """
@@ -623,6 +620,7 @@ class VidsiftOrchestrator:
                 },
             )
 
+        self.video_db.set_status(video_id=vid.video_id, status=VideoProcessingStatus.VALIDATING)
         transcript = self.manage_transcript_fetch(vid=vid)
         if transcript is None:
             return
