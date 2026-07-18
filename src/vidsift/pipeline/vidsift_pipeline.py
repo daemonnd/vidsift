@@ -18,7 +18,7 @@ from pathlib import Path
 from sys import exit
 from typing import Generator, Literal
 
-from vidsift.config.models import AppConfig
+from vidsift.config.models import AppConfig, ChannelConfig
 from vidsift.features.download.downloader import VideoDownloader
 from vidsift.features.transcript.errors import TranscriptError
 from vidsift.features.validation.errors import VideoValidationError
@@ -111,6 +111,7 @@ class VidsiftOrchestrator:
             # process new videos
             channel_lookup = get_channel_lookup(self.config.channels)
             for vid, discovery_type in video_generator:
+                # if the video is already in the db, it does not get processed
                 if self.video_db.exists(video_id=vid.video_id):
                     logger.debug(
                         f"Skipping video with video id {vid.video_id} because it was already processed.",
@@ -123,88 +124,15 @@ class VidsiftOrchestrator:
                     continue # no delay waiting
                 # check if the video is a livestream
                 # does not do the livestream check for fallback (assumed that it is only videos)
+                self.video_db.create(vid=vid) # put the data about the video into the db, with status LIVESTREAM_CHECKING
                 if discovery_type == DiscoverySource.RSS:
-                    try:
-                        logger.debug(
-                            f"Cheching wether video with video id '{vid.video_id}' is a livestream",
-                            extra={
-                                "event": LogEvent.LIVESTREAM_CHECK_STARTED,
-                                "discovery_source": discovery_type.value,
-                                "video_id": vid.video_id,
-                                "channel_id": vid.channel_id
-                            }
-                        )
-                        is_livestream = self.video_filter.check_is_livestream(vid=vid)
-                    except VideoFilteringError as e:
-                        if "This live event will begin in" in str(e):
-                            if str(e).endswith("minutes.") or str(e).endswith("hours.") or str(e).endswith("days."):
-                                logger.info(
-                                    f"Skipped video with video id {vid.video_id} with title '{vid.title}' because it is a livestream that will begin in the future",
-                                    extra={
-                                        "event": LogEvent.LIVESTREAM_CHECK_COMPLETED,
-                                        "is_livestream": True,
-                                        "video_id": vid.video_id,
-                                        "channel_id": vid.channel_id
-                                    }
-                                )
-                                self.video_db.create(vid=vid)
-                                self.video_db.save_validation_result(
-                                    video_id=vid.video_id,
-                                    decision="discarded",
-                                    quality_score=0.0,
-                                    topic_match_score=0.0,
-                                    reason="The video is a livestream that will begin in the future"
-                                )
-                                self.video_db.update_after_done(video_id=vid.video_id, decision="discarded")
-                                continue
-                        logger.exception(
-                            f"VideoFilteringError: Failed to check if video is a livestream: {str(e)}",
-                            extra={
-                                "event": LogEvent.LIVESTREAM_CHECK_FAILED,
-                                "video_id": vid.video_id,
-                                "channel_id": vid.channel_id
-                            }
-                        )
-                        self.video_db.create(vid=vid)
-                        self.video_db.mark_failed(
-                            error_msg=repr(e),
-                            video_id=vid.video_id
-                        )
+                    skip_processing: bool = self.should_skip_processing(
+                        vid=vid,
+                        discovery_type=discovery_type,
+                        channel_lookup=channel_lookup
+                    )
+                    if skip_processing:
                         continue
-                    except Exception as e:
-                        logger.exception(
-                            f"Failed to check wether video with video id {vid.video_id} is a livestream: {str(e)}",
-                            extra={
-                                "event": LogEvent.LIVESTREAM_CHECK_FAILED,
-                                "video_id": vid.video_id,
-                                "channel_id": vid.channel_id
-                            }
-                        )
-                        continue
-                    except BaseException:
-                        raise
-
-                    if is_livestream:
-                        logger.info(
-                            f"Skipped video with video id {vid.video_id} with title {vid.title} because it is a livestream",
-                            extra={
-                                "event": LogEvent.LIVESTREAM_CHECK_COMPLETED,
-                                "is_livestream": is_livestream,
-                                "video_id": vid.video_id,
-                                "channel_id": vid.channel_id
-                            }
-                        )
-                        self.video_db.create(vid=vid)
-                        self.video_db.save_validation_result(
-                            video_id=vid.video_id,
-                            decision="discarded",
-                            quality_score=0.0,
-                            topic_match_score=0.0,
-                            reason="The video is a livestream"
-                        )
-                        self.video_db.update_after_done(video_id=vid.video_id, decision="discarded")
-                        continue
-
                 logger.debug(
                     f"Processing video with video id {vid.video_id} because it is not a livestream",
                     extra={
@@ -215,82 +143,10 @@ class VidsiftOrchestrator:
                         "channel_id": vid.channel_id
                     }
                 )
-                self.video_db.create(vid=vid)
-
-                channel = channel_lookup[vid.channel_id]
-                match channel.action:
-                    case "download":
-                        logger.info(
-                            f"Processing video with video id {vid.video_id} from {vid.author} with action download",
-                            extra={
-                                "event": LogEvent.VIDEO_DOWNLOAD_STARTED,
-                                "video_id": vid.video_id,
-                                "channel_id": vid.channel_id
-                            }
-                        )
-                        self.execute_processing_step(
-                            vid=vid,
-                            step_type="download",
-                            success_decision="downloaded",
-                            starting_status=VideoProcessingStatus.DOWNLOADING,
-                            action=lambda: self.downloader.download(
-                                video_url=vid.url,
-                                output_path=Path(self.config.downloads.output_dir)
-                            )
-                        )
-                    case "summarize":
-                        logger.info(
-                            f"Processing video with video id {vid.video_id} from {vid.author} with action summarize",
-                            extra={
-                                "event": LogEvent.VIDEO_SUMMARIZATION_STARTED,
-                                "video_id": vid.video_id,
-                                "channel_id": vid.channel_id
-                            }
-                        )
-                        try:
-                            transcript: str = self.fetch_transcript(vid)
-                        except TranscriptError as e:
-                            error_msg: str = f"TranscriptError: Each transcript fetching provider failed: {str(e)}"
-                            logger.exception(
-                                error_msg,
-                                extra={
-                                    "event": LogEvent.TRANSCRIPT_FETCH_FAILED,
-                                    "video_id": vid.video_id,
-                                    "channel_id": vid.channel_id,
-                                },
-                            )
-                            # add the failure to the video database
-                            self.video_db.mark_failed(error_msg=error_msg, video_id=vid.video_id)
-                            logger.info("Moving on to the next video because of the previous TranscriptError...")
-                            sleep_delay(
-                                calculate_delay(
-                                    min_delay=self.config.video_processing.min_vid_delay,
-                                    random_delay=self.config.video_processing.random_vid_delay
-                                ),
-                                should_sleep=self.should_sleep
-                            )
-                            continue
-                        self.execute_processing_step(
-                            vid=vid,
-                            step_type="summarize",
-                            starting_status=VideoProcessingStatus.SUMMARIZING,
-                            success_decision="summarized",
-                            action=lambda: self.summarizer.summarize(
-                                raw_transcript=transcript,
-                                vid=vid
-                            )
-                        )
-                    case "validate":
-                        logger.info(
-                            f"Processing video with video id {vid.video_id} from {vid.author} with action validate",
-                            extra={
-                                "event": LogEvent.VIDEO_VALIDATION_STARTED,
-                                "video_id": vid.video_id,
-                                "channel_id": vid.channel_id
-                            }
-                        )
-                        self.process_validation_pipeline(vid=vid, create_db_entry=False)
-
+                self.process_video(
+                    vid=vid,
+                    channel_lookup=channel_lookup
+                )
         finally:
             self.video_db.close()
             logger.info(
@@ -299,6 +155,170 @@ class VidsiftOrchestrator:
                     "event": LogEvent.ORCHESTRATOR_STOPPED,
                 },
             )
+
+    def process_video(
+            self,
+            vid: Video,
+            channel_lookup: dict[str, ChannelConfig]
+        ):
+        try:
+            channel = channel_lookup[vid.channel_id]
+            match channel.action:
+                case "download":
+                    logger.info(
+                        f"Processing video with video id {vid.video_id} from {vid.author} with action download",
+                        extra={
+                            "event": LogEvent.VIDEO_DOWNLOAD_STARTED,
+                            "video_id": vid.video_id,
+                            "channel_id": vid.channel_id
+                        }
+                    )
+                    self.execute_processing_step(
+                        vid=vid,
+                        step_type="download",
+                        success_decision="downloaded",
+                        starting_status=VideoProcessingStatus.DOWNLOADING,
+                        action=lambda: self.downloader.download(
+                            video_url=vid.url,
+                            output_path=Path(self.config.downloads.output_dir)
+                        )
+                    )
+                case "summarize":
+                    logger.info(
+                        f"Processing video with video id {vid.video_id} from {vid.author} with action summarize",
+                        extra={
+                            "event": LogEvent.VIDEO_SUMMARIZATION_STARTED,
+                            "video_id": vid.video_id,
+                            "channel_id": vid.channel_id
+                        }
+                    )
+                    try:
+                        transcript: str = self.fetch_transcript(vid)
+                    except TranscriptError as e:
+                        error_msg: str = f"TranscriptError: Each transcript fetching provider failed: {str(e)}"
+                        logger.exception(
+                            error_msg,
+                            extra={
+                                "event": LogEvent.TRANSCRIPT_FETCH_FAILED,
+                                "video_id": vid.video_id,
+                                "channel_id": vid.channel_id,
+                            },
+                        )
+                        # add the failure to the video database
+                        self.video_db.mark_failed(error_msg=error_msg, video_id=vid.video_id)
+                        logger.info("Moving on to the next video because of the previous TranscriptError...")
+                        sleep_delay(
+                            calculate_delay(
+                                min_delay=self.config.video_processing.min_vid_delay,
+                                random_delay=self.config.video_processing.random_vid_delay
+                            ),
+                            should_sleep=self.should_sleep
+                        )
+                        return
+                    self.execute_processing_step(
+                        vid=vid,
+                        step_type="summarize",
+                        starting_status=VideoProcessingStatus.SUMMARIZING,
+                        success_decision="summarized",
+                        action=lambda: self.summarizer.summarize(
+                            raw_transcript=transcript,
+                            vid=vid
+                        )
+                    )
+                case "validate":
+                    logger.info(
+                        f"Processing video with video id {vid.video_id} from {vid.author} with action validate",
+                        extra={
+                            "event": LogEvent.VIDEO_VALIDATION_STARTED,
+                            "video_id": vid.video_id,
+                            "channel_id": vid.channel_id
+                        }
+                    )
+                    self.process_validation_pipeline(vid=vid, create_db_entry=False)
+        finally:
+            self.video_db.close()
+
+    def should_skip_processing(self, vid: Video, discovery_type: DiscoverySource, channel_lookup: dict[str, ChannelConfig]) -> bool:
+        """
+        Method to manage livestream outfiltering.
+        It returns True if it is a livestream or it failed so that then other method know that the video should not be processed.
+        It returns False if it should be processed, then it is not a livestream. It only returns False if the livestream check succeeded
+        and it is certain that it is not a livestream. Otherwise, it returns True.
+        """
+        try:
+            logger.debug(
+                f"Cheching wether video with video id '{vid.video_id}' is a livestream",
+                extra={
+                    "event": LogEvent.LIVESTREAM_CHECK_STARTED,
+                    "discovery_source": discovery_type.value,
+                    "video_id": vid.video_id,
+                    "channel_id": vid.channel_id
+                }
+            )
+            is_livestream = self.video_filter.check_is_livestream(vid=vid)
+        except VideoFilteringError as e: # exceptions are also caught in this by the livestream checker
+            if "This live event will begin in" in str(e):
+                if str(e).endswith("minutes.") or str(e).endswith("hours.") or str(e).endswith("days."):
+                    # if it is a livestream
+                    logger.info(
+                        f"Skipped video with video id {vid.video_id} with title '{vid.title}' because it is a livestream that will begin in the future",
+                        extra={
+                            "event": LogEvent.LIVESTREAM_CHECK_COMPLETED,
+                            "is_livestream": True,
+                            "video_id": vid.video_id,
+                            "channel_id": vid.channel_id
+                        }
+                    )
+                    self.video_db.set_status(video_id=vid.video_id, status=VideoProcessingStatus.DONE)
+                    if channel_lookup[vid.channel_id].action == "validate":
+                        self.video_db.save_validation_result(
+                            video_id=vid.video_id,
+                            decision="discarded",
+                            quality_score=0.0,
+                            topic_match_score=0.0,
+                            reason="The video is a livestream that will begin in the future"
+                        )
+                        self.video_db.update_after_done(video_id=vid.video_id, decision="discarded")
+                    return True # it is a livestream that will begin in the future
+            # on other error
+            logger.exception(
+                f"VideoFilteringError: Failed to check if video is a livestream: {str(e)}",
+                extra={
+                    "event": LogEvent.LIVESTREAM_CHECK_FAILED,
+                    "video_id": vid.video_id,
+                    "channel_id": vid.channel_id
+                }
+            )
+            self.video_db.mark_failed(
+                error_msg=repr(e),
+                video_id=vid.video_id,
+                target_status=VideoProcessingStatus.LIVESTREAM_CHECKING
+            )
+            return True # even though it is maybe not a livestream, it should not be processed because it does not know
+        except BaseException:
+            raise
+
+        if is_livestream:
+            logger.info(
+                f"Skipped video with video id {vid.video_id} with title {vid.title} because it is a livestream",
+                extra={
+                    "event": LogEvent.LIVESTREAM_CHECK_COMPLETED,
+                    "is_livestream": is_livestream,
+                    "video_id": vid.video_id,
+                    "channel_id": vid.channel_id
+                }
+            )
+            self.video_db.save_validation_result(
+                video_id=vid.video_id,
+                decision="discarded",
+                quality_score=0.0,
+                topic_match_score=0.0,
+                reason="The video is a livestream"
+            )
+            self.video_db.update_after_done(video_id=vid.video_id, decision="discarded")
+            return True
+        return False
+
 
     def execute_processing_step(
         self,
@@ -460,6 +480,40 @@ class VidsiftOrchestrator:
                 "event": LogEvent.VALIDATION_RESUME_STARTED,
             }
         )
+
+    def resume_livestream_checks(self):
+        # resume livestream checks that got interrupted (due to an error)
+        logger.debug("Check for videos where livestream check got interrupted...")
+        livestream_check_generator: Generator[VideoProcessingRecord, None, None] = self.video_db.get_by_status("livestream_checking")
+        channel_lookup = get_channel_lookup(self.config.channels)
+        for video in livestream_check_generator:
+            vid: Video = Video.from_cache(video_db_row=video)
+            logger.info(
+                f"Processing video with video id '{vid.video_id}' that got interrupted while checking wether it is a livestream",
+                extra={
+                    "event": LogEvent.LIVESTREAM_CHECK_RESUME_STARTED,
+                    "video_id": vid.video_id,
+                    "channel_id": vid.channel_id
+                }
+            )
+            if not self.should_skip_processing(
+                vid=vid,
+                discovery_type=DiscoverySource.RSS, # has to be rss, else the video would not end up in livestream checking state, it would immediately get processed,
+                channel_lookup=channel_lookup 
+            ):
+                self.process_video(
+                    vid=vid,
+                    channel_lookup=channel_lookup
+                )
+        logger.debug(
+            "Check for videos where the livestream check got interrupted... Done",
+            extra={
+                "event": LogEvent.LIVESTREAM_CHECK_RESUME_COMPLETED,
+            }
+        )
+
+
+
 
     def resume_validations(self):
         # re-validate the videos where only the metadata is present
@@ -667,6 +721,7 @@ class VidsiftOrchestrator:
             "Starting to process interrupted videos",
             extra={"event": LogEvent.INTERRUPTED_PROCESSING_STARTED},
         )
+        self.resume_livestream_checks()
         self.resume_validations()
         self.resume_downloads()
         self.resume_summaries()

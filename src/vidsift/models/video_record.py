@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field
 
 
 class VideoProcessingStatus(Enum):
+    LIVESTREAM_CHECKING = "livestream_checking"
     VALIDATING = "validating"
     DOWNLOADING = "downloading"
     SUMMARIZING = "summarizing"

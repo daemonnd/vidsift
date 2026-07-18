@@ -32,6 +32,8 @@ class LogEvent:
     INTERRUPTED_PROCESSING_STARTED = "interrupted_processing_started"
     INTERRUPTED_PROCESSING_COMPLETED = "interrupted_processing_completed"
 
+    LIVESTREAM_CHECK_RESUME_STARTED = "livestream_check_resume_started"
+    LIVESTREAM_CHECK_RESUME_COMPLETED = "livestream_check_resume_completed"
     VALIDATION_RESUME_STARTED = "validation_resume_started"
     VALIDATION_RESUME_COMPLETED = "validation_resume_completed"
     DOWNLOAD_RESUME_STARTED = "download_resume_started"

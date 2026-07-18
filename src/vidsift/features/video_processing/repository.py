@@ -19,7 +19,7 @@ class VideoProcessingRepository:
     def __init__(self,  config: AppConfig, db_path: Path | None = None) -> None:
         self.config: AppConfig = config
         if db_path is None:
-            self.db_path: Path = (Path(user_data_dir()) / "vidsift" / "processed_videos.db")
+            self.db_path: Path = (Path(user_data_dir("vidsift")) / "processed_videos.db")
         else:
             self.db_path: Path = db_path
 
@@ -54,7 +54,7 @@ class VideoProcessingRepository:
 
     def create(self, vid: Video):
         """
-        Method for setting the status to VALIDATING after a video got discovered
+        Method for setting the status to LIVESTREAM_CHECKING after a video got discovered
         """
         try:
             parameters: tuple = (
@@ -64,7 +64,7 @@ class VideoProcessingRepository:
                 vid.author,
                 vid.channel_id,
                 vid.published,
-                VideoProcessingStatus.VALIDATING.value,
+                VideoProcessingStatus.LIVESTREAM_CHECKING.value,
                 0,
                 None,
                 None,
@@ -78,17 +78,17 @@ class VideoProcessingRepository:
             (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", parameters)
             self.conn.commit()
         except IntegrityError as e:
-            raise DBWritingError(f"Failed to write to DB while setting the status to VALIDATING because a database operand violated a constraint: {str(e)}") from e
+            raise DBWritingError(f"Failed to write to DB while setting the status to LIVESTREAM_CHECKING because a database operand violated a constraint: {str(e)}") from e
         except OperationalError as e:
-            raise DBWritingError(f"Failed to write to DB while setting the status to VALIDATING because of an operational Error: {str(e)}") from e
+            raise DBWritingError(f"Failed to write to DB while setting the status to LIVESTREAM_CHECKING because of an operational Error: {str(e)}") from e
 
     def save_validation_result(self, 
-                video_id: str,
-                decision: Literal["downloaded", "summarized", "discarded"],
-                quality_score: float,
-                topic_match_score: float,
-                reason: str
-            ):
+            video_id: str,
+            decision: Literal["downloaded", "summarized", "discarded"],
+            quality_score: float,
+            topic_match_score: float,
+            reason: str
+        ):
         """
         Method to add the validation data to the table entry and update the status to ether DONE, DOWNLOADING or SUMMARIZING
         """
@@ -174,7 +174,7 @@ class VideoProcessingRepository:
 
 
 
-    def mark_failed(self, error_msg: str, video_id: str):
+    def mark_failed(self, error_msg: str, video_id: str, target_status: VideoProcessingStatus = VideoProcessingStatus.FAILED):
         """
         Method to mart a download / summary / validation as failed, updates last_error and sets the status to FAILED
         Method to add 1 to the retry attempts.
@@ -191,7 +191,7 @@ class VideoProcessingRepository:
                 retry_count = 0
             if int(retry_count) >= self.config.video_processing.max_retry_attempts:
                 # if it exeeds / is equal to the max allowed attempts
-                parameters: tuple = (VideoProcessingStatus.FAILED.value, error_msg, video_id)
+                parameters: tuple = (target_status, error_msg, video_id)
                 self.cur.execute("""
                 UPDATE processed_videos
                 SET status = ?,
@@ -254,7 +254,7 @@ class VideoProcessingRepository:
         else:
             return False
 
-    def get_by_status(self, status: Literal["downloading", "summarizing", "done", "failed", "validating"]) -> Generator[VideoProcessingRecord, None, None]:
+    def get_by_status(self, status: Literal["downloading", "summarizing", "done", "failed", "validating", "livestream_checking"]) -> Generator[VideoProcessingRecord, None, None]:
         """
         Method to get a list of the videos interrupted
         """
