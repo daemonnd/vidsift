@@ -41,6 +41,12 @@ def parse_args():
         action="store_true"
     )
 
+    parser.add_argument(
+        "--debug",
+        help="Debug vidsif by enabeling all logs. Options: dependencies (set dependency logs to debug), all (set all logs to debug), yt-dlp (enable yt-dlp logs). Only affects the console logs, for also logging that on the logfile the config file has to be edited.",
+        choices=["dependencies", "all", "yt-dlp"]
+    )
+
     subparsers = parser.add_subparsers(
         dest="command",
         required=True,

@@ -4,10 +4,16 @@
 
 # Log levels
 # DEBUG, INFO, WARNING, ERROR, CRITICAL
-[logging]
 [logging.console]
-enabled = true               # currently not possible to disable
+enabled = true
+# Can be overridden with:
+#   --loglevel LEVEL
+#   --debug all
 level = "DEBUG"
+
+# Can be overridden with:
+#   --debug dependencies
+#   --debug all
 dependency_level = "WARNING"
 
 [logging.file]
@@ -32,7 +38,25 @@ yt_dlp_video_amount = 10
 # ============================================================
 # AI
 # ============================================================
-
+# --global-ai-model MODEL
+#
+# Overrides the model reference for every AI task.
+#
+# Overrides:
+# [ai.tasks.metadata_validation]
+# reference = "<MODEL>"
+#
+# [ai.tasks.transcript_validation]
+# reference = "<MODEL>"
+#
+# [ai.tasks.chunk_summary]
+# reference = "<MODEL>"
+#
+# [ai.tasks.overall_summary]
+# reference = "<MODEL>"
+#
+# Only the model reference is changed. Context length,
+# thinking mode and max_tokens remain unchanged.
 [ai]
 # how often AI can run and fail to output the requested JSON
 # for smaller local AI models, it is usually 2-3 times
@@ -40,42 +64,49 @@ max_allowed_json_output_runs = 3
 
 
 # IMPORTANT:
-# use this option only for testing if possible
-# only set to true if the AI validation does not allow the current ai config,
-# not recommended to enable for daily usage cause it bypasses checks and
-# it will only be revealed wether it works or not after the ai has been called,
-# so vidsift runs for nothing and then fails because of ai failure
-# AI Failures are not treated as hard, so it will keep failing over and over again
-skip_ai_checks = false # not recommended for running in the background because of the aforementioned reason
+# Use this option only for testing if possible.
+#
+# Only set to true if the configured AI model fails the startup
+# compatibility checks. This bypasses those checks and lets
+# vidsift attempt to run anyway.
+#
+# AI failures are not treated as hard failures, so if the model
+# is actually incompatible, background runs will continue to fail.
+#
+# CLI override:
+# --skip-ai-checks
+#
+# Can be overridden with:
+#   --skip-ai-checks
+skip_ai_checks = false
 
 
 base_url = "http://localhost:11434"
 provider = "ollama"                 # ollama, lmstudio
 
-
 [ai.tasks.metadata_validation]
-reference = "qwen3.5:9b" # ai model name
+reference = "qwen3.5:9b" # ai model name, can be overriden with --global-ai-model MODEL
 context_length = 8192    # the context length that the ai should get
 thinking = false         # only works with ollama, for lmstudio it has to be configured at the server side
 max_tokens = 500         # how many tokens the AI can max. output. cannot exeed the context length
 
 
 [ai.tasks.transcript_validation]
-reference = "qwen3.5:9b"
+reference = "qwen3.5:9b" # ai model name, can be overriden with --global-ai-model MODEL
 context_length = 8192
 thinking = true
 max_tokens = 7000
 
 
 [ai.tasks.chunk_summary]
-reference = "qwen3.5:9b"
+reference = "qwen3.5:9b" # ai model name, can be overriden with --global-ai-model MODEL
 context_length = 8192
 max_tokens = 500
 thinking = false
 
 
 [ai.tasks.overall_summary]
-reference = "qwen3.5:9b"
+reference = "qwen3.5:9b" # ai model name, can be overriden with --global-ai-model MODEL
 context_length = 8192
 max_tokens = 7000
 thinking = true
@@ -111,7 +142,11 @@ random_vid_delay = 240 # 4 minutes
 max_retries = 10
 sleep_requests = 10              # seconds
 cookies_from_browser = "firefox" # brave, chrome, chromium, edge, firefox, opera,  safari,  vivaldi,  whale
-quiet = true                     # wether yt-dlp should be quiet or not, if false, yt-dlp will print a lot of output to the console
+
+# Can be overridden with:
+#   --debug yt-dlp
+#   --debug all
+quiet = true # wether yt-dlp should be quiet or not, if false, yt-dlp will print a lot of output to the console
 
 [video_processing.yt_dlp.download]
 # download-specific options for yt-dlp
