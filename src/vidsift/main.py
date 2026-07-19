@@ -145,6 +145,60 @@ class VidsiftCLI:
                 }
             )
             config = config.model_copy(update={"ai": ai_config})
+
+        if self.args.debug is not None:
+            def update_dependencies(config: AppConfig):
+                console_logging_config = config.logging.console.model_copy(
+                    update={
+                        "dependency_level": "DEBUG"
+                    }
+                )
+                logging_config = config.logging.model_copy(
+                    update={
+                        "console": console_logging_config
+                    }
+                )
+                config = config.model_copy(update={"logging": logging_config})
+                return config
+            def update_yt_dlp(config: AppConfig):
+                yt_dlp_base_config = config.video_processing.yt_dlp.base.model_copy(
+                    update={
+                        "quiet": False
+                    }
+                )
+                yt_dlp_config = config.video_processing.yt_dlp.model_copy(
+                    update={
+                        "base": yt_dlp_base_config
+                    }
+                )
+                video_processing_config = config.video_processing.model_copy(
+                    update={
+                        "yt_dlp": yt_dlp_config
+                    }
+                )
+                config = config.model_copy(update={"video_processing": video_processing_config})
+                return config
+            match self.args.debug:
+                case "dependencies":
+                    config = update_dependencies(config)
+                case "yt-dlp":
+                    config = update_yt_dlp(config)
+                case "all":
+                    config = update_dependencies(config)
+                    config = update_yt_dlp(config)
+                    console_config = config.logging.console.model_copy(
+                        update={"level": "DEBUG"}
+                    )
+
+                    logging_config = config.logging.model_copy(
+                        update={"console": console_config}
+                    )
+
+                    config = config.model_copy(
+                        update={"logging": logging_config}
+                    )
+
+
         return config
 
     def _validate_config(self, config: AppConfig):
