@@ -15,6 +15,6 @@ class RichConsoleHandler(logging.Handler):
         self.console = Console()
 
     def emit(self, record):
-        message = self.formatter.format(record)
+        message = self.format(record)
         style: str = get_style(levelname=record.levelname)
         self.console.print(message, style=style)
