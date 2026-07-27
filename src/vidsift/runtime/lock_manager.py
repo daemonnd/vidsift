@@ -7,22 +7,16 @@ from time import sleep
 from uuid import UUID
 
 import psutil
-from platformdirs import user_data_dir
 from portalocker import Lock, LockException
 
 from vidsift.runtime.errors import LockWritingError
 from vidsift.shared.json_utils import normalize
+from vidsift.shared.paths import LOCK_FILE_PATH
 
 
 class LockManager:
     def __init__(
-        self,
-        sleep_interval: float,
-        lock_file_path: Path = Path(
-            user_data_dir(
-                appname="vidsift"
-            )
-        ) / "vidsift.lock"
+        self, sleep_interval: float, lock_file_path: Path = LOCK_FILE_PATH
     ) -> None:
         self.sleep_interval = sleep_interval
         self.lock_file_path: Path = lock_file_path
@@ -31,7 +25,6 @@ class LockManager:
         self.lock = Lock(self.lock_file_path)
         self.pid: int = os.getpid()
         self.hostname: str = socket.gethostname()
-
 
     def acquire(self, run_id: UUID) -> None:
         """
@@ -50,10 +43,12 @@ class LockManager:
                         normalize(
                             {
                                 "pid": self.pid,
-                                "process_start_time": psutil.Process(self.pid).create_time(),
+                                "process_start_time": psutil.Process(
+                                    self.pid
+                                ).create_time(),
                                 "run_start_time": time.time(),
                                 "hostname": self.hostname,
-                                "run_id": run_id
+                                "run_id": run_id,
                             }
                         )
                     )
@@ -68,12 +63,10 @@ class LockManager:
                     """)
                     first_run = False
                 sleep(self.sleep_interval)
-            except (PermissionError, FileNotFoundError) as e :
+            except (PermissionError, FileNotFoundError) as e:
                 raise LockWritingError(str(e))
             else:
                 return
-
-
 
     def release(self) -> None:
         self.lock.release()

@@ -2,18 +2,17 @@ import logging
 from logging.handlers import TimedRotatingFileHandler
 from pathlib import Path
 
-from platformdirs import user_log_dir
 
 from vidsift.config.models import AppConfig
 from vidsift.shared.logging.filters import ConsoleDependencyFilter, FileDependencyFilter
 from vidsift.shared.logging.formatters import JSONFormatter, ConsoleFormatter
 from vidsift.shared.logging.handlers import RichConsoleHandler
+from vidsift.shared.paths import VIDSIFT_LOG_DIR, VIDSIFT_LOG_FILE
 
 
 def get_log_file_path() -> Path:
-    Path(user_log_dir(appname="vidsift")).mkdir(parents=True, exist_ok=True)
-    user_log_file: Path = Path(f"{user_log_dir(appname='vidsift')}/vidsift.jsonl")
-    return user_log_file
+    VIDSIFT_LOG_DIR.mkdir(parents=True, exist_ok=True)
+    return VIDSIFT_LOG_FILE
 
 
 def configure_logging(config: AppConfig):

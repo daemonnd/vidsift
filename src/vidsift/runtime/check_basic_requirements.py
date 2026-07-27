@@ -3,9 +3,14 @@ import os
 from argparse import Namespace
 from pathlib import Path
 
-from platformdirs import user_config_dir, user_data_dir, user_log_dir
 
 from vidsift.runtime.errors import BasicInitError
+from vidsift.shared.paths import (
+    VIDSIFT_DATA_DIR,
+    VIDSIFT_LOG_DIR,
+    VIDSIFT_CONFIG_FILE_PATH,
+    VIDSIFT_CONFIG_PROMPTS_DIR,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -13,53 +18,67 @@ logger = logging.getLogger(__name__)
 class BasicInit:
     def __init__(self) -> None:
         pass
+
     def check_data_dir(self) -> None:
-        vidsift_data_dir: Path = Path(user_data_dir("vidsift"))
-        if not vidsift_data_dir.exists():
-            raise BasicInitError(f"The data dir of vidsift '{vidsift_data_dir}' does not exist.")
-        if not vidsift_data_dir.is_dir():
-            raise BasicInitError(f"The data dir of vidsift '{vidsift_data_dir}' is not a dir")
-        if not os.access(vidsift_data_dir, mode=os.R_OK):
-            raise BasicInitError(f"Reading permissions for the vidsift data dir '{vidsift_data_dir}' are missing")
-        if not os.access(vidsift_data_dir, mode=os.W_OK):
-            raise BasicInitError(f"Writing permissions for the vidsift data dir '{vidsift_data_dir}' are missing")
+        if not VIDSIFT_DATA_DIR.exists():
+            raise BasicInitError(
+                f"The data dir of vidsift '{VIDSIFT_DATA_DIR}' does not exist."
+            )
+        if not VIDSIFT_DATA_DIR.is_dir():
+            raise BasicInitError(
+                f"The data dir of vidsift '{VIDSIFT_DATA_DIR}' is not a dir"
+            )
+        if not os.access(VIDSIFT_DATA_DIR, mode=os.R_OK):
+            raise BasicInitError(
+                f"Reading permissions for the vidsift data dir '{VIDSIFT_DATA_DIR}' are missing"
+            )
+        if not os.access(VIDSIFT_DATA_DIR, mode=os.W_OK):
+            raise BasicInitError(
+                f"Writing permissions for the vidsift data dir '{VIDSIFT_DATA_DIR}' are missing"
+            )
 
     def check_config_dir(self) -> None:
         if self.args.config:
             config_file: Path = Path(self.args.config)
         else:
-            config_file: Path = Path(user_config_dir("vidsift")) / "config.toml"
+            config_file: Path = VIDSIFT_CONFIG_FILE_PATH
 
         if not config_file.exists():
             raise BasicInitError(f"The config file '{config_file}' does not exist")
         if not os.access(config_file, mode=os.R_OK):
-            raise BasicInitError(f"Reading permissions for the vidsift config file '{config_file}' are missing")
+            raise BasicInitError(
+                f"Reading permissions for the vidsift config file '{config_file}' are missing"
+            )
 
     def check_log_dir(self) -> None:
-        vidsift_log_dir: Path = Path(user_log_dir("vidsift"))
-        if not vidsift_log_dir.exists():
-            raise BasicInitError(f"The log dir of vidsift '{vidsift_log_dir}' does not exists")
-        if not vidsift_log_dir.is_dir():
-            raise BasicInitError(f"The log dir of vidsift '{vidsift_log_dir}' is not a dir")
-        if not os.access(vidsift_log_dir, mode=os.W_OK):
-            raise BasicInitError(f"Writing permissions for the vidsift log dir '{vidsift_log_dir}' are missing")
+        if not VIDSIFT_LOG_DIR.exists():
+            raise BasicInitError(
+                f"The log dir of vidsift '{VIDSIFT_LOG_DIR}' does not exists"
+            )
+        if not VIDSIFT_LOG_DIR.is_dir():
+            raise BasicInitError(
+                f"The log dir of vidsift '{VIDSIFT_LOG_DIR}' is not a dir"
+            )
+        if not os.access(VIDSIFT_LOG_DIR, mode=os.W_OK):
+            raise BasicInitError(
+                f"Writing permissions for the vidsift log dir '{VIDSIFT_LOG_DIR}' are missing"
+            )
 
     def check_prompts(self) -> None:
-        vidsift_prompts_dir: Path = Path(user_config_dir("vidsift")) / "system_prompts"
 
-        if not vidsift_prompts_dir.exists():
+        if not VIDSIFT_CONFIG_PROMPTS_DIR.exists():
             raise BasicInitError(
-                f"The prompt dir of vidsift '{vidsift_prompts_dir}' does not exist"
+                f"The prompt dir of vidsift '{VIDSIFT_CONFIG_PROMPTS_DIR}' does not exist"
             )
 
-        if not vidsift_prompts_dir.is_dir():
+        if not VIDSIFT_CONFIG_PROMPTS_DIR.is_dir():
             raise BasicInitError(
-                f"The prompt dir of vidsift '{vidsift_prompts_dir}' is not a dir"
+                f"The prompt dir of vidsift '{VIDSIFT_CONFIG_PROMPTS_DIR}' is not a dir"
             )
 
-        if not os.access(vidsift_prompts_dir, mode=os.R_OK):
+        if not os.access(VIDSIFT_CONFIG_PROMPTS_DIR, mode=os.R_OK):
             raise BasicInitError(
-                f"Reading permissions for the vidsift prompt dir '{vidsift_prompts_dir}' are missing"
+                f"Reading permissions for the vidsift prompt dir '{VIDSIFT_CONFIG_PROMPTS_DIR}' are missing"
             )
 
         required_prompts: list[str] = [
@@ -72,7 +91,7 @@ class BasicInit:
         ]
 
         for prompt_name in required_prompts:
-            prompt_file = vidsift_prompts_dir / prompt_name
+            prompt_file = VIDSIFT_CONFIG_PROMPTS_DIR / prompt_name
 
             if not prompt_file.exists():
                 raise BasicInitError(
@@ -88,9 +107,6 @@ class BasicInit:
                 raise BasicInitError(
                     f"Reading permissions for the prompt file '{prompt_file}' are missing"
                 )
-
-
-
 
     def check_files(self, args: Namespace) -> None:
         self.args = args
