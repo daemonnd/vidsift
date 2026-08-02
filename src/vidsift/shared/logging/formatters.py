@@ -41,7 +41,7 @@ class ConsoleFormatter(Formatter):
 
         message = record.getMessage()
 
-        if record.name.startswith("vidsift"):
+        if record.name.startswith("vidsift") or record.name == "__main__":
             return f"{record.levelname}: {message}"
         else:
             return rf"{record.levelname}  \[{record.name.split('.', 1)[0]}]: {message}"
