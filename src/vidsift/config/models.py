@@ -168,6 +168,8 @@ class YtDlpConfig(BaseModel):
 
 class VideoProcessingConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
+    skip_interrupted_vids: bool
+    skip_new_vids: bool
     max_retry_attempts: int = Field(le=10, ge=-1)
     days_uploaded_before: int = Field(ge=0)
     min_vid_delay: int = Field(ge=30)

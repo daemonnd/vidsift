@@ -18,41 +18,40 @@ def parse_args():
         description="""AI-powered YouTube feed filtering and transcript-based video validation and processing""",
     )
 
-
-    parser.add_argument("-V", "--version", 
-                        help="Print version", 
-                        action="version",
-                        version="vidsift v0.0.1")
+    parser.add_argument(
+        "-V",
+        "--version",
+        help="Print version",
+        action="version",
+        version="vidsift v0.0.1",
+    )
     parser.add_argument(
         "--config",
         help="Use custom config for this run",
-        )
+    )
     parser.add_argument(
-        "--loglevel", 
+        "--loglevel",
         help="Set the loglevel console logging for one run",
-        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
+        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
     )
-    parser.add_argument(
-        "--global-ai-model",
-        help="Set the AI model for all AI usages"
-    )
+    parser.add_argument("--global-ai-model", help="Set the AI model for all AI usages")
 
     parser.add_argument(
         "--skip-ai-checks",
         help="Skip checks for AI availibility and existence, not recommended for running in the background",
-        action="store_true"
+        action="store_true",
     )
 
     parser.add_argument(
         "--debug",
         help="Debug vidsif by enabeling all logs. Options: dependencies (set dependency logs to debug), all (set all logs to debug), yt-dlp (enable yt-dlp logs). Only affects the console logs, for also logging that on the logfile the config file has to be edited.",
-        choices=["dependencies", "all", "yt-dlp"]
+        choices=["dependencies", "all", "yt-dlp"],
     )
 
     subparsers = parser.add_subparsers(
         dest="command",
         required=True,
-        help="use vidsift <command> --help for more details about the commands"
+        help="use vidsift <command> --help for more details about the commands",
     )
 
     init_parser = register_init(subparsers)
@@ -62,7 +61,6 @@ def parse_args():
     videos_parser = register_videos(subparsers)
     schedule_parser = register_schedule(subparsers)
     service_parser = register_service(subparsers)
-
 
     argcomplete.autocomplete(parser)
     return parser.parse_args()
