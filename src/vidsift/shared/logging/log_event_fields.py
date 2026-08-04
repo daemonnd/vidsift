@@ -9,11 +9,21 @@ class LogEvent:
         """
         match general_event:
             case "download":
-                return LogEvent.VIDEO_DOWNLOAD_STARTED, LogEvent.VIDEO_DOWNLOAD_COMPLETED, LogEvent.VIDEO_DOWNLOAD_FAILED
+                return (
+                    LogEvent.VIDEO_DOWNLOAD_STARTED,
+                    LogEvent.VIDEO_DOWNLOAD_COMPLETED,
+                    LogEvent.VIDEO_DOWNLOAD_FAILED,
+                )
             case "summarize":
-                return LogEvent.VIDEO_SUMMARIZATION_STARTED, LogEvent.VIDEO_SUMMARIZATION_COMPLETED, LogEvent.VIDEO_SUMMARIZATION_FAILED
+                return (
+                    LogEvent.VIDEO_SUMMARIZATION_STARTED,
+                    LogEvent.VIDEO_SUMMARIZATION_COMPLETED,
+                    LogEvent.VIDEO_SUMMARIZATION_FAILED,
+                )
+
     # run events
     RUN_STARTED = "run_started"
+    CONFIG_LOADED = "config_loaded"
     RUN_COMPLETED = "run_completed"
     # orchestrator events
     ORCHESTRATOR_STARTED = "orchestrator_started"
@@ -23,7 +33,6 @@ class LogEvent:
     # single video manual runs
     MANUAL_DOWNLOAD_RUN_STARTED = "manual_download_run_started"
     MANUAL_SUMMARIZATION_RUN_STARTED = "manual_summarization_run_started"
-
 
     # invalid video event
     INVALID_VIDEO = "invalid_video"
@@ -122,7 +131,6 @@ class LogEvent:
     SCHEDULER_FAILED = "scheduler_failed"
     SCHEDULER_COOLDOWN_STARTED = "scheduler_cooldown_started"
     SCHEDULER_COOLDOWN_COMPLETED = "scheduler_cooldown_completed"
-
 
     # locking events
     LOCK_ACQUIRED = "lock_acquired"

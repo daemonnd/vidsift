@@ -225,10 +225,21 @@ class VidsiftCLI:
             )
             exit(1)
 
-
     def run(self) -> None:
-        configure_logging(self.config)  # configure logger after app and logger config is loaded
+        configure_logging(
+            self.config
+        )  # configure logger after app and logger config is loaded
 
+        # log the loaded config to the file
+        logger = logging.getLogger(__name__)
+        logger.info(
+            "Config loaded successfully",
+            extra={
+                "event": LogEvent.CONFIG_LOADED,
+                "file_only": True,
+                "loaded_config": self.config.model_dump_json(),
+            },
+        )
 
         # execute args command
         if hasattr(self.args, "func"):
