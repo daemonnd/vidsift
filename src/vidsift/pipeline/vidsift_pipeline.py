@@ -447,97 +447,6 @@ class VidsiftOrchestrator:
         )
         return transcript
 
-    def resume_downloads(self):
-        # download the videos with an interrupted download
-        logger.debug("Check for videos where the download got interrupted...")
-        downloading_vids_generator: Generator[VideoProcessingRecord, None, None] = (
-            self.video_db.get_by_status("downloading")
-        )
-        for video in downloading_vids_generator:
-            try:
-                vid: Video = Video.from_cache(video_db_row=video)
-            except InvalidVideoError:
-                raise
-            logger.info(
-                f"Processing video {vid.video_id} that got interrupted while downloading.",
-                extra={
-                    "event": LogEvent.DOWNLOAD_RESUME_STARTED,
-                    "video_id": vid.video_id,
-                    "channel_id": vid.channel_id,
-                },
-            )
-            self.execute_processing_step(
-                vid=vid,
-                success_decision="downloaded",
-                starting_status=VideoProcessingStatus.DOWNLOADING,
-                step_type="download",
-                action=lambda: self.downloader.download(
-                    video_url=vid.url,
-                    output_path=Path(self.config.downloads.output_dir),
-                ),
-            )
-            self.cooldown()
-        logger.debug(
-            "Check for videos where the download got interrupted... Done",
-            extra={
-                "event": LogEvent.VALIDATION_RESUME_STARTED,
-            },
-        )
-
-    def resume_livestream_checks(self):
-        # resume livestream checks that got interrupted (due to an error)
-        logger.debug("Check for videos where livestream check got interrupted...")
-        livestream_check_generator: Generator[VideoProcessingRecord, None, None] = (
-            self.video_db.get_by_status("livestream_checking")
-        )
-        channel_lookup = get_channel_lookup(self.config.channels)
-        for video in livestream_check_generator:
-            vid: Video = Video.from_cache(video_db_row=video)
-            logger.info(
-                f"Processing video with video id '{vid.video_id}' that got interrupted while checking wether it is a livestream",
-                extra={
-                    "event": LogEvent.LIVESTREAM_CHECK_RESUME_STARTED,
-                    "video_id": vid.video_id,
-                    "channel_id": vid.channel_id,
-                },
-            )
-            if not self.should_skip_processing(
-                vid=vid,
-                discovery_type=DiscoverySource.RSS,  # has to be rss, else the video would not end up in livestream checking state, it would immediately get processed,
-                channel_lookup=channel_lookup,
-            ):
-                self.process_video(vid=vid, channel_lookup=channel_lookup)
-        logger.debug(
-            "Check for videos where the livestream check got interrupted... Done",
-            extra={
-                "event": LogEvent.LIVESTREAM_CHECK_RESUME_COMPLETED,
-            },
-        )
-
-    def resume_validations(self):
-        # re-validate the videos where only the metadata is present
-        logger.debug("Check for videos where the validation got interrupted...")
-        validating_vids_generator: Generator[VideoProcessingRecord, None, None] = (
-            self.video_db.get_by_status("validating")
-        )
-        for video in validating_vids_generator:
-            vid: Video = Video.from_cache(video_db_row=video)
-            logger.info(
-                f"Processing video {vid.video_id} that got interrupted while validating.",
-                extra={
-                    "event": LogEvent.VALIDATION_RESUME_STARTED,
-                    "video_id": vid.video_id,
-                    "channel_id": vid.channel_id,
-                },
-            )
-            self.process_validation_pipeline(vid=vid, create_db_entry=False)
-        logger.debug(
-            "Check for videos where the validation got interrupted... Done",
-            extra={
-                "event": LogEvent.VALIDATION_RESUME_COMPLETED,
-            },
-        )
-
     def manage_transcript_fetch(self, vid: Video) -> str | None:
         """
         Method that manages the entire transcript fetching process, logs errors and creates db entries.
@@ -584,9 +493,112 @@ class VidsiftOrchestrator:
         else:
             return transcript
 
+    def resume_downloads(self):
+        # download the videos with an interrupted download
+        logger.debug(
+            "Check for videos where the download got interrupted...",
+            extra={"event": LogEvent.DOWNLOAD_RESUME_STARTED},
+        )
+        downloading_vids_generator: Generator[VideoProcessingRecord, None, None] = (
+            self.video_db.get_by_status("downloading")
+        )
+        for video in downloading_vids_generator:
+            try:
+                vid: Video = Video.from_cache(video_db_row=video)
+            except InvalidVideoError:
+                raise
+            logger.info(
+                f"Processing video {vid.video_id} that got interrupted while downloading.",
+                extra={
+                    "event": LogEvent.PROCESSING_DOWNLOAD_RESUME,
+                    "video_id": vid.video_id,
+                    "channel_id": vid.channel_id,
+                },
+            )
+            self.execute_processing_step(
+                vid=vid,
+                success_decision="downloaded",
+                starting_status=VideoProcessingStatus.DOWNLOADING,
+                step_type="download",
+                action=lambda: self.downloader.download(
+                    video_url=vid.url,
+                    output_path=Path(self.config.downloads.output_dir),
+                ),
+            )
+            self.cooldown()
+        logger.debug(
+            "Check for videos where the download got interrupted... Done",
+            extra={
+                "event": LogEvent.DOWNLOAD_RESUME_COMPLETED,
+            },
+        )
+
+    def resume_livestream_checks(self):
+        # resume livestream checks that got interrupted (due to an error)
+        logger.debug(
+            "Check for videos where livestream check got interrupted...",
+            extra={"event": LogEvent.LIVESTREAM_CHECK_RESUME_STARTED},
+        )
+        livestream_check_generator: Generator[VideoProcessingRecord, None, None] = (
+            self.video_db.get_by_status("livestream_checking")
+        )
+        channel_lookup = get_channel_lookup(self.config.channels)
+        for video in livestream_check_generator:
+            vid: Video = Video.from_cache(video_db_row=video)
+            logger.info(
+                f"Processing video with video id '{vid.video_id}' that got interrupted while checking wether it is a livestream",
+                extra={
+                    "event": LogEvent.PROCESSING_LIVESTREAM_CHECK_RESUME,
+                    "video_id": vid.video_id,
+                    "channel_id": vid.channel_id,
+                },
+            )
+            if not self.should_skip_processing(
+                vid=vid,
+                discovery_type=DiscoverySource.RSS,  # has to be rss, else the video would not end up in livestream checking state, it would immediately get processed,
+                channel_lookup=channel_lookup,
+            ):
+                self.process_video(vid=vid, channel_lookup=channel_lookup)
+        logger.debug(
+            "Check for videos where the livestream check got interrupted... Done",
+            extra={
+                "event": LogEvent.LIVESTREAM_CHECK_RESUME_COMPLETED,
+            },
+        )
+
+    def resume_validations(self):
+        # re-validate the videos where only the metadata is present
+        logger.debug(
+            "Check for videos where the validation got interrupted...",
+            extra={"event": LogEvent.VALIDATION_RESUME_STARTED},
+        )
+        validating_vids_generator: Generator[VideoProcessingRecord, None, None] = (
+            self.video_db.get_by_status("validating")
+        )
+        for video in validating_vids_generator:
+            vid: Video = Video.from_cache(video_db_row=video)
+            logger.info(
+                f"Processing video {vid.video_id} that got interrupted while validating.",
+                extra={
+                    "event": LogEvent.PROCESSING_VALIDATION_RESUME,
+                    "video_id": vid.video_id,
+                    "channel_id": vid.channel_id,
+                },
+            )
+            self.process_validation_pipeline(vid=vid, create_db_entry=False)
+        logger.debug(
+            "Check for videos where the validation got interrupted... Done",
+            extra={
+                "event": LogEvent.VALIDATION_RESUME_COMPLETED,
+            },
+        )
+
     def resume_summaries(self):
         # restart the summarization action for the videos where the summary got interrupted
-        logger.debug("Check for videos where the summarization got interrupted...")
+        logger.debug(
+            "Check for videos where the summarization got interrupted...",
+            extra={"event": LogEvent.SUMMARIZATION_RESUME_STARTED},
+        )
         summarizing_vids_generator: Generator[VideoProcessingRecord, None, None] = (
             self.video_db.get_by_status("summarizing")
         )
@@ -595,7 +607,7 @@ class VidsiftOrchestrator:
             logger.info(
                 f"Processing video {vid.video_id} that got interrupted while summarizing.",
                 extra={
-                    "event": LogEvent.SUMMARIZATION_RESUME_STARTED,
+                    "event": LogEvent.PROCESSING_SUMMARIZATION_RESUME,
                     "video_id": vid.video_id,
                     "channel_id": vid.channel_id,
                 },

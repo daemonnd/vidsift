@@ -42,12 +42,16 @@ class LogEvent:
     INTERRUPTED_PROCESSING_COMPLETED = "interrupted_processing_completed"
 
     LIVESTREAM_CHECK_RESUME_STARTED = "livestream_check_resume_started"
+    PROCESSING_LIVESTREAM_CHECK_RESUME = "processing_livestream_check_resume"
     LIVESTREAM_CHECK_RESUME_COMPLETED = "livestream_check_resume_completed"
     VALIDATION_RESUME_STARTED = "validation_resume_started"
+    PROCESSING_VALIDATION_RESUME = "processing_validation_resume"
     VALIDATION_RESUME_COMPLETED = "validation_resume_completed"
     DOWNLOAD_RESUME_STARTED = "download_resume_started"
+    PROCESSING_DOWNLOAD_RESUME = "processing_download_resume"
     DOWNLOAD_RESUME_COMPLETED = "download_resume_completed"
     SUMMARIZATION_RESUME_STARTED = "summarization_resume_started"
+    PROCESSING_SUMMARIZATION_RESUME = "processing_summarization_resume"
     SUMMARIZATION_RESUME_COMPLETED = "summarization_resume_completed"
 
     # video delay events
