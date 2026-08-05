@@ -70,10 +70,13 @@ class LogEvent:
     RSS_FETCH_FAILED = "rss_fetch_failed"
     RSS_FETCH_COMPLETED = "rss_fetch_completed"
 
+    RSS_CHANNEL_FETCH_STARTED = "rss_channel_fetch_started"
+    RSS_CHANNEL_FETCH_FAILED = "rss_channel_fetch_failed"
+
     # yt-dlp fetching events
-    YT_DLP_FETCH_STARTED = "yt_dlp_fetch_started"
-    YT_DLP_FETCH_FAILED = "yt_dlp_fetch_failed"
-    YT_DLP_FETCH_COMPLETED = "yt_dlp_fetch_completed"
+    YT_DLP_CHANNEL_FETCH_STARTED = "yt_dlp_fetch_started"
+    YT_DLP_CHANNEL_FETCH_FAILED = "yt_dlp_fetch_failed"
+    YT_DLP_CHANNEL_FETCH_COMPLETED = "yt_dlp_fetch_completed"
 
     # video filtering events
     LIVESTREAM_CHECK_STARTED = "livestream_check_started"

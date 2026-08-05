@@ -24,14 +24,13 @@ class VideoDataCollection:
                 "The given channel id list is empty, no data can be collected"
             )
 
-    def get_videos_to_process(self) -> Generator[tuple[Video, DiscoverySource], None, None]:
+    def get_videos_to_process(
+        self,
+    ) -> Generator[tuple[Video, DiscoverySource], None, None]:
         rss_collector: RSSUrlCollector = RSSUrlCollector(
-            channel_id_list=self.channel_id_list,
-            config=self.config
+            channel_id_list=self.channel_id_list, config=self.config
         )
-        yt_dlp_collector: YtDlpUrlCollector = YtDlpUrlCollector(
-            config=self.config
-        )
+        yt_dlp_collector: YtDlpUrlCollector = YtDlpUrlCollector(config=self.config)
 
         logger.info(
             "Starting RSS feed collection.",
@@ -46,14 +45,12 @@ class VideoDataCollection:
                 logger.debug(
                     f"Fetching RSS feed for channel: {channel}",
                     extra={
-                        "event": LogEvent.RSS_FETCH_STARTED,
+                        "event": LogEvent.RSS_CHANNEL_FETCH_STARTED,
                         "channel_id": channel,
-                    }
+                    },
                 )
                 try:
-                    feed: FeedParserDict = rss_collector.fetch_feed(
-                        channel_id=channel
-                    )
+                    feed: FeedParserDict = rss_collector.fetch_feed(channel_id=channel)
 
                     rss_collector.validate_feed_response(
                         feed,
@@ -72,9 +69,10 @@ class VideoDataCollection:
                     logger.warning(
                         f"Failed to collect video data from RSS feed: {str(e)}",
                         extra={
-                            "event": LogEvent.RSS_FETCH_FAILED,
+                            "event": LogEvent.RSS_CHANNEL_FETCH_FAILED,
                             "channel_id": channel,
-                        }, exc_info=True
+                        },
+                        exc_info=True,
                     )
 
                     # fall back to yt-dlp url collector
@@ -82,9 +80,9 @@ class VideoDataCollection:
                     logger.debug(
                         "Starting yt-dlp data collection as fallback for failing rss...",
                         extra={
-                            "event": LogEvent.YT_DLP_FETCH_STARTED,
-                            "channel_id": channel
-                        }
+                            "event": LogEvent.YT_DLP_CHANNEL_FETCH_STARTED,
+                            "channel_id": channel,
+                        },
                     )
                     try:
                         current_channel_data = yt_dlp_collector.parse_one_channel(
@@ -98,9 +96,9 @@ class VideoDataCollection:
                             f"Failed to collect video data for channel id {channel}: {str(e)}",
                             exc_info=True,
                             extra={
-                                "event": LogEvent.YT_DLP_FETCH_FAILED,
-                                "channel_id": channel
-                            }
+                                "event": LogEvent.YT_DLP_CHANNEL_FETCH_FAILED,
+                                "channel_id": channel,
+                            },
                         )
 
         except BaseException:

@@ -108,17 +108,9 @@ class VidsiftOrchestrator:
                 # before fetching and processing any new videos, process the interrupted / failed ones
                 self.process_interrupted_videos()
 
-            if not self.config.video_processing.process_new_vids:
-                return
             # new videos
             if not skip_new_vids:
                 try:
-                    logger.debug(
-                        "RSS Fetch started",
-                        extra={
-                            "event": LogEvent.RSS_FETCH_STARTED,
-                        },
-                    )
                     video_generator: Generator[
                         tuple[Video, DiscoverySource], None, None
                     ] = self.video_data_collector.get_videos_to_process()
