@@ -231,7 +231,7 @@ class VideoProcessingRepository:
                 retry_count = 0
             if int(retry_count) >= self.config.video_processing.max_retry_attempts:
                 # if it exeeds / is equal to the max allowed attempts
-                parameters: tuple = (target_status, error_msg, video_id)
+                parameters: tuple = (target_status.value, error_msg, video_id)
                 self.cur.execute(
                     """
                 UPDATE processed_videos
