@@ -9,6 +9,7 @@ from vidsift.cli.commands.run import register_run
 from vidsift.cli.commands.schedule import register_schedule
 from vidsift.cli.commands.service import register_service
 from vidsift.cli.commands.videos import register_videos
+from vidsift.cli.commands.logs import register_logs
 
 
 def parse_args():
@@ -61,6 +62,7 @@ def parse_args():
     videos_parser = register_videos(subparsers)
     schedule_parser = register_schedule(subparsers)
     service_parser = register_service(subparsers)
+    log_parser = register_logs(subparsers)
 
     argcomplete.autocomplete(parser)
     return parser.parse_args()
