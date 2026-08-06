@@ -46,8 +46,11 @@ Default format: $timestamp $run_id $level: $event $message
         default=["$timestamp", "$run_id", "$level:", "$event", "$message"],
     )
 
-    logs_parser.add_argument("--starttime", help="From when the logs should be.")
-    logs_parser.add_argument("--endtime", help="Until when the logs should be.")
+    logs_parser.add_argument(
+        "--no-colors",
+        help=r"Disables colorful log displaying. Disables rich formatting and does not break and '\[' formattings in the printed string",
+        action="store_true",
+    )
 
     logs_parser.set_defaults(func=handle_logs)
 
@@ -62,9 +65,8 @@ def handle_logs(args, config):
             contains=args.contains,
             last=args.last,
             format=args.format,
-            starttime=args.starttime,
-            endtime=args.endtime,
         ),
+        no_colors=args.no_colors,
     )
 
     if args.follow:

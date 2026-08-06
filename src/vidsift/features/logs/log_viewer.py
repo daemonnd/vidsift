@@ -1,4 +1,6 @@
 import json
+from rich import print as pprint
+from datetime import datetime
 import re
 from collections import deque
 import logging
@@ -6,11 +8,13 @@ from time import sleep
 
 from vidsift.config.models import AppConfig
 from vidsift.features.logs.errors import (
+    InvalidVariableError,
     LogFieldMissingError,
     LogFileNotFoundError,
     LogFilePermissionError,
 )
 from vidsift.models.log_criteria import LogCriteria
+from vidsift.shared.logging.formatters import get_style
 from vidsift.shared.paths import VIDSIFT_LOG_FILE
 
 
@@ -23,9 +27,12 @@ MESSAGE_LEN = 100
 
 
 class LogViewer:
-    def __init__(self, config: AppConfig, log_criteria: LogCriteria) -> None:
+    def __init__(
+        self, config: AppConfig, log_criteria: LogCriteria, no_colors: bool
+    ) -> None:
         self.config: AppConfig = config
         self.log_criteria: LogCriteria = log_criteria
+        self.colors: bool = not no_colors
 
     def follow(
         self,
@@ -69,7 +76,10 @@ class LogViewer:
         display = self._filter_line(line_data)
         if not display:
             return
-        print(self._format(line_data))
+        if self.colors:
+            pprint(self._format(line_data))
+        else:
+            print(self._format(line_data))
 
     def _filter_line(self, line_data: dict) -> bool:
         """
@@ -114,7 +124,16 @@ class LogViewer:
 
         for placeholder, value in values.items():
             output = output.replace(placeholder, value)
-        if "$" in output:
-            raise
+        search_match = re.search(pattern=r"\$[a-z]", string=output)
+        if search_match:
+            raise InvalidVariableError(
+                f"Invalid Variable name: {search_match.group()}, the options are: $timestamp, $level, $run_id, $event, $logger, $message"
+            )
 
+        if self.colors:
+            output = output.replace(
+                "[", r"\["
+            )  # so that the [ from rich and [ by the user don't conflict
+            color = get_style(line_data["level"])
+            return f"[{color}]{output}[/{color}]"
         return output

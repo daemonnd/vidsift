@@ -16,3 +16,8 @@ class LogFilePermissionError(LogDisplayError):
 class LogFieldMissingError(LogDisplayError):
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
+
+
+class InvalidVariableError(LogDisplayError):
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)
