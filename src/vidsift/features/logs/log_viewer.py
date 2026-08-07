@@ -37,20 +37,24 @@ class LogViewer:
     def follow(
         self,
     ):
-        try:
-            with open(VIDSIFT_LOG_FILE, "r") as file:
-                for line in file:
-                    self._print_line(line)
-                file.seek(0, 2)  # jump to end
-                while True:
-                    new_line = file.readline()
-                    if new_line:
-                        self._print_line(new_line)
-                    sleep(0.1)
-        except FileNotFoundError as e:
-            raise LogFileNotFoundError(str(e)) from e
-        except PermissionError as e:
-            raise LogFilePermissionError(str(e)) from e
+        while True:
+            try:
+                with open(VIDSIFT_LOG_FILE, "r") as file:
+                    for line in file:
+                        self._print_line(line)
+                    file.seek(0, 2)  # jump to end
+                    while True:
+                        if not VIDSIFT_LOG_FILE.exists():
+                            break
+                        new_line = file.readline()
+                        if new_line:
+                            self._print_line(new_line)
+                        sleep(0.1)
+            except FileNotFoundError as e:
+                sleep(0.1)
+                self.follow()
+            except PermissionError as e:
+                raise LogFilePermissionError(str(e)) from e
 
     def show(self):
         try:
