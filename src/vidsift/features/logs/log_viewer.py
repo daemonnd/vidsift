@@ -13,7 +13,7 @@ from vidsift.features.logs.errors import (
     LogFileNotFoundError,
     LogFilePermissionError,
 )
-from vidsift.models.log_criteria import LogCriteria
+from vidsift.models.log_display import LogDisplayOpts
 from vidsift.shared.logging.formatters import get_style
 from vidsift.shared.paths import VIDSIFT_LOG_FILE
 
@@ -27,12 +27,9 @@ MESSAGE_LEN = 100
 
 
 class LogViewer:
-    def __init__(
-        self, config: AppConfig, log_criteria: LogCriteria, no_colors: bool
-    ) -> None:
+    def __init__(self, config: AppConfig, log_opts: LogDisplayOpts) -> None:
         self.config: AppConfig = config
-        self.log_criteria: LogCriteria = log_criteria
-        self.colors: bool = not no_colors
+        self.log_opts: LogDisplayOpts = log_opts
 
     def follow(
         self,
@@ -50,7 +47,7 @@ class LogViewer:
                         if new_line:
                             self._print_line(new_line)
                         sleep(0.1)
-            except FileNotFoundError as e:
+            except FileNotFoundError:
                 sleep(0.1)
                 self.follow()
             except PermissionError as e:
@@ -80,7 +77,7 @@ class LogViewer:
         display = self._filter_line(line_data)
         if not display:
             return
-        if self.colors:
+        if self.log_opts.colors:
             pprint(self._format(line_data))
         else:
             print(self._format(line_data))
@@ -94,11 +91,11 @@ class LogViewer:
         """
         # if the log level is high enough
         if getattr(logging, line_data["level"]) >= getattr(
-            logging, self.log_criteria.level
+            logging, self.log_opts.level
         ):
             if (
-                self.log_criteria.contains in line_data["event"]
-                or self.log_criteria.contains in line_data["message"]
+                self.log_opts.contains in line_data["event"]
+                or self.log_opts.contains in line_data["message"]
             ):
                 return True
         return False
@@ -124,7 +121,7 @@ class LogViewer:
         except KeyError as e:
             raise LogFieldMissingError(str(e)) from e
 
-        output = " ".join(self.log_criteria.format)
+        output = " ".join(self.log_opts.format)
 
         for placeholder, value in values.items():
             output = output.replace(placeholder, value)
@@ -134,7 +131,7 @@ class LogViewer:
                 f"Invalid Variable name: {search_match.group()}, the options are: $timestamp, $level, $run_id, $event, $logger, $message"
             )
 
-        if self.colors:
+        if self.log_opts.colors:
             output = output.replace(
                 "[", r"\["
             )  # so that the [ from rich and [ by the user don't conflict
