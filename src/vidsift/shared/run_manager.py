@@ -5,15 +5,10 @@ File to manage the locking, run starting etc.
 import logging
 from pathlib import Path
 from typing import Literal
-from uuid import uuid7
 
 
 from vidsift.runtime.lock_manager import LockManager
-from vidsift.shared.execution_context import (
-    RunContext,
-    reset_run_context,
-    set_run_context,
-)
+
 from vidsift.shared.logging.log_event_fields import LogEvent
 from vidsift.shared.paths import VIDSIFT_LOG_FILE
 
@@ -29,16 +24,13 @@ class RunManager:
         run_type: Literal["manual_pipeline_run", "manual_video_run", "schedule_run"],
         sleep_interval: float = 5,
     ):
-        run_context = RunContext(run_id=uuid7())
         if self.lock_file_path:
             self.lock_manager: LockManager = LockManager(
                 sleep_interval=sleep_interval, lock_file_path=self.lock_file_path
             )
         else:
             self.lock_manager: LockManager = LockManager(sleep_interval=sleep_interval)
-        self.lock_manager.acquire(run_id=run_context.run_id)
 
-        self.token = set_run_context(run_context)
         logger.info(
             "Acquired lock",
             extra={
@@ -53,7 +45,6 @@ class RunManager:
                 "log_file": str(VIDSIFT_LOG_FILE),
             },
         )
-        return self.token
 
     def end_run(self):
         try:
@@ -63,7 +54,6 @@ class RunManager:
                     "event": LogEvent.RUN_COMPLETED,
                 },
             )
-            reset_run_context(self.token)
             self.lock_manager.release()
             logger.info(
                 "Lock released",

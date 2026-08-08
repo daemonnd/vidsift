@@ -9,6 +9,7 @@ Tasks:
 """
 
 import logging
+from uuid import uuid7
 
 from pydantic import ValidationError
 
@@ -26,9 +27,16 @@ from vidsift.features.initialization.init_vidsift import InitVidsift
 from vidsift.models.video import InvalidVideoError
 from vidsift.runtime.check_basic_requirements import BasicInit
 from vidsift.runtime.errors import BasicInitError
+from vidsift.shared.execution_context import (
+    RunContext,
+    reset_run_context,
+    set_run_context,
+)
 from vidsift.shared.logging.bootstrap_logger import setup_bootstrap_logging
 from vidsift.shared.logging.config import configure_logging
 from vidsift.shared.logging.log_event_fields import LogEvent
+
+PIPELINE_RUNNING_COMMANDS: list[str] = ["run", "schedule", "process"]
 
 
 class VidsiftCLI:
@@ -55,11 +63,14 @@ class VidsiftCLI:
         # parse CLI flags
         self.args = parse_args()
 
+        # the args.command will not change with any cli overrides so it is safe to do this before applying the overrides
+        run_context = RunContext(run_id=uuid7())
+        self.run_token = set_run_context(run_context)
         # check wether command is init to repair basic requirements before exit
         if self.args.command == "init":
             vidsift_init: InitVidsift = InitVidsift(force=self.args.force)
             vidsift_init.initialize()
-            exit(0)
+            self._exit(0)
 
         # check if basic requirements are there
         try:
@@ -69,7 +80,7 @@ class VidsiftCLI:
             self.logger.exception(
                 f"BasicInitError: {str(e)}. Run 'vidsift init' first to setup basic config and other files"
             )
-            exit(1)
+            self._exit(1)
 
     def _load_config(self) -> AppConfig:
         # load config.toml
@@ -81,19 +92,19 @@ class VidsiftCLI:
                 return load_config()
         except InvalidConfigError as e:
             self.logger.exception(f"InvalidConfigError: {str(e)}")
-            exit(1)
+            self._exit(1)
         except ConfigFileNotFoundError as e:
             self.logger.exception(f"ConfigFileNotFoundError: {str(e)}")
-            exit(1)
+            self._exit(1)
         except ConfigFilePermissionError as e:
             self.logger.exception(f"ConfigFilePermissionError: {str(e)}")
-            exit(1)
+            self._exit(1)
         except ConfigValidationError as e:
             self.logger.exception(f"ConfigValidationError: {str(e)}")
-            exit(1)
+            self._exit(1)
         except ConfigError as e:
             self.logger.exception(f"ConfigError: {str(e)}")
-            exit(1)
+            self._exit(1)
 
     def _apply_cli_overrides(self, config: AppConfig) -> AppConfig:
         """
@@ -194,7 +205,7 @@ class VidsiftCLI:
                     config = config.model_copy(update={"logging": logging_config})
 
         if self.args.command == "run" or self.args.command == "schedule":
-            if self.args.skip_interrupted == True:
+            if self.args.skip_interrupted is True:
                 video_processing_config = config.video_processing.model_copy(
                     update={"skip_interrupted_vids": True}
                 )
@@ -202,7 +213,7 @@ class VidsiftCLI:
                 config = config.model_copy(
                     update={"video_processing": video_processing_config}
                 )
-            if self.args.skip_new == True:
+            if self.args.skip_new is True:
                 video_processing_config = config.video_processing.model_copy(
                     update={"skip_new_vids": True}
                 )
@@ -223,7 +234,7 @@ class VidsiftCLI:
             self.logger.exception(
                 f"ConfigValidationError: Failed to load the config overrides into vidsift: {str(e)}",
             )
-            exit(1)
+            self._exit(1)
 
     def run(self) -> None:
         configure_logging(
@@ -233,11 +244,12 @@ class VidsiftCLI:
         # log the loaded config to the file
         logger = logging.getLogger(__name__)
         logger.info(
-            "Config loaded successfully",
+            "Starting new vidsift instance",
             extra={
                 "event": LogEvent.CONFIG_LOADED,
                 "file_only": True,
                 "loaded_config": self.config.model_dump_json(),
+                "cli_args": self.args,
             },
         )
 
@@ -251,28 +263,32 @@ class VidsiftCLI:
                     exc_info=True,
                     extra={"event": LogEvent.INVALID_VIDEO},
                 )
-                exit(1)
+                self._exit(1)
             except KeyboardInterrupt:
                 self.logger.exception(
                     "Exiting due to KeyboardInterrupt.",
                     extra={"event": LogEvent.ORCHESTRATOR_INTERRUPTED},
                 )
-                exit(130)
+                self._exit(130)
             else:
-                if self.args.command in ["run", "schedule", "process"]:
+                if self.args.command in PIPELINE_RUNNING_COMMANDS:
                     self.logger.info(
                         "Orchestrator terminated successfully.",
                         extra={"event": LogEvent.ORCHESTRATOR_STOPPED},
                     )
-                exit(0)
+                self._exit(0)
         else:
             self.logger.critical("No command provided, nothing to run")
-            exit(1)
+            self._exit(1)
 
     def _initialize_application(self) -> None:
         config = self._load_config()
         config = self._apply_cli_overrides(config=config)
         self._validate_config(config=config)
+
+    def _exit(self, code: int):
+        reset_run_context(self.run_token)
+        exit(code)
 
 
 def main() -> None:
