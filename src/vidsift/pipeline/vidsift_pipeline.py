@@ -94,7 +94,8 @@ class VidsiftOrchestrator:
 
         if skip_interrupted_vids and skip_new_vids:
             logger.info(
-                "No videos will be processed because both interrupted video processing and new video processing are disabled"
+                "No videos will be processed because both interrupted video processing and new video processing are disabled",
+                extra={"event": LogEvent.NO_VIDEO_GETS_PROCESSED},
             )
             return
         try:

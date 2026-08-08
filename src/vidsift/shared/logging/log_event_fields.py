@@ -65,6 +65,8 @@ class LogEvent:
     VIDEO_PROCESSING_COMPLETED = "video_processing_completed"
     VIDEO_PROCESSING_FAILED = "video_processing_failed"
 
+    NO_VIDEO_GETS_PROCESSED = "no_video_gets_processed"
+
     # rss fetching events
     RSS_FETCH_STARTED = "rss_fetch_started"
     RSS_FETCH_FAILED = "rss_fetch_failed"
