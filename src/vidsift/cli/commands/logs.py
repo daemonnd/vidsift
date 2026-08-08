@@ -1,5 +1,5 @@
 from vidsift.features.logs.log_viewer import LogViewer
-from vidsift.models.log_criteria import LogCriteria
+from vidsift.models.log_display import LogDisplayOpts
 
 
 def register_logs(subparsers):
@@ -51,6 +51,11 @@ Default format: $timestamp $run_id $level: $event $message
         help=r"Disables colorful log displaying. Disables rich formatting and does not break and '\[' formattings in the printed string",
         action="store_true",
     )
+    logs_parser.add_argument(
+        "--all-files",
+        action="store_true",
+        help="Show log entries from all log files",
+    )
 
     logs_parser.set_defaults(func=handle_logs)
 
@@ -60,13 +65,14 @@ Default format: $timestamp $run_id $level: $event $message
 def handle_logs(args, config):
     viewer = LogViewer(
         config=config,
-        log_criteria=LogCriteria(
+        log_opts=LogDisplayOpts(
             level=args.level,
             contains=args.contains,
             last=args.last,
             format=args.format,
+            colors=not args.no_colors,
+            all_files=args.all_files,
         ),
-        no_colors=args.no_colors,
     )
 
     if args.follow:

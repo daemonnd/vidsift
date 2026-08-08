@@ -21,3 +21,8 @@ class LogFieldMissingError(LogDisplayError):
 class InvalidVariableError(LogDisplayError):
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
+
+
+class NoLogFilesError(LogDisplayError):
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)

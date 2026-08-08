@@ -12,10 +12,11 @@ from vidsift.features.logs.errors import (
     LogFieldMissingError,
     LogFileNotFoundError,
     LogFilePermissionError,
+    NoLogFilesError,
 )
 from vidsift.models.log_display import LogDisplayOpts
 from vidsift.shared.logging.formatters import get_style
-from vidsift.shared.paths import VIDSIFT_LOG_FILE
+from vidsift.shared.paths import VIDSIFT_LOG_DIR, VIDSIFT_LOG_FILE
 
 
 TIMESTAMP_LEN = 23
@@ -54,23 +55,32 @@ class LogViewer:
                 raise LogFilePermissionError(str(e)) from e
 
     def show(self):
-        try:
-            with open(VIDSIFT_LOG_FILE, "r") as file:
-                if self.log_criteria.last > 0:
-                    lines = deque(
-                        file,
-                        maxlen=self.log_criteria.last,
-                    )
-                else:
-                    lines = file
+        if self.log_opts.all_files:
+            files = list(VIDSIFT_LOG_DIR.glob("vidsift.jsonl*"))
+        else:
+            files = [VIDSIFT_LOG_FILE]
+        if not files:
+            raise NoLogFilesError(
+                f"There are no log files that can be displayed from {VIDSIFT_LOG_DIR}."
+            )
+        for file in files:
+            try:
+                with open(file, "r") as f:
+                    if self.log_opts.last > 0:
+                        lines = deque(
+                            f,
+                            maxlen=self.log_opts.last,
+                        )
+                    else:
+                        lines = f
 
-                for line in lines:
-                    self._print_line(line)
+                    for line in lines:
+                        self._print_line(line)
 
-        except FileNotFoundError as e:
-            raise LogFileNotFoundError(str(e)) from e
-        except PermissionError as e:
-            raise LogFilePermissionError(str(e)) from e
+            except FileNotFoundError as e:
+                raise LogFileNotFoundError(str(e)) from e
+            except PermissionError as e:
+                raise LogFilePermissionError(str(e)) from e
 
     def _print_line(self, line: str):
         line_data = json.loads(line)

@@ -65,4 +65,10 @@ def parse_args():
     log_parser = register_logs(subparsers)
 
     argcomplete.autocomplete(parser)
-    return parser.parse_args()
+
+    args = parser.parse_args()
+
+    if args.command == "logs" and args.follow and args.all_files:
+        parser.error("--all-files cannot be used with --follow")
+
+    return args
