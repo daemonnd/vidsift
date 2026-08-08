@@ -248,7 +248,7 @@ class VidsiftCLI:
             extra={
                 "event": LogEvent.CONFIG_LOADED,
                 "file_only": True,
-                "loaded_config": self.config.model_dump_json(),
+                "loaded_config": self.config.model_dump(),
                 "cli_args": self.args,
             },
         )
