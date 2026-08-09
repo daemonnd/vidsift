@@ -81,9 +81,9 @@ class LogEvent:
     YT_DLP_CHANNEL_FETCH_COMPLETED = "yt_dlp_fetch_completed"
 
     # video filtering events
-    LIVESTREAM_CHECK_STARTED = "livestream_check_started"
-    LIVESTREAM_CHECK_COMPLETED = "livestream_check_completed"
-    LIVESTREAM_CHECK_FAILED = "livestream_check_failed"
+    VIDEO_FILTERING_STARTED = "video_filtering_started"
+    VIDEO_FILTERING_COMPLETED = "video_filtering_completed"
+    VIDEO_FILTERING_FAILED = "video_filtering_failed"
 
     # pre-validation events
     PRE_VALIDATION_STARTED = "pre_validation_started"

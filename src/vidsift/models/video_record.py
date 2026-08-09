@@ -6,14 +6,13 @@ from pydantic import BaseModel, Field
 
 
 class VideoProcessingStatus(Enum):
-    LIVESTREAM_CHECKING = "livestream_checking"
+    FILTERING = "filtering"
     VALIDATING = "validating"
     DOWNLOADING = "downloading"
     SUMMARIZING = "summarizing"
 
     DONE = "done"
     FAILED = "failed"
-
 
 
 class VideoProcessingRecord(BaseModel):
@@ -26,9 +25,8 @@ class VideoProcessingRecord(BaseModel):
     status: VideoProcessingStatus
     retry_count: int
     decision: Literal["downloaded", "summarized", "discarded"] | None
-    quality_score: float | None = Field(default=None, ge=0) 
+    quality_score: float | None = Field(default=None, ge=0)
     topic_match_score: float | None = Field(default=None, ge=0)
     reason: str | None
     processed_at: datetime | None
     last_error: str | None
-

@@ -52,7 +52,7 @@ class VideoProcessingRepository:
 
     def create(self, vid: Video):
         """
-        Method for setting the status to LIVESTREAM_CHECKING after a video got discovered
+        Method for setting the status to filtering after a video got discovered
         """
         try:
             parameters: tuple = (
@@ -62,7 +62,7 @@ class VideoProcessingRepository:
                 vid.author,
                 vid.channel_id,
                 vid.published,
-                VideoProcessingStatus.LIVESTREAM_CHECKING.value,
+                VideoProcessingStatus.FILTERING.value,
                 0,
                 None,
                 None,
@@ -80,11 +80,11 @@ class VideoProcessingRepository:
             self.conn.commit()
         except IntegrityError as e:
             raise DBWritingError(
-                f"Failed to write to DB while setting the status to LIVESTREAM_CHECKING because a database operand violated a constraint: {str(e)}"
+                f"Failed to write to DB while setting the status to filtering because a database operand violated a constraint: {str(e)}"
             ) from e
         except OperationalError as e:
             raise DBWritingError(
-                f"Failed to write to DB while setting the status to LIVESTREAM_CHECKING because of an operational Error: {str(e)}"
+                f"Failed to write to DB while setting the status to filtering because of an operational Error: {str(e)}"
             ) from e
 
     def save_validation_result(
@@ -315,7 +315,7 @@ class VideoProcessingRepository:
             "done",
             "failed",
             "validating",
-            "livestream_checking",
+            "filtering",
         ],
     ) -> Generator[VideoProcessingRecord, None, None]:
         """
