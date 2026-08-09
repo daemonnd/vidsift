@@ -4,6 +4,7 @@ from pathlib import Path
 from platformdirs import user_data_dir
 from rich.console import Console
 
+from vidsift.cli.autocomplete import complete_channel_ids
 from vidsift.features.video_processing.repository import \
     VideoProcessingRepository
 from vidsift.models.video_record import VideoProcessingStatus
@@ -42,7 +43,7 @@ def register_videos(subparsers):
     video_list.add_argument(
         "--channel-id",
         help="only show the db entries with the matching channel id"
-    )
+    ).completer = complete_channel_ids
 
     video_list.set_defaults(
         func=handle_videos_list

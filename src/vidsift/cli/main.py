@@ -1,5 +1,7 @@
 from argparse import ArgumentParser
 
+import argcomplete
+
 from vidsift.cli.commands.config import register_config
 from vidsift.cli.commands.init import register_init
 from vidsift.cli.commands.process import register_process
@@ -62,6 +64,5 @@ def parse_args():
     service_parser = register_service(subparsers)
 
 
-
-
+    argcomplete.autocomplete(parser)
     return parser.parse_args()
