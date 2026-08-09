@@ -149,7 +149,7 @@ class ChannelConfig(BaseModel):
 class JSRuntimesConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
     name: Literal["deno", "node", "bun", "quickjs"]
-    path: str
+    path: str | None = None
 
 
 class YtDlpBaseConfig(BaseModel):
