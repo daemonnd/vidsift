@@ -163,12 +163,6 @@ min_vid_delay = 300 # 5 minutes
 # int(< 10)
 random_vid_delay = 240 # 4 minutes
 
-[[js_runtimes]]
-name = "deno"
-path = "/absulute/path/to/deno" # optional
-
-[[js_runtimes]]
-name = "node"
 
 [video_processing.yt_dlp.base] # wether interrupted videos should be processed
 # all of these settings are passed to yt-dlp, so you can use any yt-dlp setting here
@@ -181,6 +175,15 @@ cookies_from_browser = "firefox" # brave, chrome, chromium, edge, firefox, opera
 #   --debug yt-dlp
 #   --debug all
 quiet = true # wether yt-dlp should be quiet or not, if false, yt-dlp will print a lot of output to the console
+
+[[video_processing.yt_dlp.base.js_runtimes]]
+name = "deno"
+path = "/absulute/path/to/deno" # required
+
+[[video_processing.yt_dlp.base.js_runtimes]]
+name = "node"
+path = "/absolute/path/to/node"
+
 
 [video_processing.yt_dlp.download]
 # download-specific options for yt-dlp
