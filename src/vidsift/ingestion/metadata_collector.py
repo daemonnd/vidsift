@@ -7,6 +7,7 @@ from yt_dlp.utils import DownloadError
 from vidsift.config.models import AppConfig
 from vidsift.ingestion.errors import MetadataCollectionError
 from vidsift.models.video import InvalidVideoError, Video
+from vidsift.shared.config_helpers import get_js_runtimes_config
 from vidsift.shared.logging.log_event_fields import LogEvent
 from vidsift.shared.video_id_extractor import VideoIDExtractor
 
@@ -23,15 +24,14 @@ class MetadataCollector:
             "sleep_interval_requests": yt_dlp_config.base.sleep_requests,
             "no_playlist": True,
             "quiet": yt_dlp_config.base.quiet,
+            "js_runtimes": get_js_runtimes_config(yt_dlp_config.base.js_runtimes),
         }
         self.ydl: YoutubeDL = YoutubeDL(ydl_opts)
+
     def fetch_metadata(self, url: str):
         logger.info(
             f"Starting to fetch metadata for video with url {url}",
-            extra={
-                "event": LogEvent.METADATA_FETCH_STARTED,
-                "url": url
-            }
+            extra={"event": LogEvent.METADATA_FETCH_STARTED, "url": url},
         )
         try:
             data = self.ydl.extract_info(
@@ -44,18 +44,22 @@ class MetadataCollector:
                 extra={
                     "event": LogEvent.METADATA_FETCH_FAILED,
                     "url": url,
-                }
+                },
             )
-            raise MetadataCollectionError(f"DownloadError: Failed to fetch the data: {str(e)}") from e
+            raise MetadataCollectionError(
+                f"DownloadError: Failed to fetch the data: {str(e)}"
+            ) from e
         except KeyError as e:
             logger.exception(
                 f"KeyError: One of the required fields for creating a video object does not exist: {str(e)}",
                 extra={
                     "event": LogEvent.METADATA_FETCH_FAILED,
                     "url": url,
-                }
+                },
             )
-            raise MetadataCollectionError(f"KeyError: One of the required fields for creating a video object does not exist: {str(e)}") from e
+            raise MetadataCollectionError(
+                f"KeyError: One of the required fields for creating a video object does not exist: {str(e)}"
+            ) from e
         else:
             try:
                 to_return: dict[str, Any] = {
@@ -64,7 +68,7 @@ class MetadataCollector:
                     "author": data["uploader"],
                     "channel_id": data["channel_id"],
                     "published": data["upload_date"],
-                    "video_id": data["id"]
+                    "video_id": data["id"],
                 }
             except KeyError as e:
                 logger.exception(
@@ -72,16 +76,14 @@ class MetadataCollector:
                     extra={
                         "event": LogEvent.METADATA_FETCH_FAILED,
                         "url": url,
-                    }
+                    },
                 )
                 raise MetadataCollectionError(
                     f"KeyError: One of the required fields for creating a video object does not exist: {str(e)}",
                 ) from e
 
             else:
-                logger.info(
-                    f"Metadata collection from url {url} completed."
-                )
+                logger.info(f"Metadata collection from url {url} completed.")
                 try:
                     return Video(
                         title=to_return["title"],
@@ -89,8 +91,7 @@ class MetadataCollector:
                         author=to_return["author"],
                         channel_id=to_return["channel_id"],
                         published=to_return["published"],
-                        video_id=to_return["video_id"]
+                        video_id=to_return["video_id"],
                     )
                 except InvalidVideoError:
                     raise
-

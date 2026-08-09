@@ -6,6 +6,7 @@ from yt_dlp import YoutubeDL
 from vidsift.config.models import AppConfig
 from vidsift.ingestion.errors import VideoFilteringError
 from vidsift.models.video import Video
+from vidsift.shared.config_helpers import get_js_runtimes_config
 
 logger = logging.getLogger(__name__)
 
@@ -17,6 +18,7 @@ class VideoFilter:
             "cookiesfrombrowser": tuple([yt_dlp_config.base.cookies_from_browser]),
             "sleep_interval_requests": yt_dlp_config.base.sleep_requests,
             "quiet": yt_dlp_config.base.quiet,
+            "js_runtimes": get_js_runtimes_config(yt_dlp_config.base.js_runtimes),
             "extract_flat": True,
         }
         self.ydl = YoutubeDL(ytl_opts)

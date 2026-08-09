@@ -5,6 +5,7 @@ from yt_dlp import YoutubeDL
 from vidsift.config.models import AppConfig, ChannelConfig, YtDlpBaseConfig
 from vidsift.ingestion.errors import VideoDataCollectionError
 from vidsift.models.video import Video
+from vidsift.shared.config_helpers import get_js_runtimes_config
 
 
 class YtDlpUrlCollector:
@@ -16,21 +17,20 @@ class YtDlpUrlCollector:
             "cookiesfrombrowser": tuple([yt_dlp_config.cookies_from_browser]),
             "sleep_interval_requests": yt_dlp_config.sleep_requests,
             "quiet": yt_dlp_config.quiet,
+            "js_runtimes": get_js_runtimes_config(yt_dlp_config.js_runtimes),
             "max_retries": yt_dlp_config.max_retries,
             "playlist_items": f"1:{config.video_fetching.yt_dlp_video_amount}",
             "extract_flat": True,
-            "sleep_interval": yt_dlp_config.sleep_requests
+            "sleep_interval": yt_dlp_config.sleep_requests,
         }
         self.ydl: YoutubeDL = YoutubeDL(ydl_opts)
         self.channel_lookup: dict = {}
         channels: list[ChannelConfig] = self.config.channels
-        self.channel_lookup = {
-            channel.id: channel
-            for channel in channels
-        }
+        self.channel_lookup = {channel.id: channel for channel in channels}
 
     def get_channel_url(self, channel_id: str) -> str:
-        return f"https://www.youtube.com/channel/{channel_id}/videos" # only videos
+        return f"https://www.youtube.com/channel/{channel_id}/videos"  # only videos
+
     def parse_one_channel(self, channel_id: str) -> Generator[Video, None, None]:
         try:
             info = self.ydl.extract_info(
@@ -38,19 +38,16 @@ class YtDlpUrlCollector:
                 download=False,
             )
             for video in info["entries"]:
-                vid =  Video(
+                vid = Video(
                     title=str(video.get("title")),
-                    url=f"https://www.youtube.com/watch?v={video.get("id")}",
-                    author=str(),#self.channel_lookup.get(""),
+                    url=f"https://www.youtube.com/watch?v={video.get('id')}",
+                    author=str(),  # self.channel_lookup.get(""),
                     published=str(video.get("upload_date")),
                     video_id=video.get("id"),
-                    channel_id=channel_id
+                    channel_id=channel_id,
                 )
                 yield vid
         except Exception as e:
             raise VideoDataCollectionError(str(e)) from e
         except BaseException:
             raise
-
-
-
