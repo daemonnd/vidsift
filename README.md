@@ -17,19 +17,39 @@
 
 The pipeline currently performs:
 
-1. Video URL collection from YouTube channels
-2. Transcript acquisition
-3. Transcript extraction and cleanup
-4. AI-based validation
-5. Summarization, Downloading or nothing based on the score
+## Ingestion
+
+1. Process Videos that got interrupted during the last run
+2. Fetch Videos from rss to get data about new videos that get processed.
+
+## Processing
+
+The processing depends on the action, pre-defined in the config for the channel
+
+### Download
+
+- Downloads the video url using yt-dlp
+
+### Summarize
+
+1. Fetch the transcript
+2. Chunk the transcript into chunks
+3. Summarize each chunk individually to a few bullet points using AI
+4. Summarize all the chunk summaries into a final summary
+
+### Validate
+
+1. Run AI against the video metadata
+1. Fetch the transcript
+1. Chunk the transcript into 2 begin chunks, 1 middle chunk and 2 end chunks.
 
 The project is designed around:
 
-* local-first AI workflows
-* modular feature isolation
-* pipeline-oriented execution
-* minimal external dependencies
-* Linux-first development
+- local-first AI workflows
+- modular feature isolation
+- pipeline-oriented execution
+- minimal external dependencies
+- Linux-first development
 
 `vidsift` is built as a step-by-step pipeline designed to keep data downloading and local AI processing separate.
 
@@ -51,14 +71,14 @@ The project is designed around:
 
 # Key Features
 
-* Transcript-driven AI relevance validation
-* Local Ollama integration
-* Modular feature-based architecture
-* Pipeline-oriented execution flow
-* Linux-first CLI workflow
-* Shared utility layer
-* Feature-scoped custom errors
-* Transcript extraction from VTT files
+- Transcript-driven AI relevance validation
+- Local Ollama integration
+- Modular feature-based architecture
+- Pipeline-oriented execution flow
+- Linux-first CLI workflow
+- Shared utility layer
+- Feature-scoped custom errors
+- Transcript extraction from VTT files
 
 ---
 
@@ -179,15 +199,15 @@ Validation is based on transcript content rather than titles or metadata.
 
 Current implementation uses:
 
-* local Ollama inference
-* prompt-driven validation
-* transcript text as primary input
+- local Ollama inference
+- prompt-driven validation
+- transcript text as primary input
 
 Current work in progress:
 
-* strict integer parsing
-* AI response validation
-* malformed response handling
+- strict integer parsing
+- AI response validation
+- malformed response handling
 
 ---
 
@@ -207,9 +227,9 @@ Transcript String
 
 Known pending areas:
 
-* real transcript integration across full pipeline
-* fallback behavior
-* transcript validation hardening
+- real transcript integration across full pipeline
+- fallback behavior
+- transcript validation hardening
 
 ---
 
@@ -223,9 +243,9 @@ src/config/parser.py
 
 Possible future additions:
 
-* environment variable overrides
-* schema validation
-* multiple config layers
+- environment variable overrides
+- schema validation
+- multiple config layers
 
 ---
 
@@ -233,10 +253,10 @@ Possible future additions:
 
 ## Required
 
-* Python >= 3.14.5
-* Ollama + LLM
-* Internet access
-* Linux environment
+- Python >= 3.14.5
+- Ollama + LLM
+- Internet access
+- Linux environment
 
 ## Python Dependencies
 
@@ -337,7 +357,7 @@ src/shared/errorprotocol.py
 
 Current error handling strategy (Not implemented yet):
 
-*
+-
 
 ---
 
@@ -362,15 +382,15 @@ logs/
 
 # Security Considerations
 
-* Transcript content should be treated as untrusted input
-* AI responses should not be trusted without validation
-* Local-first inference reduces external API exposure
+- Transcript content should be treated as untrusted input
+- AI responses should not be trusted without validation
+- Local-first inference reduces external API exposure
 
 Pending hardening work:
 
-* strict validator parsing
-* deterministic AI output handling
-* malformed response rejection
+- strict validator parsing
+- deterministic AI output handling
+- malformed response rejection
 
 ---
 
@@ -384,10 +404,10 @@ Current testing status: Tests don't exist yet
 
 Planned areas:
 
-* transcript extraction tests
-* validator tests
-* malformed AI output tests
-* integration tests
+- transcript extraction tests
+- validator tests
+- malformed AI output tests
+- integration tests
 
 ---
 
@@ -395,15 +415,15 @@ Planned areas:
 
 Current bottlenecks likely include: YouTube-related issues because of transcript fetching / Video downloading
 
-* transcript download latency
-* local model inference speed
-* sequential pipeline execution
+- transcript download latency
+- local model inference speed
+- sequential pipeline execution
 
 Potential future improvements:
 
-* async processing
-* caching
-* worker pools
+- async processing
+- caching
+- worker pools
 
 ---
 
@@ -411,10 +431,10 @@ Potential future improvements:
 
 ## Development Standards
 
-* Modular feature isolation
-* Explicit responsibilities
-* Avoid unnecessary abstractions
-* Prefer readable execution flow
+- Modular feature isolation
+- Explicit responsibilities
+- Avoid unnecessary abstractions
+- Prefer readable execution flow
 
 ## Before Opening PR
 
@@ -450,25 +470,25 @@ See `LICENSE`.
 
 ## Near Term
 
-* transcript cleanup improvements
-* logging improvements
-* summarization implementation
-* testing
-* video downloading
+- transcript cleanup improvements
+- logging improvements
+- summarization implementation
+- testing
+- video downloading
 
 ## Mid Term
 
-* async processing
-* caching layer
-* improved CLI interface
-* expanded testing
+- async processing
+- caching layer
+- improved CLI interface
+- expanded testing
 
 ## Long Term
 
-* multi-source ingestion
-* persistent storage
-* distributed processing
-* feedback-driven filtering
+- multi-source ingestion
+- persistent storage
+- distributed processing
+- feedback-driven filtering
 
 ---
 
@@ -482,7 +502,7 @@ See `LICENSE`.
 
 # Acknowledgments
 
-* Ollama contributors
-* yt-dlp ecosystem
-* Python open-source tooling community
-* Linux CLI ecosystem
+- Ollama contributors
+- yt-dlp ecosystem
+- Python open-source tooling community
+- Linux CLI ecosystem
