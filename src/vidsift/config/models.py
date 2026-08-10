@@ -146,12 +146,19 @@ class ChannelConfig(BaseModel):
         return self
 
 
+class JSRuntimesConfig(BaseModel):
+    model_config = ConfigDict(frozen=True)
+    name: Literal["deno", "node", "bun", "quickjs"]
+    path: str | None = None
+
+
 class YtDlpBaseConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
     max_retries: int | Literal["infinite"] = Field(ge=0)
     sleep_requests: int = Field(ge=0)
     cookies_from_browser: str
     quiet: bool
+    js_runtimes: list[JSRuntimesConfig]
 
 
 class YtDlpDownloadConfig(BaseModel):

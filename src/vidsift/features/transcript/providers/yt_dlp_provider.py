@@ -7,12 +7,15 @@ from yt_dlp import YoutubeDL
 from yt_dlp.utils import DownloadCancelled, DownloadError
 
 from vidsift.config.models import AppConfig
-from vidsift.features.transcript.errors import (TranscriptDownloadError,
-                                                TranscriptError,
-                                                TranscriptNotFoundError,
-                                                VTTFileReadingError)
+from vidsift.features.transcript.errors import (
+    TranscriptDownloadError,
+    TranscriptError,
+    TranscriptNotFoundError,
+    VTTFileReadingError,
+)
 from vidsift.features.transcript.providers.base import TranscriptProvider
 from vidsift.models.video import Video
+from vidsift.shared.config_helpers import get_js_runtimes_config
 from vidsift.shared.logging.log_event_fields import LogEvent
 
 logger = logging.getLogger(__name__)
@@ -43,12 +46,17 @@ class YtDlpTranscriptProvider(TranscriptProvider):
             "outtmpl": "/tmp/vidsift/%(id)s.%(lang)s.%(ext)s",
             "remote-components": "ejs/github",
             "quiet": yt_dlp_config.base.quiet,
+            "js_runtimes": get_js_runtimes_config(yt_dlp_config.base.js_runtimes),
             "max_retries": yt_dlp_config.base.max_retries,
         }
 
         logger.info(
             "Starting transcript provider attempt using yt-dlp.",
-            extra={"event": LogEvent.TRANSCRIPT_PROVIDER_STARTED, "video_id": video_id, "provider": "yt_dlp"},
+            extra={
+                "event": LogEvent.TRANSCRIPT_PROVIDER_STARTED,
+                "video_id": video_id,
+                "provider": "yt_dlp",
+            },
         )
 
         with YoutubeDL(ydl_opts) as ydl:
@@ -57,19 +65,31 @@ class YtDlpTranscriptProvider(TranscriptProvider):
             except DownloadError as e:
                 logger.exception(
                     f"Transcript provider failed: {str(e)}",
-                    extra={"event": LogEvent.TRANSCRIPT_PROVIDER_FAILED,"video_id": video_id, "provider": "yt_dlp"},
+                    extra={
+                        "event": LogEvent.TRANSCRIPT_PROVIDER_FAILED,
+                        "video_id": video_id,
+                        "provider": "yt_dlp",
+                    },
                 )
                 raise TranscriptDownloadError(str(e))
             except DownloadCancelled as e:
                 logger.exception(
                     f"Transcript provider cancelled: {str(e)}",
-                    extra={"event": LogEvent.TRANSCRIPT_PROVIDER_FAILED,"video_id": video_id, "provider": "yt_dlp"},
+                    extra={
+                        "event": LogEvent.TRANSCRIPT_PROVIDER_FAILED,
+                        "video_id": video_id,
+                        "provider": "yt_dlp",
+                    },
                 )
                 raise TranscriptDownloadError(str(e))
             except Exception as e:
                 logger.exception(
                     f"Transcript provider unknown error: {str(e)}",
-                    extra={"event": LogEvent.TRANSCRIPT_PROVIDER_FAILED,"video_id": video_id, "provider": "yt_dlp"},
+                    extra={
+                        "event": LogEvent.TRANSCRIPT_PROVIDER_FAILED,
+                        "video_id": video_id,
+                        "provider": "yt_dlp",
+                    },
                 )
                 raise TranscriptError(str(e))
             except BaseException:
@@ -77,7 +97,11 @@ class YtDlpTranscriptProvider(TranscriptProvider):
             else:
                 logger.info(
                     "Transcript provider completed successfully.",
-                    extra={"event": LogEvent.TRANSCRIPT_PROVIDER_COMPLETED,"video_id": video_id, "provider": "yt_dlp"},
+                    extra={
+                        "event": LogEvent.TRANSCRIPT_PROVIDER_COMPLETED,
+                        "video_id": video_id,
+                        "provider": "yt_dlp",
+                    },
                 )
 
     def find_vtt_file(self, video_id: str) -> Path:
@@ -88,7 +112,9 @@ class YtDlpTranscriptProvider(TranscriptProvider):
         """
         for tmp_file in Path("/tmp/vidsift/").iterdir():
             if Path(tmp_file).is_file():
-                if str(Path(tmp_file)).endswith(".vtt") and str(Path(tmp_file).name).startswith(video_id):
+                if str(Path(tmp_file)).endswith(".vtt") and str(
+                    Path(tmp_file).name
+                ).startswith(video_id):
                     return tmp_file
         raise TranscriptNotFoundError(
             f"No .vtt transcript file got found under /tmp/vidsift/ with the video id {video_id}"
@@ -105,9 +131,13 @@ class YtDlpTranscriptProvider(TranscriptProvider):
             with open(vtt_file) as file:
                 vtt_content = file.read()
         except FileNotFoundError:
-            raise TranscriptNotFoundError(f"No .vtt transcript found under {str(vtt_file)}")
+            raise TranscriptNotFoundError(
+                f"No .vtt transcript found under {str(vtt_file)}"
+            )
         except PermissionError:
-            raise VTTFileReadingError(f"Reading permissions are missing for {str(vtt_file)}")
+            raise VTTFileReadingError(
+                f"Reading permissions are missing for {str(vtt_file)}"
+            )
         else:
             vtt_content_list: list[str] = vtt_content.splitlines()
             transcript: list[str] = []
@@ -116,9 +146,17 @@ class YtDlpTranscriptProvider(TranscriptProvider):
                     continue
                 if line == "":
                     continue
-                if "WEBVTT" == line or "Kind: captions" == line or "Language: en" == line:
+                if (
+                    "WEBVTT" == line
+                    or "Kind: captions" == line
+                    or "Language: en" == line
+                ):
                     continue
-                if "-->" in line or line == "" or line in ["WEBVTT", "Kind: captions", "Language: en"]:
+                if (
+                    "-->" in line
+                    or line == ""
+                    or line in ["WEBVTT", "Kind: captions", "Language: en"]
+                ):
                     continue
                 line = re.sub(r"<[^>]+>", "", line)
                 try:
@@ -139,37 +177,62 @@ class YtDlpTranscriptProvider(TranscriptProvider):
 
         try:
             self.fetch_transcript(video.url, video.video_id)
-            transcript_str = self.convert_vtt_to_str(vtt_file=self.find_vtt_file(video_id=video.video_id))
+            transcript_str = self.convert_vtt_to_str(
+                vtt_file=self.find_vtt_file(video_id=video.video_id)
+            )
         except TranscriptNotFoundError as e:
             logger.warning(
                 f"TranscriptNotFoundError: {str(e)}",
-                extra={"event": LogEvent.TRANSCRIPT_FETCH_FAILED, "video_id": video.video_id},
+                extra={
+                    "event": LogEvent.TRANSCRIPT_FETCH_FAILED,
+                    "video_id": video.video_id,
+                },
             )
-            raise TranscriptError(f"Failed to get the transcript of {video.video_id} with yt-dlp")
+            raise TranscriptError(
+                f"Failed to get the transcript of {video.video_id} with yt-dlp"
+            )
         except TranscriptDownloadError as e:
             logger.warning(
                 f"TranscriptDownloadError: Failed to download transcript: {str(e)}",
-                extra={"event": LogEvent.TRANSCRIPT_FETCH_FAILED, "video_id": video.video_id},
+                extra={
+                    "event": LogEvent.TRANSCRIPT_FETCH_FAILED,
+                    "video_id": video.video_id,
+                },
             )
-            raise TranscriptError(f"Failed to get the transcript of {video.video_id} with yt-dlp")
+            raise TranscriptError(
+                f"Failed to get the transcript of {video.video_id} with yt-dlp"
+            )
         except VTTFileReadingError as e:
             logger.warning(
                 f"VTTFileReadingError: Failed to read transcript file: {str(e)}",
-                extra={"event": LogEvent.TRANSCRIPT_FETCH_FAILED, "video_id": video.video_id},
+                extra={
+                    "event": LogEvent.TRANSCRIPT_FETCH_FAILED,
+                    "video_id": video.video_id,
+                },
             )
-            raise TranscriptError(f"TranscriptError: Failed to download the transcript of {video.video_id}: {str(e)}")
+            raise TranscriptError(
+                f"TranscriptError: Failed to download the transcript of {video.video_id}: {str(e)}"
+            )
         except TranscriptError as e:
             logger.warning(
                 f"TranscriptError: Failed to fetch transcript: {str(e)}",
-                extra={"event": LogEvent.TRANSCRIPT_FETCH_FAILED, "video_id": video.video_id},
+                extra={
+                    "event": LogEvent.TRANSCRIPT_FETCH_FAILED,
+                    "video_id": video.video_id,
+                },
             )
             raise
         except Exception as e:
             logger.warning(
                 f"Exception: Failed to fetch transcript: {str(e)}",
-                extra={"event": LogEvent.TRANSCRIPT_FETCH_FAILED, "video_id": video.video_id},
+                extra={
+                    "event": LogEvent.TRANSCRIPT_FETCH_FAILED,
+                    "video_id": video.video_id,
+                },
             )
-            raise TranscriptError(f"TranscriptError: Failed to download the transcript of {video.video_id}: {str(e)}")
+            raise TranscriptError(
+                f"TranscriptError: Failed to download the transcript of {video.video_id}: {str(e)}"
+            )
         else:
             return transcript_str
 
