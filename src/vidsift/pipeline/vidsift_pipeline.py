@@ -233,15 +233,19 @@ class VidsiftOrchestrator:
         self,
         vid: Video,
         reason: Literal["livestream", "members-only"],
-        channel_lookup: dict[str, ChannelConfig]
+        channel_lookup: dict[str, ChannelConfig],
+        exception: bool
     ):
         match reason:
             case "livestream":
                 logger.info(
-                    f"Skipped video with video id {vid.video_id} with title '{vid.title}' because it is a livestream that will begin in the future",
+                    f"Skipped video with video id {vid.video_id} with title '{vid.title}' because it is a livestream."
+                    if not exception else
+                    f"Skipped video with video id {vid.video_id} with title '{vid.title}' because it is probably a livestream.",
                     extra={
                         "event": LogEvent.VIDEO_FILTERING_COMPLETED,
                         "passed": False,
+                        "error_msg_parsed": str(exception),
                         "reason": "livestream",
                         "video_id": vid.video_id,
                         "channel_id": vid.channel_id,
@@ -249,9 +253,13 @@ class VidsiftOrchestrator:
                 )
             case "members-only":
                 logger.info(
-                    f"Skipped video with video id {vid.video_id} with title '{vid.title}' because it is members-only content",
+                    f"Skipped video with video id {vid.video_id} with title '{vid.title}' because it is members-only content"
+                    if not exception else
+                    f"Skipped video with video id {vid.video_id} with title '{vid.title}' because it is probably members-only content",
                     extra={
                         "event": LogEvent.VIDEO_FILTERING_COMPLETED,
+                        "passed": False,
+                        "error_msg_parsed": str(exception),
                         "reason": "members-only",
                         "video_id": vid.video_id,
                         "channel_id": vid.channel_id,
@@ -267,7 +275,7 @@ class VidsiftOrchestrator:
                 decision="discarded",
                 quality_score=0.0,
                 topic_match_score=0.0,
-                reason="Filterd out because it is a livestream that will begin in the future" if reason == "livestream" else "Filtered out because it is members-only content",
+                reason="Filterd out because it is a livestream." if reason == "livestream" else "Filtered out because it is members-only content",
             )
             self.video_db.update_after_done(
                 video_id=vid.video_id, decision="discarded"
@@ -306,11 +314,11 @@ class VidsiftOrchestrator:
                     or str(e).endswith("days.")
                 ):
                     # if it is a livestream
-                    self._filter_video_out(vid=vid, reason="livestream", channel_lookup=channel_lookup)
+                    self._filter_video_out(vid=vid, reason="livestream", channel_lookup=channel_lookup, exception=True)
                     return False  # it is a livestream that will begin in the future
             if "Join this channel to get access to members-only content like this video, and other exclusive perks." in str(e):
                 # it is members-only content
-                self._filter_video_out(vid=vid, reason="members-only", channel_lookup=channel_lookup)
+                self._filter_video_out(vid=vid, reason="members-only", channel_lookup=channel_lookup, exception=True)
                 return False
 
             # on other error
@@ -330,27 +338,11 @@ class VidsiftOrchestrator:
             return False
         except BaseException:
             raise
-
-        if passes is False:
-            logger.info(
-                f"Skipped video with video id {vid.video_id} with title {vid.title} because it is {reason}.",
-                extra={
-                    "event": LogEvent.VIDEO_FILTERING_COMPLETED,
-                    "passes": False,
-                    "video_id": vid.video_id,
-                    "channel_id": vid.channel_id,
-                },
-            )
-            self.video_db.save_validation_result(
-                video_id=vid.video_id,
-                decision="discarded",
-                quality_score=0.0,
-                topic_match_score=0.0,
-                reason=str(reason),
-            )
-            self.video_db.update_after_done(video_id=vid.video_id, decision="discarded")
-            return False
-        return True
+        else:
+            if passes is False:
+                self._filter_video_out(vid=vid, reason=reason, channel_lookup=channel_lookup, exception=False)
+                return False
+            return True
 
     def execute_processing_step(
         self,
