@@ -21,12 +21,15 @@ from vidsift.config.models import AppConfig, ChannelConfig
 from vidsift.features.download.downloader import VideoDownloader
 from vidsift.features.transcript.errors import TranscriptError
 from vidsift.features.validation.errors import VideoValidationError
-from vidsift.features.video_processing.repository import VideoProcessingRepository
-from vidsift.ingestion.errors import VideoDataCollectionError, VideoFilteringError
+from vidsift.features.video_processing.repository import \
+    VideoProcessingRepository
+from vidsift.ingestion.errors import (VideoDataCollectionError,
+                                      VideoFilteringError)
 from vidsift.ingestion.video_filter import VideoFilter
 from vidsift.models.validation.validation_result import ValidationResult
 from vidsift.models.video import InvalidVideoError, Video
-from vidsift.models.video_record import VideoProcessingRecord, VideoProcessingStatus
+from vidsift.models.video_record import (VideoProcessingRecord,
+                                         VideoProcessingStatus)
 from vidsift.services.summarization_service import SummarizationService
 from vidsift.services.transcript_service import TranscriptService
 from vidsift.services.validation_service import VideoValidator
@@ -528,22 +531,22 @@ class VidsiftOrchestrator:
             },
         )
 
-    def resume_livestream_checks(self):
-        # resume livestream checks that got interrupted (due to an error)
+    def resume_filtering(self):
+        # resume fitlering that got interrupted (due to an error)
         logger.debug(
-            "Check for videos where livestream check got interrupted...",
-            extra={"event": LogEvent.LIVESTREAM_CHECK_RESUME_STARTED},
+            "Check for videos that got interrupted while filtering...",
+            extra={"event": LogEvent.VIDEO_FILTERING_RESUME_STARTED},
         )
-        livestream_check_generator: Generator[VideoProcessingRecord, None, None] = (
+        filtering_videos: Generator[VideoProcessingRecord, None, None] = (
             self.video_db.get_by_status("filtering")
         )
         channel_lookup = get_channel_lookup(self.config.channels)
-        for video in livestream_check_generator:
+        for video in filtering_videos:
             vid: Video = Video.from_cache(video_db_row=video)
             logger.info(
-                f"Processing video with video id '{vid.video_id}' that got interrupted while checking wether it is a livestream",
+                f"Processing video with video id '{vid.video_id}' that got interrupted while filtering",
                 extra={
-                    "event": LogEvent.PROCESSING_LIVESTREAM_CHECK_RESUME,
+                    "event": LogEvent.PROCESSING_VIDEO_FILTERING_RESUME,
                     "video_id": vid.video_id,
                     "channel_id": vid.channel_id,
                 },
@@ -555,9 +558,9 @@ class VidsiftOrchestrator:
             ):
                 self.process_video(vid=vid, channel_lookup=channel_lookup)
         logger.debug(
-            "Check for videos where the livestream check got interrupted... Done",
+            "Check for videos where filtering got interrupted... Done",
             extra={
-                "event": LogEvent.LIVESTREAM_CHECK_RESUME_COMPLETED,
+                "event": LogEvent.VIDEO_FILTERING_RESUME_COMPLETED,
             },
         )
 
@@ -724,7 +727,7 @@ class VidsiftOrchestrator:
             "Starting to process interrupted videos",
             extra={"event": LogEvent.INTERRUPTED_PROCESSING_STARTED},
         )
-        self.resume_livestream_checks()
+        self.resume_filtering()
         self.resume_validations()
         self.resume_downloads()
         self.resume_summaries()

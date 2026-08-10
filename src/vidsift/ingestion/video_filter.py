@@ -26,7 +26,7 @@ class VideoFilter:
             return self.ydl.extract_info(vid.url, download=False)
         except Exception as e:
             raise VideoFilteringError(
-                f"Error while checking if video is livestream: {e}"
+                f"Error while filtering video: {e}"
             )
 
     def run_filters(
