@@ -64,6 +64,7 @@ class PreValidator:
         logger.debug(
             "Calculated title emoji ratio.",
             extra={
+                "event": LogEvent.PRE_VALIDATION_EMOJI_RATIO_CALCULATED,
                 "emoji_count": emoji.emoji_count(title),
                 "title_length": len(title),
                 "emoji_ratio": emoji.emoji_count(title) / max(len(title), 1),

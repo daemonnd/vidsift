@@ -94,6 +94,7 @@ class LogEvent:
     PRE_VALIDATION_FAILED = "pre_validation_failed"
 
     # video validation events
+    PRE_VALIDATION_EMOJI_RATIO_CALCULATED = "pre_validation_emoji_ratio_calculated"
     VIDEO_VALIDATION_STARTED = "video_validation_started"
     VIDEO_VALIDATION_FAILED = "video_validation_failed"
     VIDEO_VALIDATION_COMPLETED = "video_validation_completed"
