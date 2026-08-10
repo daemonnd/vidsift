@@ -3,7 +3,8 @@ from pathlib import Path
 from rich.console import Console
 
 from vidsift.cli.autocomplete import complete_channel_ids
-from vidsift.features.video_processing.repository import VideoProcessingRepository
+from vidsift.features.video_processing.repository import \
+    VideoProcessingRepository
 from vidsift.models.video_record import VideoProcessingStatus
 from vidsift.shared.paths import PROCESSED_VIDEOS_DB
 
@@ -94,7 +95,7 @@ def handle_videos_list(args, config):
         repo.close()
 
 
-def handle_videos_set_status(args, config):
+def handle_videos_set_status(args, config, run_id):
     repo = VideoProcessingRepository(config=config)
     match args.status:  # args.status can only be "downloading", "summarizing", "validating", "failed", "done", because that is set in the choices
         case "downloading":
@@ -118,7 +119,7 @@ def handle_videos_set_status(args, config):
         repo.close()
 
 
-def handle_videos_delete(args, config):
+def handle_videos_delete(args, config, run_id):
     repo = VideoProcessingRepository(config=config)
     try:
         repo.del_row(video_id=args.video_id)
@@ -126,5 +127,5 @@ def handle_videos_delete(args, config):
         repo.close()
 
 
-def handle_db_path_print(args, config):
+def handle_db_path_print(args, config, run_id):
     print(PROCESSED_VIDEOS_DB)

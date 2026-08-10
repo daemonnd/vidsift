@@ -14,24 +14,17 @@ from uuid import uuid7
 from pydantic import ValidationError
 
 from vidsift.cli.main import parse_args
-from vidsift.config.errors import (
-    ConfigError,
-    ConfigFileNotFoundError,
-    ConfigFilePermissionError,
-    ConfigValidationError,
-    InvalidConfigError,
-)
+from vidsift.config.errors import (ConfigError, ConfigFileNotFoundError,
+                                   ConfigFilePermissionError,
+                                   ConfigValidationError, InvalidConfigError)
 from vidsift.config.loader import load_config
 from vidsift.config.models import AppConfig
 from vidsift.features.initialization.init_vidsift import InitVidsift
 from vidsift.models.video import InvalidVideoError
 from vidsift.runtime.check_basic_requirements import BasicInit
 from vidsift.runtime.errors import BasicInitError
-from vidsift.shared.execution_context import (
-    RunContext,
-    reset_run_context,
-    set_run_context,
-)
+from vidsift.shared.execution_context import (RunContext, reset_run_context,
+                                              set_run_context)
 from vidsift.shared.logging.bootstrap_logger import setup_bootstrap_logging
 from vidsift.shared.logging.config import configure_logging
 from vidsift.shared.logging.log_event_fields import LogEvent
@@ -64,8 +57,8 @@ class VidsiftCLI:
         self.args = parse_args()
 
         # the args.command will not change with any cli overrides so it is safe to do this before applying the overrides
-        run_context = RunContext(run_id=uuid7())
-        self.run_token = set_run_context(run_context)
+        self.run_context = RunContext(run_id=uuid7())
+        self.run_token = set_run_context(self.run_context)
         # check wether command is init to repair basic requirements before exit
         if self.args.command == "init":
             vidsift_init: InitVidsift = InitVidsift(force=self.args.force)
@@ -256,7 +249,7 @@ class VidsiftCLI:
         # execute args command
         if hasattr(self.args, "func"):
             try:
-                self.args.func(self.args, self.config)
+                self.args.func(self.args, self.config, self.run_context.run_id)
             except InvalidVideoError as e:
                 self.logger.critical(
                     f"InvalidVideoError: Failed to create a video object to process videos: {str(e)}, exiting",

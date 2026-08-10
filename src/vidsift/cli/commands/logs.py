@@ -62,7 +62,7 @@ Default format: $timestamp $run_id $level: $event $message
     return logs_parser
 
 
-def handle_logs(args, config):
+def handle_logs(args, config, run_id):
     viewer = LogViewer(
         config=config,
         log_opts=LogDisplayOpts(

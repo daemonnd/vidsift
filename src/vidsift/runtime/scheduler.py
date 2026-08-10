@@ -1,6 +1,7 @@
 import logging
 from contextvars import Token
 from time import sleep
+from uuid import UUID
 
 from vidsift.config.models import AppConfig
 from vidsift.pipeline.vidsift_pipeline import VidsiftOrchestrator
@@ -16,11 +17,13 @@ class BackgroundServiceManager:
             self,
         orchestrator: VidsiftOrchestrator,
         config: AppConfig,
-        locking_interval: float = 10
+        run_id: UUID,
+        locking_interval: float = 10,
     ) -> None:
         self.orchestrator: VidsiftOrchestrator = orchestrator
         self.config: AppConfig = config
         self.locking_interval = locking_interval
+        self.run_id = run_id
 
     def run(
         self,
@@ -37,7 +40,7 @@ class BackgroundServiceManager:
         token: None | Token = None
         try:
             while True:
-                run_manager = RunManager()
+                run_manager = RunManager(self.run_id)
                 token = run_manager.start_run(sleep_interval=self.locking_interval, run_type="schedule_run")
                 try:
                     self.orchestrator.run()

@@ -31,7 +31,7 @@ class LockManager:
         Method to acquire the lock
         Waits until lock is free
         """
-        first_run = True
+        start = time.perf_counter()
         while True:
             try:
                 self.lock.acquire()
@@ -56,12 +56,9 @@ class LockManager:
                 fh.flush()
 
             except LockException:
-                if first_run:
-                    print("""
-                        Another vidsift instance is currently running.
-                        Waiting for lock release...
-                    """)
-                    first_run = False
+                print(
+                    f"Lock is held by another process. ({time.perf_counter() - start:.2f}s elapsed) Waiting for lock to be released..."
+                )
                 sleep(self.sleep_interval)
             except (PermissionError, FileNotFoundError) as e:
                 raise LockWritingError(str(e))
