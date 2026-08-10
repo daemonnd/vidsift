@@ -23,8 +23,8 @@ def register_run(subparsers):
     return run_parser
 
 
-def handle_pipeline_run(args, config):
-    run_manager = RunManager()
+def handle_pipeline_run(args, config, run_id):
+    run_manager = RunManager(run_id)
     run_manager.start_run(run_type="manual_pipeline_run")
 
     try:

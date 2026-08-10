@@ -31,10 +31,11 @@ def register_schedule(subparsers):
     return schedule_parser
 
 
-def handle_background_service(args, config):
+def handle_background_service(args, config, run_id):
     background_service_manager = BackgroundServiceManager(
         orchestrator=VidsiftOrchestrator(config=config),
         config=config,
+        run_id=run_id,
     )
     if args.sleep_interval:
         background_service_manager.run(sleep_interval=args.sleep_interval)

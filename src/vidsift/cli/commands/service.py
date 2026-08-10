@@ -39,7 +39,7 @@ def register_service(subparsers):
     return schedule_parser
 
 
-def handle_background_service(args, config):
+def handle_background_service(args, config, run_id):
     bg_runner_service = BgRunnserService()
     if args.enable:
         bg_runner_service.install_service()

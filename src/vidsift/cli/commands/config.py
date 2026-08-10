@@ -26,7 +26,7 @@ def register_config(subparsers):
     return config_parser
 
 
-def handle_config(args, config):
+def handle_config(args, config, run_id):
     if args.file:
         if args.config:
             CONFIG_FILE_PATH = args.config
