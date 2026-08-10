@@ -2,31 +2,33 @@
 File for managing the AI usage.
 It runs the AI and generates the prompts for it
 """
+
 from pathlib import Path
 
-from platformdirs import user_config_dir
-
 from vidsift.config.models import AppConfig
+from vidsift.shared.paths import VIDSIFT_CONFIG_PROMPTS_DIR
 
 
 class PromptManager:
     def __init__(self, system_prompt_file_name: str, config: AppConfig) -> None:
         self.config: AppConfig = config
-        self.sys_prompt_file: Path = (Path(user_config_dir("vidsift")) / "system_prompts" / system_prompt_file_name)
+        self.sys_prompt_file: Path = (
+            VIDSIFT_CONFIG_PROMPTS_DIR / system_prompt_file_name
+        )
         if not system_prompt_file_name:
             self.system_prompt: str = ""
         else:
             with open(self.sys_prompt_file, "r") as f:
                 self.system_prompt: str = f.read()
 
-
-    def generate_prompt(self,
-                        system_prompt: str = "",
-                        pattern: str = "",
-                        replacement: str = "",
-                        prepend: str = "",
-                        append: str = "",
-                        ) -> str:
+    def generate_prompt(
+        self,
+        system_prompt: str = "",
+        pattern: str = "",
+        replacement: str = "",
+        prepend: str = "",
+        append: str = "",
+    ) -> str:
         """
         Method to generate a prompt out of the given system prompt, and the parameters
         """
@@ -44,7 +46,6 @@ class PromptManager:
 
         # return with append and prepend
         return f"{prepend}{prompt}{append}"
-
 
     def get_system_prompt(self) -> str:
         """

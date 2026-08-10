@@ -120,6 +120,33 @@ thinking = true
 # use vidsift videos list --status failed to list all the failed videos
 max_retry_attempts = 1
 
+
+# wether interrupted videos should be processed in the first place
+# When false, they will be processed before checking for any new videos.
+# It is recommended to keep the value false because else
+# if vidsift gets interrupted because of missing internet connection,
+# a pc shutdown, or a failure with one video
+# the video that was being processed gets skipped
+# CLI Override:
+# --skip-interrupted to set this setting to true
+
+skip_interrupted_vids = false
+
+
+# same as skip_interrupted_vids, but applies to new videos.
+# When false, vidsift will check for new videos
+# When true, vidsift will not check for any new videos
+# It is recommended to keep the value false because else 
+# no new videos get processed.
+
+# CLI Override:
+# --skip-new
+# When the value is false, it disables:
+# - video_processing.days_uploaded_before
+# - video_fetching block
+skip_new_vids = false
+
+
 # How recent videos should be.
 # The RSS feeds can contain month or even year old videos that may not be wanted
 # This limits the newly processed videos to the upload date between today and today - the value
@@ -136,7 +163,8 @@ min_vid_delay = 300 # 5 minutes
 # int(< 10)
 random_vid_delay = 240 # 4 minutes
 
-[video_processing.yt_dlp.base]
+
+[video_processing.yt_dlp.base] # wether interrupted videos should be processed
 # all of these settings are passed to yt-dlp, so you can use any yt-dlp setting here
 # yt-dlp is used for data fetching for one video (including filtering), transcript fetching, video download
 max_retries = 10

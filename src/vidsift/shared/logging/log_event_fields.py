@@ -9,11 +9,21 @@ class LogEvent:
         """
         match general_event:
             case "download":
-                return LogEvent.VIDEO_DOWNLOAD_STARTED, LogEvent.VIDEO_DOWNLOAD_COMPLETED, LogEvent.VIDEO_DOWNLOAD_FAILED
+                return (
+                    LogEvent.VIDEO_DOWNLOAD_STARTED,
+                    LogEvent.VIDEO_DOWNLOAD_COMPLETED,
+                    LogEvent.VIDEO_DOWNLOAD_FAILED,
+                )
             case "summarize":
-                return LogEvent.VIDEO_SUMMARIZATION_STARTED, LogEvent.VIDEO_SUMMARIZATION_COMPLETED, LogEvent.VIDEO_SUMMARIZATION_FAILED
+                return (
+                    LogEvent.VIDEO_SUMMARIZATION_STARTED,
+                    LogEvent.VIDEO_SUMMARIZATION_COMPLETED,
+                    LogEvent.VIDEO_SUMMARIZATION_FAILED,
+                )
+
     # run events
     RUN_STARTED = "run_started"
+    CONFIG_LOADED = "config_loaded"
     RUN_COMPLETED = "run_completed"
     # orchestrator events
     ORCHESTRATOR_STARTED = "orchestrator_started"
@@ -24,7 +34,6 @@ class LogEvent:
     MANUAL_DOWNLOAD_RUN_STARTED = "manual_download_run_started"
     MANUAL_SUMMARIZATION_RUN_STARTED = "manual_summarization_run_started"
 
-
     # invalid video event
     INVALID_VIDEO = "invalid_video"
 
@@ -33,12 +42,16 @@ class LogEvent:
     INTERRUPTED_PROCESSING_COMPLETED = "interrupted_processing_completed"
 
     LIVESTREAM_CHECK_RESUME_STARTED = "livestream_check_resume_started"
+    PROCESSING_LIVESTREAM_CHECK_RESUME = "processing_livestream_check_resume"
     LIVESTREAM_CHECK_RESUME_COMPLETED = "livestream_check_resume_completed"
     VALIDATION_RESUME_STARTED = "validation_resume_started"
+    PROCESSING_VALIDATION_RESUME = "processing_validation_resume"
     VALIDATION_RESUME_COMPLETED = "validation_resume_completed"
     DOWNLOAD_RESUME_STARTED = "download_resume_started"
+    PROCESSING_DOWNLOAD_RESUME = "processing_download_resume"
     DOWNLOAD_RESUME_COMPLETED = "download_resume_completed"
     SUMMARIZATION_RESUME_STARTED = "summarization_resume_started"
+    PROCESSING_SUMMARIZATION_RESUME = "processing_summarization_resume"
     SUMMARIZATION_RESUME_COMPLETED = "summarization_resume_completed"
 
     # video delay events
@@ -52,15 +65,20 @@ class LogEvent:
     VIDEO_PROCESSING_COMPLETED = "video_processing_completed"
     VIDEO_PROCESSING_FAILED = "video_processing_failed"
 
+    NO_VIDEO_GETS_PROCESSED = "no_video_gets_processed"
+
     # rss fetching events
     RSS_FETCH_STARTED = "rss_fetch_started"
     RSS_FETCH_FAILED = "rss_fetch_failed"
     RSS_FETCH_COMPLETED = "rss_fetch_completed"
 
+    RSS_CHANNEL_FETCH_STARTED = "rss_channel_fetch_started"
+    RSS_CHANNEL_FETCH_FAILED = "rss_channel_fetch_failed"
+
     # yt-dlp fetching events
-    YT_DLP_FETCH_STARTED = "yt_dlp_fetch_started"
-    YT_DLP_FETCH_FAILED = "yt_dlp_fetch_failed"
-    YT_DLP_FETCH_COMPLETED = "yt_dlp_fetch_completed"
+    YT_DLP_CHANNEL_FETCH_STARTED = "yt_dlp_fetch_started"
+    YT_DLP_CHANNEL_FETCH_FAILED = "yt_dlp_fetch_failed"
+    YT_DLP_CHANNEL_FETCH_COMPLETED = "yt_dlp_fetch_completed"
 
     # video filtering events
     LIVESTREAM_CHECK_STARTED = "livestream_check_started"
@@ -122,7 +140,6 @@ class LogEvent:
     SCHEDULER_FAILED = "scheduler_failed"
     SCHEDULER_COOLDOWN_STARTED = "scheduler_cooldown_started"
     SCHEDULER_COOLDOWN_COMPLETED = "scheduler_cooldown_completed"
-
 
     # locking events
     LOCK_ACQUIRED = "lock_acquired"

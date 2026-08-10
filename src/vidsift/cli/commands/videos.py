@@ -1,14 +1,11 @@
-import json
 from pathlib import Path
 
-from platformdirs import user_data_dir
 from rich.console import Console
 
 from vidsift.cli.autocomplete import complete_channel_ids
-from vidsift.features.video_processing.repository import \
-    VideoProcessingRepository
+from vidsift.features.video_processing.repository import VideoProcessingRepository
 from vidsift.models.video_record import VideoProcessingStatus
-from vidsift.shared.text_normalizer import TextNormalizer
+from vidsift.shared.paths import PROCESSED_VIDEOS_DB
 
 
 def register_videos(subparsers):
@@ -19,7 +16,7 @@ def register_videos(subparsers):
     videos_parser.add_argument(
         "--show-db-path",
         help="Show the absolute path to the video processing database",
-        action="store_true"
+        action="store_true",
     )
     videos_parser.set_defaults(func=handle_db_path_print)
     videos_subparsers = videos_parser.add_subparsers(
@@ -30,60 +27,49 @@ def register_videos(subparsers):
         help="list already processed videos",
     )
     video_list.add_argument(
-        "-s", "--status",
+        "-s",
+        "--status",
         help="filter by processing status ('downloading', 'summarizing', 'done', 'failed', 'validating'",
-        choices=["downloading", "summarizing", "done", "failed", "validating"]
+        choices=["downloading", "summarizing", "done", "failed", "validating"],
     )
 
     video_list.add_argument(
-        "--video-id",
-        help="only show the db entry with the matching video id"
+        "--video-id", help="only show the db entry with the matching video id"
     )
 
     video_list.add_argument(
-        "--channel-id",
-        help="only show the db entries with the matching channel id"
+        "--channel-id", help="only show the db entries with the matching channel id"
     ).completer = complete_channel_ids
 
-    video_list.set_defaults(
-        func=handle_videos_list
-    )
+    video_list.set_defaults(func=handle_videos_list)
 
     video_set_status = videos_subparsers.add_parser(
-        "set-status",
-        help="Set the status of <video id> to <status>"
+        "set-status", help="Set the status of <video id> to <status>"
     )
-    video_set_status.add_argument(
-        "--video-id",
-        help="ID of the target video"
-    )
+    video_set_status.add_argument("--video-id", help="ID of the target video")
     video_set_status.add_argument(
         "--status",
         help="Target status of video",
-        choices=["downloading", "summarizing", "done", "failed", "validating"]
+        choices=["downloading", "summarizing", "done", "failed", "validating"],
     )
     video_set_status.add_argument(
         "--reset-failed-attempts",
         help="Set the failed attempts amount to 0 (only recommended if setting the status to done or testing)",
-        action="store_true"
+        action="store_true",
     )
 
-    video_set_status.set_defaults(
-        func=handle_videos_set_status
-    )
+    video_set_status.set_defaults(func=handle_videos_set_status)
 
     videos_delete_one = videos_subparsers.add_parser(
-        "rm",
-        help="Delete a video from the database so it can be reprocessed"
+        "rm", help="Delete a video from the database so it can be reprocessed"
     )
     videos_delete_one.add_argument(
-        "--video-id",
-        help="ID of the target video",
-        required=True
+        "--video-id", help="ID of the target video", required=True
     )
     videos_delete_one.set_defaults(func=handle_videos_delete)
 
     return videos_parser
+
 
 def handle_videos_list(args, config):
     repo = VideoProcessingRepository(config=config)
@@ -102,15 +88,15 @@ def handle_videos_list(args, config):
         else:
             videos = repo.get_all()
 
-
         for video in videos:
             console.print(video)
     finally:
         repo.close()
 
+
 def handle_videos_set_status(args, config):
     repo = VideoProcessingRepository(config=config)
-    match args.status: # args.status can only be "downloading", "summarizing", "validating", "failed", "done", because that is set in the choices
+    match args.status:  # args.status can only be "downloading", "summarizing", "validating", "failed", "done", because that is set in the choices
         case "downloading":
             target_status = VideoProcessingStatus.DOWNLOADING
         case "summarizing":
@@ -131,14 +117,14 @@ def handle_videos_set_status(args, config):
     finally:
         repo.close()
 
+
 def handle_videos_delete(args, config):
     repo = VideoProcessingRepository(config=config)
     try:
-        repo.del_row(
-            video_id=args.video_id
-        )
+        repo.del_row(video_id=args.video_id)
     finally:
         repo.close()
 
+
 def handle_db_path_print(args, config):
-    print((Path(user_data_dir("vidsift")) / "processed_videos.db"))
+    print(PROCESSED_VIDEOS_DB)

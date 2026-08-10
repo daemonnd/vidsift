@@ -1,16 +1,16 @@
 import subprocess
 
-from platformdirs import user_bin_dir
 
 from vidsift.features.service.base import VidsiftService
 from vidsift.features.service.errors import ServiceExecutionError
+from vidsift.shared.paths import WIN_BIN_PATH
 
 
 class SchtasksService(VidsiftService):
     TASK_NAME = "vidsift"
 
     def install_service(self) -> None:
-        vidsift_path = rf'"{user_bin_dir()}\vidsift.exe" schedule'
+        vidsift_path = rf'"{WIN_BIN_PATH}" schedule'
 
         try:
             subprocess.run(
@@ -116,9 +116,13 @@ class SchtasksService(VidsiftService):
         except subprocess.CalledProcessError as e:
             try:
                 if result:
-                    raise ServiceExecutionError(f"Failed to get service status: {e}. STDERR: {result.stderr}") from e
+                    raise ServiceExecutionError(
+                        f"Failed to get service status: {e}. STDERR: {result.stderr}"
+                    ) from e
             except UnboundLocalError:
                 pass
-            raise ServiceExecutionError(f"Failed to get service status: {e}. STDERR is not availible.") from e
+            raise ServiceExecutionError(
+                f"Failed to get service status: {e}. STDERR is not availible."
+            ) from e
         else:
             return f"{result.stdout}\n{result.stderr}"

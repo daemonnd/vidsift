@@ -1,9 +1,6 @@
-from pathlib import Path
 from typing import Literal
 
-from platformdirs import user_config_dir
-from pydantic import (BaseModel, ConfigDict, Field, field_validator,
-                      model_validator)
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
 class ConsoleLoggingConfig(BaseModel):
@@ -11,6 +8,7 @@ class ConsoleLoggingConfig(BaseModel):
     enabled: bool
     level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
     dependency_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
+
 
 class FileLoggingConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
@@ -21,15 +19,18 @@ class FileLoggingConfig(BaseModel):
     retain_days: int = Field(ge=0, le=1000)
     utc_time: bool
 
+
 class LoggingConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
     console: ConsoleLoggingConfig
     file: FileLoggingConfig
 
+
 class VideoFetchingConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
     rss_bozo_level: Literal["permissive", "strict", "ignore", "debug"]
     yt_dlp_video_amount: int = Field(ge=0)
+
 
 class SpecificAITaskConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
@@ -41,14 +42,16 @@ class SpecificAITaskConfig(BaseModel):
     @model_validator(mode="after")
     def validate_context(self):
         if self.max_tokens > self.context_length:
-            raise ValueError(f"max_tokens value of {self.max_tokens} cannot exeed context_length which is {self.context_length}")
+            raise ValueError(
+                f"max_tokens value of {self.max_tokens} cannot exeed context_length which is {self.context_length}"
+            )
 
         return self
 
 
 class AITasksConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
- 
+
     # validation
     metadata_validation: SpecificAITaskConfig
     transcript_validation: SpecificAITaskConfig
@@ -66,7 +69,7 @@ class AIConfig(BaseModel):
     provider: Literal["ollama", "lmstudio"]
     tasks: AITasksConfig
 
-    max_allowed_json_output_runs: int = Field(ge=0,le=5)
+    max_allowed_json_output_runs: int = Field(ge=0, le=5)
     skip_ai_checks: bool = False
 
 
@@ -78,6 +81,7 @@ class PreValidationThresholdConfig(BaseModel):
     title_clickbait_ratio: float = Field(ge=0.0, le=1)
     transcript_clickbait_ratio: float = Field(ge=0.0, le=1)
 
+
 class PreValidationWeightsConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
     title_punctuation_weight: float = Field(ge=0.0, le=10)
@@ -86,28 +90,33 @@ class PreValidationWeightsConfig(BaseModel):
     title_clickbait_weight: float = Field(ge=0.0, le=10)
     transcript_clickbait_weight: float = Field(ge=0.0, le=10)
 
+
 class PreValidationConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
     max_allowed: PreValidationThresholdConfig
     weak: PreValidationThresholdConfig
     weights: PreValidationWeightsConfig
 
+
 class ValidationConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
-    #enabled: bool
+    # enabled: bool
     transcript_chunk_char_size: int = Field(ge=100)
     pre_validation: PreValidationConfig
 
+
 class SummarizationConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
-    #enabled: bool
+    # enabled: bool
     char_chunk_size: int = Field(ge=100)
     output_dir: str
 
+
 class DownloadsConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
-    #enabled: bool
+    # enabled: bool
     output_dir: str
+
 
 class ChannelConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
@@ -133,11 +142,8 @@ class ChannelConfig(BaseModel):
             return self
 
         if self.instruction is None:
-            raise ValueError(
-                "instruction is required when action is 'validate'"
-            )
+            raise ValueError("instruction is required when action is 'validate'")
         return self
-
 
 
 class YtDlpBaseConfig(BaseModel):
@@ -146,18 +152,24 @@ class YtDlpBaseConfig(BaseModel):
     sleep_requests: int = Field(ge=0)
     cookies_from_browser: str
     quiet: bool
+
+
 class YtDlpDownloadConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
     merge_output_format: str
     format: str
+
 
 class YtDlpConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
     base: YtDlpBaseConfig
     download: YtDlpDownloadConfig
 
+
 class VideoProcessingConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
+    skip_interrupted_vids: bool
+    skip_new_vids: bool
     max_retry_attempts: int = Field(le=10, ge=-1)
     days_uploaded_before: int = Field(ge=0)
     min_vid_delay: int = Field(ge=30)
@@ -175,4 +187,3 @@ class AppConfig(BaseModel):
     summarization: SummarizationConfig
     downloads: DownloadsConfig
     channels: list[ChannelConfig]
-
