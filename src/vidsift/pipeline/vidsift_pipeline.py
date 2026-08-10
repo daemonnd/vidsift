@@ -229,6 +229,49 @@ class VidsiftOrchestrator:
                 )
                 self.process_validation_pipeline(vid=vid, create_db_entry=False)
 
+    def _filter_video_out(
+        self,
+        vid: Video,
+        reason: Literal["livestream", "members-only"],
+        channel_lookup: dict[str, ChannelConfig]
+    ):
+        match reason:
+            case "livestream":
+                logger.info(
+                    f"Skipped video with video id {vid.video_id} with title '{vid.title}' because it is a livestream that will begin in the future",
+                    extra={
+                        "event": LogEvent.VIDEO_FILTERING_COMPLETED,
+                        "passed": False,
+                        "reason": "livestream",
+                        "video_id": vid.video_id,
+                        "channel_id": vid.channel_id,
+                    },
+                )
+            case "members-only":
+                logger.info(
+                    f"Skipped video with video id {vid.video_id} with title '{vid.title}' because it is members-only content",
+                    extra={
+                        "event": LogEvent.VIDEO_FILTERING_COMPLETED,
+                        "reason": "members-only",
+                        "video_id": vid.video_id,
+                        "channel_id": vid.channel_id,
+                    }
+                )
+
+        self.video_db.set_status(
+            video_id=vid.video_id, status=VideoProcessingStatus.DONE
+        )
+        if channel_lookup[vid.channel_id].action == "validate":
+            self.video_db.save_validation_result(
+                video_id=vid.video_id,
+                decision="discarded",
+                quality_score=0.0,
+                topic_match_score=0.0,
+                reason="Filterd out because it is a livestream that will begin in the future" if reason == "livestream" else "Filtered out because it is members-only content",
+            )
+            self.video_db.update_after_done(
+                video_id=vid.video_id, decision="discarded"
+            )
     def should_process(
         self,
         vid: Video,
@@ -263,31 +306,13 @@ class VidsiftOrchestrator:
                     or str(e).endswith("days.")
                 ):
                     # if it is a livestream
-                    logger.info(
-                        f"Skipped video with video id {vid.video_id} with title '{vid.title}' because it is a livestream that will begin in the future",
-                        extra={
-                            "event": LogEvent.VIDEO_FILTERING_COMPLETED,
-                            "passed": False,
-                            "reason": "livestream",
-                            "video_id": vid.video_id,
-                            "channel_id": vid.channel_id,
-                        },
-                    )
-                    self.video_db.set_status(
-                        video_id=vid.video_id, status=VideoProcessingStatus.DONE
-                    )
-                    if channel_lookup[vid.channel_id].action == "validate":
-                        self.video_db.save_validation_result(
-                            video_id=vid.video_id,
-                            decision="discarded",
-                            quality_score=0.0,
-                            topic_match_score=0.0,
-                            reason="The video is a livestream that will begin in the future",
-                        )
-                        self.video_db.update_after_done(
-                            video_id=vid.video_id, decision="discarded"
-                        )
+                    self._filter_video_out(vid=vid, reason="livestream", channel_lookup=channel_lookup)
                     return False  # it is a livestream that will begin in the future
+            if "Join this channel to get access to members-only content like this video, and other exclusive perks." in str(e):
+                # it is members-only content
+                self._filter_video_out(vid=vid, reason="members-only", channel_lookup=channel_lookup)
+                return False
+
             # on other error
             logger.exception(
                 f"VideoFilteringError: Failed to filter video '{vid.video_id}': {str(e)}",
