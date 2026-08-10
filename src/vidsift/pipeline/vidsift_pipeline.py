@@ -134,7 +134,7 @@ class VidsiftOrchestrator:
                     # if the video is already in the db, it does not get processed
                     if self.video_db.exists(video_id=vid.video_id):
                         logger.debug(
-                            f"Skipping video with video id {vid.video_id} because it was already processed.",
+                            f"Skipping video with video id '{vid.video_id}' because it was already processed.",
                             extra={
                                 "event": LogEvent.VIDEO_SKIPPED_EXISTING,
                                 "video_id": vid.video_id,
@@ -156,7 +156,7 @@ class VidsiftOrchestrator:
                         if not processing:
                             continue
                     logger.debug(
-                        f"Processing video with video id {vid.video_id} because it passed the filters",
+                        f"Processing video with video id '{vid.video_id}' because it passed the filters",
                         extra={
                             "event": LogEvent.VIDEO_FILTERING_COMPLETED,
                             "passed": True,
@@ -180,7 +180,7 @@ class VidsiftOrchestrator:
         match channel.action:
             case "download":
                 logger.info(
-                    f"Processing video with video id {vid.video_id} from {vid.author} with action download",
+                    f"Processing video with video id '{vid.video_id}' from {vid.author} with action download",
                     extra={
                         "event": LogEvent.VIDEO_DOWNLOAD_STARTED,
                         "video_id": vid.video_id,
@@ -199,7 +199,7 @@ class VidsiftOrchestrator:
                 )
             case "summarize":
                 logger.info(
-                    f"Processing video with video id {vid.video_id} from {vid.author} with action summarize",
+                    f"Processing video with video id '{vid.video_id}' from {vid.author} with action summarize",
                     extra={
                         "event": LogEvent.VIDEO_SUMMARIZATION_STARTED,
                         "video_id": vid.video_id,
@@ -220,7 +220,7 @@ class VidsiftOrchestrator:
                 )
             case "validate":
                 logger.info(
-                    f"Processing video with video id {vid.video_id} from {vid.author} with action validate",
+                    f"Processing video with video id '{vid.video_id}' from {vid.author} with action validate",
                     extra={
                         "event": LogEvent.VIDEO_VALIDATION_STARTED,
                         "video_id": vid.video_id,
@@ -239,9 +239,9 @@ class VidsiftOrchestrator:
         match reason:
             case "livestream":
                 logger.info(
-                    f"Skipped video with video id {vid.video_id} with title '{vid.title}' because it is a livestream."
+                    f"Skipped video with video id '{vid.video_id}' with title '{vid.title}' because it is a livestream."
                     if not exception else
-                    f"Skipped video with video id {vid.video_id} with title '{vid.title}' because it is probably a livestream.",
+                    f"Skipped video with video id '{vid.video_id}' with title '{vid.title}' because it is probably a livestream.",
                     extra={
                         "event": LogEvent.VIDEO_FILTERING_COMPLETED,
                         "passed": False,
@@ -253,9 +253,9 @@ class VidsiftOrchestrator:
                 )
             case "members-only":
                 logger.info(
-                    f"Skipped video with video id {vid.video_id} with title '{vid.title}' because it is members-only content"
+                    f"Skipped video with video id '{vid.video_id}' with title '{vid.title}' because it is members-only content"
                     if not exception else
-                    f"Skipped video with video id {vid.video_id} with title '{vid.title}' because it is probably members-only content",
+                    f"Skipped video with video id '{vid.video_id}' with title '{vid.title}' because it is probably members-only content",
                     extra={
                         "event": LogEvent.VIDEO_FILTERING_COMPLETED,
                         "passed": False,
@@ -659,7 +659,7 @@ class VidsiftOrchestrator:
             # check if the video has already been handled
             if self.video_db.exists(video_id=vid.video_id):
                 logger.debug(
-                    f"Skipping video with video id {vid.video_id} because it was already processed.",
+                    f"Skipping video with video id '{vid.video_id}' because it was already processed.",
                     extra={
                         "event": LogEvent.VIDEO_SKIPPED_EXISTING,
                         "video_id": vid.video_id,

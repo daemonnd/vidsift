@@ -43,7 +43,7 @@ class VideoDataCollection:
         total_channels = len(self.channel_id_list)
         try:
             for channel in self.channel_id_list:
-                logger.debug(
+                logger.info(
                     f"Fetching RSS feed for channel: {channel} ({self.channel_id_list.index(channel)+1}/{total_channels})",
                     extra={
                         "event": LogEvent.RSS_CHANNEL_FETCH_STARTED,

@@ -7,6 +7,7 @@ from vidsift.config.models import AppConfig
 from vidsift.ingestion.errors import VideoFilteringError
 from vidsift.models.video import Video
 from vidsift.shared.config_helpers import get_js_runtimes_config
+from vidsift.shared.logging.log_event_fields import LogEvent
 
 logger = logging.getLogger(__name__)
 

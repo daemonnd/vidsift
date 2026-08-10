@@ -79,7 +79,7 @@ class SummarizationService:
         summaries: list[str] = self.summarize_all_chunks(transcript=transcript, video_id=vid.video_id)
         if len(summaries) == 0:
             logger.info(
-                f"Video with video id {vid.video_id} did not contain any important information for a summary, skipping",
+                f"Video with video id '{vid.video_id}' did not contain any important information for a summary, skipping",
                 extra={
                     "event": LogEvent.VIDEO_SUMMARIZATION_SKIPPED,
                     "video_id": vid.video_id,
