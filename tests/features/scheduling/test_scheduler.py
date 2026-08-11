@@ -43,6 +43,7 @@ def test_scheduler_runs_pipeline_repeatedly(
     scheduler = BackgroundServiceManager(
         orchestrator=default_orchestrator,
         config=fake_config,
+        run_id=uuid7()
     )
 
     sleep_calls = 0
@@ -80,9 +81,10 @@ def test_failed_pipeline_releases_lock(
     orchestrator = FakeOrchestrator(fail_after=1)
     scheduler = BackgroundServiceManager(
         orchestrator=orchestrator,
-        config=fake_config
+        config=fake_config,
+        run_id=uuid7()
     )
-    test_run_manager = RunManager(lock_file_path=tmp_path / "test.lock")
+    test_run_manager = RunManager(lock_file_path=tmp_path / "test.lock", run_id=uuid7())
 
     monkeypatch.setattr(
         "vidsift.runtime.scheduler.RunManager",
@@ -115,6 +117,7 @@ def test_scheduler_releases_lock_during_cooldown(
         orchestrator=orchestrator,
         config=fake_config,
         locking_interval=0,
+        run_id=uuid7()
     )
 
     sleep_calls = 0

@@ -176,6 +176,14 @@ cookies_from_browser = "firefox" # brave, chrome, chromium, edge, firefox, opera
 #   --debug all
 quiet = true # wether yt-dlp should be quiet or not, if false, yt-dlp will print a lot of output to the console
 
+[[video_processing.yt_dlp.base.js_runtimes]]
+name = "deno"
+path = "/absulute/path/to/deno" # optional
+
+[[video_processing.yt_dlp.base.js_runtimes]]
+name = "node"
+
+
 [video_processing.yt_dlp.download]
 # download-specific options for yt-dlp
 # used alongside base yt-dlp args for downloading
