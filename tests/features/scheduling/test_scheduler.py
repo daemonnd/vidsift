@@ -62,7 +62,7 @@ def test_scheduler_runs_pipeline_repeatedly(
 
     monkeypatch.setattr(
         "vidsift.runtime.scheduler.RunManager",
-        lambda: run_manager,
+        lambda run_id: run_manager,
     )
 
     with pytest.raises(StopScheduler):
@@ -84,12 +84,10 @@ def test_failed_pipeline_releases_lock(
         config=fake_config,
         run_id=uuid7()
     )
-    test_run_manager = RunManager(lock_file_path=tmp_path / "test.lock", run_id=uuid7())
 
     monkeypatch.setattr(
         "vidsift.runtime.scheduler.RunManager",
-        lambda: test_run_manager,
-    )
+        lambda run_id: RunManager(lock_file_path=tmp_path / "test.lock", run_id=run_id)    )
     with pytest.raises(RuntimeError):
         scheduler.run(sleep_interval=1)
     try:
@@ -108,7 +106,7 @@ def test_scheduler_releases_lock_during_cooldown(
 
     monkeypatch.setattr(
         "vidsift.runtime.scheduler.RunManager",
-        lambda: RunManager(lock_file_path=lock_path),
+        lambda run_id: RunManager(lock_file_path=lock_path, run_id=run_id)
     )
 
     orchestrator = FakeOrchestrator(fail_after=2)
