@@ -29,8 +29,13 @@ class FakeDataCollector:
 class FakeVideoFilter:
     def __init__(self, config) -> None:
         pass
-    def check_is_livestream(self, vid: Video, is_livestream: bool = False) -> bool:
-        return is_livestream
+    def run_filters(self, vid: Video, is_livestream: bool = False, is_members_only: bool = False) -> tuple[bool, Literal["livestream", "members-only"] | None]:
+        if is_members_only:
+            return False, "members-only"
+        elif is_livestream:
+            return False, "livestream"
+        else:
+            return True, None
 
 class FailingSummarizer:
     def __init__(self):

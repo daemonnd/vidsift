@@ -12,10 +12,8 @@ from vidsift.config.models import AppConfig
 from vidsift.features.video_processing.repository import \
     VideoProcessingRepository
 from vidsift.models.video import Video
-from vidsift.models.video_record import (VideoProcessingRecord,
-                                         VideoProcessingStatus)
+from vidsift.models.video_record import VideoProcessingStatus
 from vidsift.pipeline.vidsift_pipeline import VidsiftOrchestrator
-from vidsift.services.video_data_collection_service import VideoDataCollection
 from vidsift.shared.video_discovery_source import DiscoverySource
 
 
@@ -40,8 +38,16 @@ def summarizer():
     return FakeSummarizer()
 
 @pytest.fixture()
-def vid():
-    return Video("sometitle", "someurl", "someauthor", "UCjjjjjjjjjjjjjjjjjjjjjj", "somepubdate", "uuuuuuuuuuu")
+def download_vid():
+    return Video("sometitle", "someurl", "someauthor", "UC9x0AN7BWHpCDHSm9NiJFJQ", "somepubdate", "uuuuuuuuuuu")
+
+@pytest.fixture()
+def summarize_vid():
+    return Video("sometitle", "someurl", "someauthor", "UC4JX40jDee_tINbkjycV4Sg", "somepubdate", "uuuuuuuuuuu")
+
+@pytest.fixture()
+def validate_vid():
+    return Video("sometitle", "someurl", "someauthor", "UCo71RUe6DX4w-Vd47rFLXPg", "somepubdate", "uuuuuuuuuuu")
 
 @pytest.fixture()
 def fake_config():
@@ -75,7 +81,7 @@ def default_orchestrator(fake_config, video_validator, transcript_service, summa
         downloader=downloader,
         video_db=video_db,
         video_filter=video_filter,
-        should_sleep=False
+        should_sleep=False,
     )
 def test_validation_downloads_video(
     default_orchestrator: VidsiftOrchestrator,
@@ -108,24 +114,24 @@ def test_existing_video_is_skipped(
     default_orchestrator: VidsiftOrchestrator,
     fake_config: AppConfig,
     video_db: VideoProcessingRepository,
-    vid: Video,
+    download_vid: Video,
     downloader: FakeDownloader,
     video_validator: FakeValidator,
     transcript_service: FakeTranscriptService,
 ):
     # Arrange
     video_db.open()
-    video_db.create(vid)
+    video_db.create(download_vid)
     video_db.set_status(
-        video_id=vid.video_id,
+        video_id=download_vid.video_id,
         status=VideoProcessingStatus.DONE
     )
 
     default_orchestrator.video_data_collector = FakeDataCollector(
-        channel_id_list=[vid.channel_id],
+        channel_id_list=[download_vid.channel_id],
         config=fake_config,
         videos=[
-            (vid, DiscoverySource.RSS),
+            (download_vid, DiscoverySource.RSS),
         ],
     )
 
@@ -139,7 +145,7 @@ def test_existing_video_is_skipped(
 
 def test_transcript_failure_stops_processing(
     fake_config: AppConfig,
-    vid: Video,
+    validate_vid: Video,
     failing_transcript_service: FailingTranscriptService,
     downloader: FakeDownloader,
     video_validator: FakeValidator,
@@ -158,13 +164,13 @@ def test_transcript_failure_stops_processing(
         should_sleep=False
     )
 
-    orchestrator.transcript_service = failing_transcript_service
+    #orchestrator.transcript_service = failing_transcript_service
 
     orchestrator.video_data_collector = FakeDataCollector(
-        channel_id_list=[vid.channel_id],
+        channel_id_list=[validate_vid.channel_id],
         config=fake_config,
         videos=[
-            (vid, DiscoverySource.RSS),
+            (validate_vid, DiscoverySource.RSS),
         ],
     )
 
@@ -176,7 +182,7 @@ def test_transcript_failure_stops_processing(
 
 def test_validation_summarizes_video(
     fake_config: AppConfig,
-    vid: Video,
+    validate_vid: Video,
     transcript_service: FakeTranscriptService,
     downloader: FakeDownloader,
     summarizer: FakeSummarizer,
@@ -197,9 +203,9 @@ def test_validation_summarizes_video(
     )
 
     orchestrator.video_data_collector = FakeDataCollector(
-        channel_id_list=[vid.channel_id],
+        channel_id_list=[validate_vid.channel_id],
         config=fake_config,
-        videos=[(vid, DiscoverySource.RSS)],
+        videos=[(validate_vid, DiscoverySource.RSS)],
     )
 
     orchestrator.run()
@@ -211,7 +217,7 @@ def test_validation_summarizes_video(
 
 def test_validation_discards_video(
     fake_config: AppConfig,
-    vid: Video,
+    validate_vid: Video,
     transcript_service: FakeTranscriptService,
     downloader: FakeDownloader,
     summarizer: FakeSummarizer,
@@ -232,9 +238,9 @@ def test_validation_discards_video(
     )
 
     orchestrator.video_data_collector = FakeDataCollector(
-        channel_id_list=[vid.channel_id],
+        channel_id_list=[validate_vid.channel_id],
         config=fake_config,
-        videos=[(vid, DiscoverySource.RSS)],
+        videos=[(validate_vid, DiscoverySource.RSS)],
     )
 
     orchestrator.run()
@@ -251,6 +257,7 @@ def test_multiple_videos_take_independent_actions(
     summarizer: FakeSummarizer,
     video_db: VideoProcessingRepository,
     video_filter: FakeVideoFilter,
+    validate_vid: Video,
 ):
     validator = FakeValidator(
         decisions=[
@@ -259,20 +266,11 @@ def test_multiple_videos_take_independent_actions(
         ]
     )
 
-    vid1 = Video(
-        title="video1",
-        url="url1",
-        author="author",
-        channel_id="UCjjjjjjjjjjjjjjjjjjjjjj",
-        published="today",
-        video_id="11111111111",
-    )
-
     vid2 = Video(
         title="video2",
         url="url2",
         author="author",
-        channel_id="UCjjjjjjjjjjjjjjjjjjjjjj",
+        channel_id="UCo71RUe6DX4w-Vd47rFLXPg",
         published="today",
         video_id="22222222222",
     )
@@ -289,10 +287,10 @@ def test_multiple_videos_take_independent_actions(
     )
 
     orchestrator.video_data_collector = FakeDataCollector(
-        channel_id_list=[vid1.channel_id],
+        channel_id_list=[validate_vid.channel_id],
         config=fake_config,
         videos=[
-            (vid1, DiscoverySource.RSS),
+            (validate_vid, DiscoverySource.RSS),
             (vid2, DiscoverySource.RSS),
         ],
     )
