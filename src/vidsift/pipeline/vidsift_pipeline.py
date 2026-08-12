@@ -311,6 +311,8 @@ class VidsiftOrchestrator:
             - `True` if it passed all of the filters
             - `False` if it failed on one filter
         """
+        # not set the status to filtering, because it is requires data enrichment, and not all data from data enrichment is stored
+ 
         try:
             logger.debug(
                 f"Checking wether video with video id '{vid.video_id}' should be processed",
@@ -352,7 +354,7 @@ class VidsiftOrchestrator:
             self.video_db.mark_failed(
                 error_msg=repr(e),
                 video_id=vid.video_id,
-                target_status=VideoProcessingStatus.FILTERING,
+                target_status=VideoProcessingStatus.DATA_ENRICHING # filtering requires data enrichment, so the status is set to data enriching, so that it can be re-processed
             )
             return False
         except BaseException:
@@ -567,22 +569,22 @@ class VidsiftOrchestrator:
             },
         )
 
-    def resume_filtering(self):
-        # resume fitlering that got interrupted (due to an error)
+    def resume_data_enriching(self):
+        # resume data enriching that got interrupted (due to an error)
         logger.debug(
-            "Check for videos that got interrupted while filtering...",
-            extra={"event": LogEvent.VIDEO_FILTERING_RESUME_STARTED},
+            "Check for videos that got interrupted while enriching their metadata...",
+            extra={"event": LogEvent.VIDEO_METADATA_ENRICHMENT_RESUME_STARTED},
         )
         filtering_videos: Generator[VideoProcessingRecord, None, None] = (
-            self.video_db.get_by_status("filtering")
+            self.video_db.get_by_status("data_enriching")
         )
         channel_lookup = get_channel_lookup(self.config.channels)
         for video in filtering_videos:
             vid: Video = Video.from_cache(video_db_row=video)
             logger.info(
-                f"Processing video with video id '{vid.video_id}' that got interrupted while filtering",
+                f"Processing video with video id '{vid.video_id}' that got interrupted while enriching its metadata.",
                 extra={
-                    "event": LogEvent.PROCESSING_VIDEO_FILTERING_RESUME,
+                    "event": LogEvent.PROCESSING_VIDEO_METADATA_ENRICHMENT_RESUME,
                     "video_id": vid.video_id,
                     "channel_id": vid.channel_id,
                 },
@@ -596,7 +598,7 @@ class VidsiftOrchestrator:
         logger.debug(
             "Check for videos where filtering got interrupted... Done",
             extra={
-                "event": LogEvent.VIDEO_FILTERING_RESUME_COMPLETED,
+                "event": LogEvent.VIDEO_METADATA_ENRICHMENT_RESUME_COMPLETED,
             },
         )
 
@@ -763,7 +765,7 @@ class VidsiftOrchestrator:
             "Starting to process interrupted videos",
             extra={"event": LogEvent.INTERRUPTED_PROCESSING_STARTED},
         )
-        self.resume_filtering()
+        self.resume_data_enriching()
         self.resume_validations()
         self.resume_downloads()
         self.resume_summaries()

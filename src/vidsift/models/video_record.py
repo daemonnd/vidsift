@@ -6,7 +6,6 @@ from pydantic import BaseModel, Field
 
 
 class VideoProcessingStatus(Enum):
-    FILTERING = "filtering"
     DATA_ENRICHING = "data_enriching"
     VALIDATING = "validating"
     DOWNLOADING = "downloading"

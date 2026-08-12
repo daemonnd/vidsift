@@ -316,6 +316,7 @@ class VideoProcessingRepository:
             "failed",
             "validating",
             "filtering",
+            "data_enriching",
         ],
     ) -> Generator[VideoProcessingRecord, None, None]:
         """
