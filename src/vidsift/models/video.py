@@ -18,6 +18,7 @@ class Video:
     channel_id: str
     published: str
     video_id: str
+    duration: int | None = None
 
     def __post_init__(self):
         if not isinstance(self.video_id, str):

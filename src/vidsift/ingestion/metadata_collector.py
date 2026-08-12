@@ -63,12 +63,13 @@ class MetadataCollector:
         else:
             try:
                 to_return: dict[str, Any] = {
-                    "title": data["title"],
+                    "title": data.get("title"),
                     "url": url,
-                    "author": data["uploader"],
+                    "author": data.get("uploader"),
                     "channel_id": data["channel_id"],
-                    "published": data["upload_date"],
+                    "published": data.get("upload_date"),
                     "video_id": data["id"],
+                    "duration": data.get("duration"),
                 }
             except KeyError as e:
                 logger.exception(
@@ -92,6 +93,7 @@ class MetadataCollector:
                         channel_id=to_return["channel_id"],
                         published=to_return["published"],
                         video_id=to_return["video_id"],
+                        duration=to_return["duration"]
                     )
                 except InvalidVideoError:
                     raise

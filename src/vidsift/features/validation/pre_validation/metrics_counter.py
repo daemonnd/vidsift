@@ -153,15 +153,3 @@ class PreValidator:
         )
 
         return pre_validation_result
-
-
-
-
-
-if __name__ == "__main__":
-    vid: Video = Video(
-        title="100% percent 😀viral, !!!! like REALLY easy money",
-        url="asldl", author="lasjdl", published="lajsdl", video_id="lsydjslafdj")
-    transcript: str = "This is a transcript with clickbait phrases like you won't believe what happened next and this is not clickbait"
-    pv = PreValidator()
-    print(pv.build_pre_validation_features(vid, transcript))
