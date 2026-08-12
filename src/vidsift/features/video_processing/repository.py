@@ -32,7 +32,7 @@ class VideoProcessingRepository:
             author TEXT,
             channel_id TEXT NOT NULL,
             published TEXT,
-            duration TEXT,
+            duration INTEGER,
 
             status TEXT NOT NULL,
 

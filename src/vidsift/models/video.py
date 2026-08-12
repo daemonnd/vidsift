@@ -41,5 +41,6 @@ class Video:
             author=video_db_row.author,
             channel_id=video_db_row.channel_id,
             published=video_db_row.published,
-            video_id=video_db_row.video_id
+            video_id=video_db_row.video_id,
+            duration=video_db_row.duration
         )

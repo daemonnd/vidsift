@@ -23,7 +23,7 @@ class VideoProcessingRecord(BaseModel):
     author: str
     channel_id: str
     published: str
-    duration: str | None
+    duration: int | None
     status: VideoProcessingStatus
     retry_count: int
     decision: Literal["downloaded", "summarized", "discarded"] | None
