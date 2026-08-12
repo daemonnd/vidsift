@@ -32,6 +32,7 @@ class LogEvent:
 
     # single video manual runs
     MANUAL_DOWNLOAD_RUN_STARTED = "manual_download_run_started"
+    MANUAL_FAKE_DOWNLOAD_RUN_STARTED = "manual_fake_download_run_started"
     MANUAL_SUMMARIZATION_RUN_STARTED = "manual_summarization_run_started"
 
     # invalid video event

@@ -74,19 +74,37 @@ def handle_process(args, config: AppConfig, run_id):
         logger = logging.getLogger(__name__)
         if args.download:
             from vidsift.shared.video_id_extractor import VideoIDExtractor
-            logger.info(
-                f"Starting manual download with url {args.url}",
-                extra={
-                    "event": LogEvent.MANUAL_DOWNLOAD_RUN_STARTED,
-                    "video_id": VideoIDExtractor().extract_id(args.url)
-                }
-            )
+            video_id = VideoIDExtractor().extract_id(args.url)
             downloader: VideoDownloader = VideoDownloader(config=config)
-            downloader.download(
-                video_url=args.url,
-                output_path=Path(config.downloads.output_dir)
-            )
-            return
+            if not config.downloads.fake_download:
+                logger.info(
+                    f"Starting manual download with url {args.url}",
+                    extra={
+                        "event": LogEvent.MANUAL_DOWNLOAD_RUN_STARTED,
+                        "video_id": video_id
+                    }
+                )
+                downloader.download(
+                    video_url=args.url,
+                    output_path=Path(config.downloads.output_dir)
+                )
+                return
+            else:
+                logger.info(
+                    f"Starting manual fake download with url {args.url}",
+                    extra={
+                        "event": LogEvent.MANUAL_FAKE_DOWNLOAD_RUN_STARTED,
+                        "video_id": video_id,
+                        "output_path": config.downloads.output_path
+                    }
+                )
+                downloader.download(
+                    video_url=args.url,
+                    output_path=Path(config.downloads.output_dir)
+                )
+                return
+
+
 
         metadata_collector = MetadataCollector(config=config)
         try:
