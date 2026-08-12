@@ -46,6 +46,7 @@ class VideoDownloader:
         try:
             with open(Path(self.download_config.output_path), "a") as f:
                 f.write(video_url)
+                f.write("\n")
         except PermissionError as e:
             raise OutputPathPermissionError(str(e)) from e
         except FileNotFoundError as e:
