@@ -4,12 +4,12 @@ import argcomplete
 
 from vidsift.cli.commands.config import register_config
 from vidsift.cli.commands.init import register_init
+from vidsift.cli.commands.logs import register_logs
 from vidsift.cli.commands.process import register_process
 from vidsift.cli.commands.run import register_run
 from vidsift.cli.commands.schedule import register_schedule
 from vidsift.cli.commands.service import register_service
 from vidsift.cli.commands.videos import register_videos
-from vidsift.cli.commands.logs import register_logs
 
 
 def parse_args():
@@ -70,5 +70,8 @@ def parse_args():
 
     if args.command == "logs" and args.follow and args.all_files:
         parser.error("--all-files cannot be used with --follow")
+
+    if args.command == "process" and args.fake_download and args.download is False:
+        parser.error("--fake-download can only be used with --download")
 
     return args

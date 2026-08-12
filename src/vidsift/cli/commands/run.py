@@ -18,6 +18,18 @@ def register_run(subparsers):
         help="Only process interrupted videos, skip the new ones.",
         action="store_true",
     )
+    run_parser.add_argument( 
+        "--fake-download",
+        nargs='?',
+        const=True,  # value when flag is used WITHOUT an argument
+        default=None,  # value when flag is NOT used at all
+        help="""Simulate the download of videos without actually downloading them.
+        Instead, the url of the video to the filepath specified in the config file, 
+        to override that config file value, use
+        --fake-download-path /path/to/fake/download/file.
+        The default value for that is the download targed dir / 'to_watch.md'.
+        Only applies to videos that get ether downloaded with the action 'download' or through the validation result 'download'""",
+    )
     run_parser.set_defaults(func=handle_pipeline_run)
 
     return run_parser
