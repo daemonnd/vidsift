@@ -148,11 +148,28 @@ class VidsiftOrchestrator:
                         vid=vid
                     )  # put the data about the video into the db, with status FILTERING
                     if discovery_type == DiscoverySource.RSS:
-                        processing: bool = self.should_process(
-                            vid=vid,
-                            discovery_type=discovery_type,
-                            channel_lookup=channel_lookup,
-                        )
+                        # extract additional video data
+                        try:
+                            enrichment_data: dict = self.video_data_collector.get_additional_video_data(vid=vid)
+                        except VideoDataCollectionError as e:
+                            logger.exception(
+                                f"Failed to fetch additional video data for video '{vid.video_id}': {str(e)}",
+                                extra={"event": LogEvent.VIDEO_METADATA_ENRICHMENT_FAILED,
+                                       "video_id": vid.video_id,
+                                       "channel_id": vid.channel_id
+                                },
+                            )
+                            processing: bool = self.should_process(vid, discovery_type, channel_lookup, error_message=str(e))
+                        except BaseException:
+                            raise
+                        else:
+                            self.video_db.del_row(video_id=vid.video_id)  # delete the row, because it will be re-created with the enriched data
+                            self.video_db.create(vid=Video.apply_duration_enrichment(video=vid, duration=enrichment_data.get("duration")))  # re-create the row with the enriched data
+                            processing: bool = self.should_process(
+                                vid=vid,
+                                discovery_type=discovery_type,
+                                channel_lookup=channel_lookup,
+                            )
                         if not processing:
                             continue
                     logger.debug(
@@ -285,6 +302,8 @@ class VidsiftOrchestrator:
         vid: Video,
         discovery_type: DiscoverySource,
         channel_lookup: dict[str, ChannelConfig],
+        data: dict | None = None,
+        error_message: str | None = None
     ) -> bool:
         """
         Method to manage video filtering
@@ -302,7 +321,7 @@ class VidsiftOrchestrator:
                     "channel_id": vid.channel_id,
                 },
             )
-            passes, reason = self.video_filter.run_filters(vid=vid)
+            passes, reason = self.video_filter.run_filters(vid=vid, data=data, error_message=error_message)
         except (
             VideoFilteringError
         ) as e:  # exceptions are also caught in this by the livestream checker

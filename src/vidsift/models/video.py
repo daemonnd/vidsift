@@ -44,3 +44,17 @@ class Video:
             video_id=video_db_row.video_id,
             duration=video_db_row.duration
         )
+
+    @classmethod
+    def apply_duration_enrichment(cls, video: Video, duration: int | None) -> Video:
+        if not duration:
+            return video
+        return cls(
+            title=video.title,
+            url=video.url,
+            author=video.author,
+            channel_id=video.channel_id,
+            published=video.published,
+            video_id=video.video_id,
+            duration=duration
+        )
