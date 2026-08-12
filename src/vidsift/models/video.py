@@ -18,6 +18,7 @@ class Video:
     channel_id: str
     published: str
     video_id: str
+    duration: int | None = None
 
     def __post_init__(self):
         if not isinstance(self.video_id, str):
@@ -40,5 +41,20 @@ class Video:
             author=video_db_row.author,
             channel_id=video_db_row.channel_id,
             published=video_db_row.published,
-            video_id=video_db_row.video_id
+            video_id=video_db_row.video_id,
+            duration=video_db_row.duration
+        )
+
+    @classmethod
+    def apply_duration_enrichment(cls, video: Video, duration: int | None) -> Video:
+        if not duration:
+            return video
+        return cls(
+            title=video.title,
+            url=video.url,
+            author=video.author,
+            channel_id=video.channel_id,
+            published=video.published,
+            video_id=video.video_id,
+            duration=duration
         )

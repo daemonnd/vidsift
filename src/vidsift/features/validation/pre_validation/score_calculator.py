@@ -74,16 +74,3 @@ class PreValidationScoreCalculator:
             weak_signals.append(weights.transcript_clickbait_weight)
 
         return weak_signals
-
-if __name__ == "__main__":
-    result = PreValidationResult(title_uppercase_ratio=0.5, title_punctuation_ratio=0.1, title_clickbait_ratio=2, 
-                                 title_emoji_ratio=0.2, transcript_clickbait_ratio=5)
-    vid: Video = Video(title="This is a clickbait title guaranteed for free and , so no not miss this!!!", url="https://www.youtube.com/watch?v=dQw4w9WgXcQ", author="Rick Astley", published="1987-10-25", video_id="dQw4w9WgXcQ")
-    transcript: str = "This is a transcript with clickbait phrases like you won't believe what happened next and this is not clickbait"
-    from vidsift.features.validation.pre_validation.metrics_counter import \
-        PreValidator
-    pv: PreValidator = PreValidator()
-    result: PreValidationResult = pv.build_pre_validation_features(vid, transcript)
-    pvsc: PreValidationScoreCalculator = PreValidationScoreCalculator()
-    print(pvsc.calculate_score(result))
-

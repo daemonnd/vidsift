@@ -113,7 +113,8 @@ class RSSUrlCollector:
                         url=str(entry.link),
                         published=str(entry.published),
                         video_id=id_extractor.extract_id(str(entry.link)),
-                        channel_id=channel_id
+                        channel_id=channel_id,
+                        duration=None  # duration is not available in the RSS feed
                     )
                 except InvalidVideoError:
                     raise

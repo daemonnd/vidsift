@@ -25,17 +25,24 @@ class FakeDataCollector:
         for vid in self.videos:
             self.fetched_videos += 1
             yield vid
+    def get_additional_video_data(self, vid: Video) -> dict:
+        return {"additional": "data"}
 
 class FakeVideoFilter:
     def __init__(self, config) -> None:
         pass
-    def run_filters(self, vid: Video, is_livestream: bool = False, is_members_only: bool = False) -> tuple[bool, Literal["livestream", "members-only"] | None]:
-        if is_members_only:
-            return False, "members-only"
-        elif is_livestream:
-            return False, "livestream"
-        else:
-            return True, None
+    def check_is_livestream(self, vid: Video, is_livestream: bool = False) -> bool:
+        return is_livestream
+    def run_filters(
+        self,
+        vid: Video,
+        data: dict | None = None, 
+        error_message: str | None = None,
+        reason: Literal["livestream", "members-only"] | None = None,
+        passes: bool = True
+    ) -> tuple[bool, Literal["livestream", "members-only"] | None]:
+        return passes, reason
+
 
 class FailingSummarizer:
     def __init__(self):

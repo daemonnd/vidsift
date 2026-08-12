@@ -4,7 +4,9 @@ from typing import Generator
 from feedparser import FeedParserDict
 
 from vidsift.config.models import AppConfig
-from vidsift.ingestion.errors import VideoDataCollectionError
+from vidsift.ingestion.errors import (IngestionEnrichmentError,
+                                      VideoDataCollectionError)
+from vidsift.ingestion.ingestion_enrichment import IngestionEnrichment
 from vidsift.ingestion.rss_url_collector import RSSUrlCollector
 from vidsift.ingestion.yt_dlp_url_collector import YtDlpUrlCollector
 from vidsift.models.video import Video
@@ -111,3 +113,31 @@ class VideoDataCollection:
                     "event": LogEvent.RSS_FETCH_COMPLETED,
                 },
             )
+    def get_additional_video_data(self, vid: Video) -> dict:
+        """
+        Method to fetch additional video data using yt-dlp extract_flat for a given video.
+        """
+        logger.info(
+            f"First, fetching additional video data using yt-dlp for video id: '{vid.video_id}'",
+            extra={
+                "event": LogEvent.VIDEO_METADATA_ENRICHMENT_STARTED,
+                "video_id": vid.video_id,
+                "channel_id": vid.channel_id,
+            }
+        )
+        try:
+            ingestion_enrichment = IngestionEnrichment(config=self.config)
+            data =  ingestion_enrichment.entract_data(vid=vid)
+        except IngestionEnrichmentError:
+            raise
+        else:
+            logger.info(
+                f"Successfully fetched additional video data using yt-dlp for video id: '{vid.video_id}'",
+                extra={
+                    "event": LogEvent.VIDEO_METADATA_ENRICHMENT_COMPLETED,
+                    "video_id": vid.video_id,
+                    "channel_id": vid.channel_id,
+                }
+            )
+            return data 
+

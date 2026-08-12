@@ -63,6 +63,7 @@ class VideoValidator:
                 published=vid.published,
                 video_id=vid.video_id,
                 channel_id=vid.channel_id,
+                duration=vid.duration
             )
         except InvalidVideoError:
             raise

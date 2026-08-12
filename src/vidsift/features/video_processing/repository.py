@@ -8,12 +8,10 @@ from pydantic import ValidationError
 
 from vidsift.config.models import AppConfig
 from vidsift.features.video_processing.errors import (
-    DBWritingError,
-    VideoIDNotFoundError,
-    VideoProcessingDataValidationError,
-)
+    DBWritingError, VideoIDNotFoundError, VideoProcessingDataValidationError)
 from vidsift.models.video import Video
-from vidsift.models.video_record import VideoProcessingRecord, VideoProcessingStatus
+from vidsift.models.video_record import (VideoProcessingRecord,
+                                         VideoProcessingStatus)
 from vidsift.shared.paths import PROCESSED_VIDEOS_DB
 
 
@@ -34,6 +32,7 @@ class VideoProcessingRepository:
             author TEXT,
             channel_id TEXT NOT NULL,
             published TEXT,
+            duration INTEGER,
 
             status TEXT NOT NULL,
 
@@ -52,7 +51,7 @@ class VideoProcessingRepository:
 
     def create(self, vid: Video):
         """
-        Method for setting the status to filtering after a video got discovered
+        Method for setting the status to data_enriching after a video got discovered
         """
         try:
             parameters: tuple = (
@@ -62,7 +61,8 @@ class VideoProcessingRepository:
                 vid.author,
                 vid.channel_id,
                 vid.published,
-                VideoProcessingStatus.FILTERING.value,
+                vid.duration,
+                VideoProcessingStatus.DATA_ENRICHING.value,
                 0,
                 None,
                 None,
@@ -74,17 +74,17 @@ class VideoProcessingRepository:
             self.cur.execute(
                 """
             INSERT INTO processed_videos VALUES
-            (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                 parameters,
             )
             self.conn.commit()
         except IntegrityError as e:
             raise DBWritingError(
-                f"Failed to write to DB while setting the status to filtering because a database operand violated a constraint: {str(e)}"
+                f"Failed to write to DB while setting the status to data_enriching because a database operand violated a constraint: {str(e)}"
             ) from e
         except OperationalError as e:
             raise DBWritingError(
-                f"Failed to write to DB while setting the status to filtering because of an operational Error: {str(e)}"
+                f"Failed to write to DB while setting the status to data_enriching because of an operational Error: {str(e)}"
             ) from e
 
     def save_validation_result(
@@ -315,7 +315,7 @@ class VideoProcessingRepository:
             "done",
             "failed",
             "validating",
-            "filtering",
+            "data_enriching",
         ],
     ) -> Generator[VideoProcessingRecord, None, None]:
         """

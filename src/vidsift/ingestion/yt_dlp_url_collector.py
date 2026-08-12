@@ -45,6 +45,7 @@ class YtDlpUrlCollector:
                     published=str(video.get("upload_date")),
                     video_id=video.get("id"),
                     channel_id=channel_id,
+                    duration=video.get("duration")
                 )
                 yield vid
         except Exception as e:

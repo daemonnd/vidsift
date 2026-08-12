@@ -23,7 +23,8 @@ from vidsift.features.transcript.errors import TranscriptError
 from vidsift.features.validation.errors import VideoValidationError
 from vidsift.features.video_processing.repository import \
     VideoProcessingRepository
-from vidsift.ingestion.errors import (VideoDataCollectionError,
+from vidsift.ingestion.errors import (IngestionEnrichmentError,
+                                      VideoDataCollectionError,
                                       VideoFilteringError)
 from vidsift.ingestion.video_filter import VideoFilter
 from vidsift.models.validation.validation_result import ValidationResult
@@ -146,13 +147,10 @@ class VidsiftOrchestrator:
                     # does not do the filtering for fallback (assumed that it is only videos)
                     self.video_db.create(
                         vid=vid
-                    )  # put the data about the video into the db, with status FILTERING
+                    )  # put the data about the video into the db, with status DATA_ENRICHING, 
+                    # because filtering requires data enrichment, so the status is set to DATA_ENRICHING
                     if discovery_type == DiscoverySource.RSS:
-                        processing: bool = self.should_process(
-                            vid=vid,
-                            discovery_type=discovery_type,
-                            channel_lookup=channel_lookup,
-                        )
+                        processing: bool = self._enrich_and_filter_video(vid=vid, discovery_type=discovery_type, channel_lookup=channel_lookup)
                         if not processing:
                             continue
                     logger.debug(
@@ -174,6 +172,44 @@ class VidsiftOrchestrator:
                     "event": LogEvent.ORCHESTRATOR_STOPPED,
                 },
             )
+
+    def _enrich_and_filter_video(
+        self,
+        vid: Video,
+        discovery_type: DiscoverySource,
+        channel_lookup: dict[str, ChannelConfig]
+    ) -> bool:
+        """
+        Method that enriches the video data and runs the filtering on it 
+        because filtering requires data enrichment, the filtering is done after the enrichment.
+        Returns:
+            - True if it passed all of the filters
+            - False if it failed on one filter
+        """
+        # extract additional video data
+        try:
+            enrichment_data: dict = self.video_data_collector.get_additional_video_data(vid=vid)
+        except IngestionEnrichmentError as e:
+            logger.exception(
+                f"Failed to fetch additional video data for video '{vid.video_id}': {str(e)}",
+                extra={"event": LogEvent.VIDEO_METADATA_ENRICHMENT_FAILED,
+                        "video_id": vid.video_id,
+                        "channel_id": vid.channel_id
+                },
+            )
+            processing: bool = self.should_process(vid, discovery_type, channel_lookup, error_message=str(e))
+        except BaseException:
+            raise
+        else:
+            self.video_db.del_row(video_id=vid.video_id)  # delete the row, because it will be re-created with the enriched data
+            self.video_db.create(vid=Video.apply_duration_enrichment(video=vid, duration=enrichment_data.get("duration")))  # re-create the row with the enriched data
+            processing: bool = self.should_process(
+                vid=vid,
+                discovery_type=discovery_type,
+                channel_lookup=channel_lookup,
+                data=enrichment_data,
+            )
+        return processing
 
     def process_video(self, vid: Video, channel_lookup: dict[str, ChannelConfig]):
         channel = channel_lookup[vid.channel_id]
@@ -280,11 +316,14 @@ class VidsiftOrchestrator:
             self.video_db.update_after_done(
                 video_id=vid.video_id, decision="discarded"
             )
+
     def should_process(
         self,
         vid: Video,
         discovery_type: DiscoverySource,
         channel_lookup: dict[str, ChannelConfig],
+        data: dict | None = None,
+        error_message: str | None = None
     ) -> bool:
         """
         Method to manage video filtering
@@ -292,6 +331,8 @@ class VidsiftOrchestrator:
             - `True` if it passed all of the filters
             - `False` if it failed on one filter
         """
+        # not set the status to filtering, because it is requires data enrichment, and not all data from data enrichment is stored
+ 
         try:
             logger.debug(
                 f"Checking wether video with video id '{vid.video_id}' should be processed",
@@ -302,25 +343,10 @@ class VidsiftOrchestrator:
                     "channel_id": vid.channel_id,
                 },
             )
-            passes, reason = self.video_filter.run_filters(vid=vid)
+            passes, reason = self.video_filter.run_filters(vid=vid, data=data, error_message=error_message)
         except (
             VideoFilteringError
-        ) as e:  # exceptions are also caught in this by the livestream checker
-            # for livestream checking filter
-            if "This live event will begin in" in str(e):
-                if (
-                    str(e).endswith("minutes.")
-                    or str(e).endswith("hours.")
-                    or str(e).endswith("days.")
-                ):
-                    # if it is a livestream
-                    self._filter_video_out(vid=vid, reason="livestream", channel_lookup=channel_lookup, exception=True)
-                    return False  # it is a livestream that will begin in the future
-            if "Join this channel to get access to members-only content like this video, and other exclusive perks." in str(e):
-                # it is members-only content
-                self._filter_video_out(vid=vid, reason="members-only", channel_lookup=channel_lookup, exception=True)
-                return False
-
+        ) as e:
             # on other error
             logger.exception(
                 f"VideoFilteringError: Failed to filter video '{vid.video_id}': {str(e)}",
@@ -333,7 +359,7 @@ class VidsiftOrchestrator:
             self.video_db.mark_failed(
                 error_msg=repr(e),
                 video_id=vid.video_id,
-                target_status=VideoProcessingStatus.FILTERING,
+                target_status=VideoProcessingStatus.DATA_ENRICHING # filtering requires data enrichment, so the status is set to data enriching, so that it can be re-processed
             )
             return False
         except BaseException:
@@ -548,36 +574,32 @@ class VidsiftOrchestrator:
             },
         )
 
-    def resume_filtering(self):
-        # resume fitlering that got interrupted (due to an error)
+    def resume_data_enriching(self):
+        # resume data enriching that got interrupted (due to an error)
         logger.debug(
-            "Check for videos that got interrupted while filtering...",
-            extra={"event": LogEvent.VIDEO_FILTERING_RESUME_STARTED},
+            "Check for videos that got interrupted while enriching their metadata...",
+            extra={"event": LogEvent.VIDEO_METADATA_ENRICHMENT_RESUME_STARTED},
         )
         filtering_videos: Generator[VideoProcessingRecord, None, None] = (
-            self.video_db.get_by_status("filtering")
+            self.video_db.get_by_status("data_enriching")
         )
         channel_lookup = get_channel_lookup(self.config.channels)
         for video in filtering_videos:
             vid: Video = Video.from_cache(video_db_row=video)
             logger.info(
-                f"Processing video with video id '{vid.video_id}' that got interrupted while filtering",
+                f"Processing video with video id '{vid.video_id}' that got interrupted while enriching its metadata.",
                 extra={
-                    "event": LogEvent.PROCESSING_VIDEO_FILTERING_RESUME,
+                    "event": LogEvent.PROCESSING_VIDEO_METADATA_ENRICHMENT_RESUME,
                     "video_id": vid.video_id,
                     "channel_id": vid.channel_id,
                 },
             )
-            if self.should_process(
-                vid=vid,
-                discovery_type=DiscoverySource.RSS,  # has to be rss, else the video would not end up in livestream checking state, it would immediately get processed,
-                channel_lookup=channel_lookup,
-            ):
+            if self._enrich_and_filter_video(vid=vid, discovery_type=DiscoverySource.RSS, channel_lookup=channel_lookup):
                 self.process_video(vid=vid, channel_lookup=channel_lookup)
         logger.debug(
-            "Check for videos where filtering got interrupted... Done",
+            "Check for videos where enriching their metadata got interrupted... Done",
             extra={
-                "event": LogEvent.VIDEO_FILTERING_RESUME_COMPLETED,
+                "event": LogEvent.VIDEO_METADATA_ENRICHMENT_RESUME_COMPLETED,
             },
         )
 
@@ -744,7 +766,7 @@ class VidsiftOrchestrator:
             "Starting to process interrupted videos",
             extra={"event": LogEvent.INTERRUPTED_PROCESSING_STARTED},
         )
-        self.resume_filtering()
+        self.resume_data_enriching()
         self.resume_validations()
         self.resume_downloads()
         self.resume_summaries()

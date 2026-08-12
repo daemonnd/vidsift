@@ -41,9 +41,10 @@ class LogEvent:
     INTERRUPTED_PROCESSING_STARTED = "interrupted_processing_started"
     INTERRUPTED_PROCESSING_COMPLETED = "interrupted_processing_completed"
 
-    VIDEO_FILTERING_RESUME_STARTED = "video_filtering_resume_started"
-    PROCESSING_VIDEO_FILTERING_RESUME = "processing_video_filtering_resume"
-    VIDEO_FILTERING_RESUME_COMPLETED = "video_filtering_resumoe_completed"
+    VIDEO_METADATA_ENRICHMENT_RESUME_STARTED = "video_metadata_enrichment_resume_started"
+    PROCESSING_VIDEO_METADATA_ENRICHMENT_RESUME = "processing_video_metadata_enrichment_resume"
+    VIDEO_METADATA_ENRICHMENT_RESUME_COMPLETED = "video_metadata_enrichment_resume_completed"
+    VIDEO_METADATA_ENRICHMENT_RESUME_FAILED = "video_metadata_enrichment_resume_failed"
 
     VALIDATION_RESUME_STARTED = "validation_resume_started"
     PROCESSING_VALIDATION_RESUME = "processing_validation_resume"
@@ -82,6 +83,11 @@ class LogEvent:
     YT_DLP_CHANNEL_FETCH_STARTED = "yt_dlp_fetch_started"
     YT_DLP_CHANNEL_FETCH_FAILED = "yt_dlp_fetch_failed"
     YT_DLP_CHANNEL_FETCH_COMPLETED = "yt_dlp_fetch_completed"
+
+    # video metadata enrichment events
+    VIDEO_METADATA_ENRICHMENT_STARTED = "video_metadata_enrichment_started"
+    VIDEO_METADATA_ENRICHMENT_COMPLETED = "video_metadata_enrichment_completed"
+    VIDEO_METADATA_ENRICHMENT_FAILED = "video_metadata_enrichment_failed"
 
     # video filtering events
     VIDEO_FILTERING_STARTED = "video_filtering_started"
@@ -149,3 +155,6 @@ class LogEvent:
     LOCK_ACQUIRED = "lock_acquired"
     LOCK_RELEASED = "lock_released"
     LOCK_FAILED = "lock_failed"
+
+    # video display events
+    VIDEO_PROCESSING_ERROR = "video_processing_error"

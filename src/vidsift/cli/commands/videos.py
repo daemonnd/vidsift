@@ -1,10 +1,16 @@
+import logging
+
 from rich.console import Console
 
 from vidsift.cli.autocomplete import complete_channel_ids, complete_video_ids
+from vidsift.features.video_processing.errors import VideoProcessingError
 from vidsift.features.video_processing.repository import \
     VideoProcessingRepository
 from vidsift.models.video_record import VideoProcessingStatus
+from vidsift.shared.logging.log_event_fields import LogEvent
 from vidsift.shared.paths import PROCESSED_VIDEOS_DB
+
+logger = logging.getLogger(__name__)
 
 
 def register_videos(subparsers):
@@ -29,7 +35,7 @@ def register_videos(subparsers):
         "-s",
         "--status",
         help="filter by processing status ('downloading', 'summarizing', 'done', 'failed', 'validating'",
-        choices=["downloading", "summarizing", "done", "failed", "validating"],
+        choices=["downloading", "summarizing", "done", "failed", "validating", ],
     )
 
     video_list.add_argument(
@@ -49,7 +55,14 @@ def register_videos(subparsers):
     video_set_status.add_argument(
         "--status",
         help="Target status of video",
-        choices=["downloading", "summarizing", "done", "failed", "validating"],
+        choices=[
+            "downloading",
+            "summarizing",
+            "done",
+            "failed",
+            "validating",
+            "data_enriching",
+        ],
     )
     video_set_status.add_argument(
         "--reset-failed-attempts",
@@ -70,7 +83,7 @@ def register_videos(subparsers):
     return videos_parser
 
 
-def handle_videos_list(args, config):
+def handle_videos_list(args, config, run_id):
     repo = VideoProcessingRepository(config=config)
     console = Console()
     try:
@@ -89,6 +102,8 @@ def handle_videos_list(args, config):
 
         for video in videos:
             console.print(video)
+    except VideoProcessingError as e:
+        logger.exception(f"Error while listing videos: {e}", extra={"event": LogEvent.VIDEO_PROCESSING_ERROR})
     finally:
         repo.close()
 
@@ -106,6 +121,10 @@ def handle_videos_set_status(args, config, run_id):
             target_status = VideoProcessingStatus.FAILED
         case "done":
             target_status = VideoProcessingStatus.DONE
+        case "data_enriching":
+            target_status = VideoProcessingStatus.DATA_ENRICHING
+        case _:
+            raise ValueError(f"Invalid status: {args.status}")
     try:
         if args.video_id and args.status:
             if args.reset_failed_attempts:
