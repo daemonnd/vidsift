@@ -14,26 +14,13 @@ logger = logging.getLogger(__name__)
 
 class VideoFilter:
     def __init__(self, config: AppConfig) -> None:
-        yt_dlp_config = config.video_processing.yt_dlp
-        ytl_opts = {
-            "cookiesfrombrowser": tuple([yt_dlp_config.base.cookies_from_browser]),
-            "sleep_interval_requests": yt_dlp_config.base.sleep_requests,
-            "quiet": yt_dlp_config.base.quiet,
-            "js_runtimes": get_js_runtimes_config(yt_dlp_config.base.js_runtimes),
-            "extract_flat": True,
-        }
-        self.ydl = YoutubeDL(ytl_opts)
-
-    def _extract_data(self, vid: Video):
-        try:
-            return self.ydl.extract_info(vid.url, download=False)
-        except Exception as e:
-            raise VideoFilteringError(
-                f"Error while filtering video: {e}"
-            )
+        pass
 
     def run_filters(
-        self, vid: Video
+        self, 
+        vid: Video,
+        data: dict | None = None, 
+        error_message: str | None = None
     ) -> tuple[bool, Literal["livestream", "members-only"] | None]:
         """
         Method for running all of the filters.
@@ -46,7 +33,6 @@ class VideoFilter:
             - If it passes all of the filters, it returns `True, None`
         """
 
-        data = self._extract_data(vid)
         filters = {
             "members-only": self._check_member_only,
             "livestream": self._check_is_livestream,  # livestream checks at the end cause it might fail
