@@ -23,7 +23,8 @@ from vidsift.features.transcript.errors import TranscriptError
 from vidsift.features.validation.errors import VideoValidationError
 from vidsift.features.video_processing.repository import \
     VideoProcessingRepository
-from vidsift.ingestion.errors import (VideoDataCollectionError,
+from vidsift.ingestion.errors import (IngestionEnrichmentError,
+                                      VideoDataCollectionError,
                                       VideoFilteringError)
 from vidsift.ingestion.video_filter import VideoFilter
 from vidsift.models.validation.validation_result import ValidationResult
@@ -148,29 +149,7 @@ class VidsiftOrchestrator:
                         vid=vid
                     )  # put the data about the video into the db, with status FILTERING
                     if discovery_type == DiscoverySource.RSS:
-                        # extract additional video data
-                        try:
-                            enrichment_data: dict = self.video_data_collector.get_additional_video_data(vid=vid)
-                        except VideoDataCollectionError as e:
-                            logger.exception(
-                                f"Failed to fetch additional video data for video '{vid.video_id}': {str(e)}",
-                                extra={"event": LogEvent.VIDEO_METADATA_ENRICHMENT_FAILED,
-                                       "video_id": vid.video_id,
-                                       "channel_id": vid.channel_id
-                                },
-                            )
-                            processing: bool = self.should_process(vid, discovery_type, channel_lookup, error_message=str(e))
-                        except BaseException:
-                            raise
-                        else:
-                            self.video_db.del_row(video_id=vid.video_id)  # delete the row, because it will be re-created with the enriched data
-                            self.video_db.create(vid=Video.apply_duration_enrichment(video=vid, duration=enrichment_data.get("duration")))  # re-create the row with the enriched data
-                            processing: bool = self.should_process(
-                                vid=vid,
-                                discovery_type=discovery_type,
-                                channel_lookup=channel_lookup,
-                                data=enrichment_data,
-                            )
+                        processing: bool = self._enrich_and_filter_video(vid=vid, discovery_type=discovery_type, channel_lookup=channel_lookup)
                         if not processing:
                             continue
                     logger.debug(
@@ -193,6 +172,43 @@ class VidsiftOrchestrator:
                 },
             )
 
+    def _enrich_and_filter_video(
+        self,
+        vid: Video,
+        discovery_type: DiscoverySource,
+        channel_lookup: dict[str, ChannelConfig]
+    ) -> bool:
+        """
+        Method that enriches the video data and runs the filtering on it 
+        because filtering requires data enrichment, the filtering is done after the enrichment.
+        Returns:
+            - True if it passed all of the filters
+            - False if it failed on one filter
+        """
+        # extract additional video data
+        try:
+            enrichment_data: dict = self.video_data_collector.get_additional_video_data(vid=vid)
+        except IngestionEnrichmentError as e:
+            logger.exception(
+                f"Failed to fetch additional video data for video '{vid.video_id}': {str(e)}",
+                extra={"event": LogEvent.VIDEO_METADATA_ENRICHMENT_FAILED,
+                        "video_id": vid.video_id,
+                        "channel_id": vid.channel_id
+                },
+            )
+            processing: bool = self.should_process(vid, discovery_type, channel_lookup, error_message=str(e))
+        except BaseException:
+            raise
+        else:
+            self.video_db.del_row(video_id=vid.video_id)  # delete the row, because it will be re-created with the enriched data
+            self.video_db.create(vid=Video.apply_duration_enrichment(video=vid, duration=enrichment_data.get("duration")))  # re-create the row with the enriched data
+            processing: bool = self.should_process(
+                vid=vid,
+                discovery_type=discovery_type,
+                channel_lookup=channel_lookup,
+                data=enrichment_data,
+            )
+        return processing
     def process_video(self, vid: Video, channel_lookup: dict[str, ChannelConfig]):
         channel = channel_lookup[vid.channel_id]
         match channel.action:
