@@ -149,3 +149,6 @@ class LogEvent:
     LOCK_ACQUIRED = "lock_acquired"
     LOCK_RELEASED = "lock_released"
     LOCK_FAILED = "lock_failed"
+
+    # video display events
+    VIDEO_PROCESSING_ERROR = "video_processing_error"

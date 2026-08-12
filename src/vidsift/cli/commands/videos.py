@@ -1,10 +1,16 @@
+import logging
+
 from rich.console import Console
 
 from vidsift.cli.autocomplete import complete_channel_ids, complete_video_ids
+from vidsift.features.video_processing.errors import VideoProcessingError
 from vidsift.features.video_processing.repository import \
     VideoProcessingRepository
 from vidsift.models.video_record import VideoProcessingStatus
+from vidsift.shared.logging.log_event_fields import LogEvent
 from vidsift.shared.paths import PROCESSED_VIDEOS_DB
+
+logger = logging.getLogger(__name__)
 
 
 def register_videos(subparsers):
@@ -89,6 +95,8 @@ def handle_videos_list(args, config, run_id):
 
         for video in videos:
             console.print(video)
+    except VideoProcessingError as e:
+        logger.exception(f"Error while listing videos: {e}", extra={"event": LogEvent.VIDEO_PROCESSING_ERROR})
     finally:
         repo.close()
 
