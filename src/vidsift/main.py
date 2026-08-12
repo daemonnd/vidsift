@@ -7,8 +7,8 @@ Tasks:
 - call one orchestrator (vidsift_pipeline.py)
 
 """
-
 import logging
+from pathlib import Path
 from uuid import uuid7
 
 from pydantic import ValidationError
@@ -213,6 +213,36 @@ class VidsiftCLI:
                 config = config.model_copy(
                     update={"video_processing": video_processing_config}
                 )
+
+        if self.args.command in PIPELINE_RUNNING_COMMANDS:
+            if self.args.fake_download is not None and self.args.fake_download is not True:
+                video_download_config = config.downloads.model_copy(
+                    update={
+                        "fake_download": True,
+                        "output_path": self.args.fake_download
+                    }
+                )
+                config = config.model_copy(
+                    update={"downloads": video_download_config}
+                )
+            elif self.args.fake_download is True:
+                video_download_config = config.downloads.model_copy(
+                    update={
+                        "fake_download": True,
+                    }
+                )
+                config = config.model_copy(
+                    update={"downloads": video_download_config}
+                )
+        if config.downloads.output_path is None:
+            video_download_config = config.downloads.model_copy(
+                update={
+                    "output_path": Path(config.downloads.output_dir) / "to_watch.md"
+                }
+            )
+            config = config.model_copy(
+                update={"downloads": video_download_config}
+            )
 
         return config
 
