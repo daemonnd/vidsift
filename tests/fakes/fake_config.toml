@@ -182,8 +182,6 @@ path = "/absulute/path/to/deno" # optional
 
 [[video_processing.yt_dlp.base.js_runtimes]]
 name = "node"
-
-
 [video_processing.yt_dlp.download]
 # download-specific options for yt-dlp
 # used alongside base yt-dlp args for downloading
