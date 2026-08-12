@@ -35,7 +35,7 @@ def register_videos(subparsers):
         "-s",
         "--status",
         help="filter by processing status ('downloading', 'summarizing', 'done', 'failed', 'validating'",
-        choices=["downloading", "summarizing", "done", "failed", "validating"],
+        choices=["downloading", "summarizing", "done", "failed", "validating", ],
     )
 
     video_list.add_argument(
@@ -55,7 +55,14 @@ def register_videos(subparsers):
     video_set_status.add_argument(
         "--status",
         help="Target status of video",
-        choices=["downloading", "summarizing", "done", "failed", "validating"],
+        choices=[
+            "downloading",
+            "summarizing",
+            "done",
+            "failed",
+            "validating",
+            "data_enriching",
+        ],
     )
     video_set_status.add_argument(
         "--reset-failed-attempts",
@@ -114,6 +121,10 @@ def handle_videos_set_status(args, config, run_id):
             target_status = VideoProcessingStatus.FAILED
         case "done":
             target_status = VideoProcessingStatus.DONE
+        case "data_enriching":
+            target_status = VideoProcessingStatus.DATA_ENRICHING
+        case _:
+            raise ValueError(f"Invalid status: {args.status}")
     try:
         if args.video_id and args.status:
             if args.reset_failed_attempts:

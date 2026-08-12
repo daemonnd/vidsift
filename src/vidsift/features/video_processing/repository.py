@@ -51,7 +51,7 @@ class VideoProcessingRepository:
 
     def create(self, vid: Video):
         """
-        Method for setting the status to filtering after a video got discovered
+        Method for setting the status to data_enriching after a video got discovered
         """
         try:
             parameters: tuple = (
@@ -80,11 +80,11 @@ class VideoProcessingRepository:
             self.conn.commit()
         except IntegrityError as e:
             raise DBWritingError(
-                f"Failed to write to DB while setting the status to filtering because a database operand violated a constraint: {str(e)}"
+                f"Failed to write to DB while setting the status to data_enriching because a database operand violated a constraint: {str(e)}"
             ) from e
         except OperationalError as e:
             raise DBWritingError(
-                f"Failed to write to DB while setting the status to filtering because of an operational Error: {str(e)}"
+                f"Failed to write to DB while setting the status to data_enriching because of an operational Error: {str(e)}"
             ) from e
 
     def save_validation_result(
@@ -315,7 +315,6 @@ class VideoProcessingRepository:
             "done",
             "failed",
             "validating",
-            "filtering",
             "data_enriching",
         ],
     ) -> Generator[VideoProcessingRecord, None, None]:
