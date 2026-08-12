@@ -244,6 +244,10 @@ output_dir = "/home/user/Documents/vidsift/"
 
 [downloads]
 #enabled = true
+# Where the downloaded video should be stored.
+# If fake_download is True,
+# if output_path is not provided, the path for writing 
+# would have downloaded video links is output_dir / "to_watch.md"
 output_dir = "/home/user/Videos/.vidsift/"
 
 # when true, vidsift will not download the video, 
@@ -255,12 +259,13 @@ output_dir = "/home/user/Videos/.vidsift/"
 # vidsift process --url "someurl" --download --fake-download /optional/path/to/output/file
 fake_download = false
 
-# filename of the file that will be created in the output_dir when fake_download is true
+# full path of the file that will be created in the when fake_download is true
+# Overrides output_dir
 # Config override with:
 # vidsift run --fake-download /optional/path/to/output/file
 # vidsift schedule --fake-download /optional/path/to/output/file
 # vidsift process --url "someurl" --download --fake-download /optional/path/to/output/file
-output_file = "to_watch.md"
+output_path = "/home/user/Documents/to_watch.md"
 
 
 # ============================================================

@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Literal
 
 from pydantic import (BaseModel, ConfigDict, Field, field_validator,
@@ -118,7 +119,7 @@ class DownloadsConfig(BaseModel):
     # enabled: bool
     output_dir: str
     fake_download: bool = False
-    output_file: str = 'to_watch.md'
+    output_path: str | Path | None = None 
 
 
 class ChannelConfig(BaseModel):
