@@ -209,6 +209,7 @@ class VidsiftOrchestrator:
                 data=enrichment_data,
             )
         return processing
+
     def process_video(self, vid: Video, channel_lookup: dict[str, ChannelConfig]):
         channel = channel_lookup[vid.channel_id]
         match channel.action:
@@ -314,6 +315,7 @@ class VidsiftOrchestrator:
             self.video_db.update_after_done(
                 video_id=vid.video_id, decision="discarded"
             )
+
     def should_process(
         self,
         vid: Video,
@@ -591,14 +593,10 @@ class VidsiftOrchestrator:
                     "channel_id": vid.channel_id,
                 },
             )
-            if self.should_process(
-                vid=vid,
-                discovery_type=DiscoverySource.RSS,  # has to be rss, else the video would not end up in livestream checking state, it would immediately get processed,
-                channel_lookup=channel_lookup,
-            ):
+            if self._enrich_and_filter_video(vid=vid, discovery_type=DiscoverySource.RSS, channel_lookup=channel_lookup):
                 self.process_video(vid=vid, channel_lookup=channel_lookup)
         logger.debug(
-            "Check for videos where filtering got interrupted... Done",
+            "Check for videos where enriching their metadata got interrupted... Done",
             extra={
                 "event": LogEvent.VIDEO_METADATA_ENRICHMENT_RESUME_COMPLETED,
             },
