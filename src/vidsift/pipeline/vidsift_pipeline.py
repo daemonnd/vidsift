@@ -215,24 +215,45 @@ class VidsiftOrchestrator:
         channel = channel_lookup[vid.channel_id]
         match channel.action:
             case "download":
-                logger.info(
-                    f"Processing video with video id '{vid.video_id}' from {vid.author} with action download",
-                    extra={
-                        "event": LogEvent.VIDEO_DOWNLOAD_STARTED,
-                        "video_id": vid.video_id,
-                        "channel_id": vid.channel_id,
-                    },
-                )
-                self.execute_processing_step(
-                    vid=vid,
-                    step_type="download",
-                    success_decision="downloaded",
-                    starting_status=VideoProcessingStatus.DOWNLOADING,
-                    action=lambda: self.downloader.download(
-                        video_url=vid.url,
-                        output_path=Path(self.config.downloads.output_dir),
-                    ),
-                )
+                if self.config.downloads.fake_download:
+                    logger.info(
+                        f"Processing video with video id '{vid.video_id}' from {vid.author} with action download (but it will be fake-downloaded)",
+                        extra={
+                            "event": LogEvent.FAKE_VIDEO_DOWNLOAD_STARTED,
+                            "video_id": vid.video_id,
+                            "channel_id": vid.channel_id,
+                            "output_path": self.config.downloads.output_path
+                        },
+                    )
+                    self.execute_processing_step(
+                        vid=vid,
+                        step_type="fake_download",
+                        success_decision="downloaded", # not fake_downloaded cause it is not a real action
+                        starting_status=VideoProcessingStatus.DOWNLOADING,
+                        action=lambda: self.downloader.download(
+                            video_url=vid.url,
+                            output_path=Path(self.config.downloads.output_dir),
+                        ),
+                    )
+                else:
+                    logger.info(
+                        f"Processing video with video id '{vid.video_id}' from {vid.author} with action download",
+                        extra={
+                            "event": LogEvent.VIDEO_DOWNLOAD_STARTED,
+                            "video_id": vid.video_id,
+                            "channel_id": vid.channel_id,
+                        },
+                    )
+                    self.execute_processing_step(
+                        vid=vid,
+                        step_type="download",
+                        success_decision="downloaded",
+                        starting_status=VideoProcessingStatus.DOWNLOADING,
+                        action=lambda: self.downloader.download(
+                            video_url=vid.url,
+                            output_path=Path(self.config.downloads.output_dir),
+                        ),
+                    )
             case "summarize":
                 logger.info(
                     f"Processing video with video id '{vid.video_id}' from {vid.author} with action summarize",
@@ -373,7 +394,7 @@ class VidsiftOrchestrator:
     def execute_processing_step(
         self,
         vid: Video,
-        step_type: Literal["download", "summarize"],
+        step_type: Literal["download", "summarize", "fake_download"],
         success_decision: Literal["downloaded", "summarized"],
         starting_status: VideoProcessingStatus,
         action: Callable[[], None],

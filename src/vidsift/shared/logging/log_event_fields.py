@@ -3,7 +3,7 @@ from typing import Literal
 
 class LogEvent:
     @staticmethod
-    def get_final_output_events(general_event: Literal["download", "summarize"]):
+    def get_final_output_events(general_event: Literal["download", "summarize", "fake_download"]):
         """
         Get the events in a tuple of started, completed and failed from a general event
         """
@@ -19,6 +19,12 @@ class LogEvent:
                     LogEvent.VIDEO_SUMMARIZATION_STARTED,
                     LogEvent.VIDEO_SUMMARIZATION_COMPLETED,
                     LogEvent.VIDEO_SUMMARIZATION_FAILED,
+                )
+            case "fake_download":
+                return (
+                    LogEvent.FAKE_VIDEO_DOWNLOAD_STARTED,
+                    LogEvent.FAKE_VIDEO_DOWNLOAD_COMPLETED,
+                    LogEvent.FAKE_VIDEO_DOWNLOAD_FAILED,
                 )
 
     # run events
@@ -139,6 +145,11 @@ class LogEvent:
     VIDEO_DOWNLOAD_STARTED = "video_download_started"
     VIDEO_DOWNLOAD_COMPLETED = "video_download_completed"
     VIDEO_DOWNLOAD_FAILED = "video_download_failed"
+
+    # video fake download events
+    FAKE_VIDEO_DOWNLOAD_STARTED = "fake_video_download_started"
+    FAKE_VIDEO_DOWNLOAD_COMPLETED = "fake_video_download_completed"
+    FAKE_VIDEO_DOWNLOAD_FAILED = "fake_video_download_failed"
 
     # video summarization events
     VIDEO_SUMMARIZATION_STARTED = "video_summarization_started"
