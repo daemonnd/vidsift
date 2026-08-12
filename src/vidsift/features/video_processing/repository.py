@@ -8,12 +8,10 @@ from pydantic import ValidationError
 
 from vidsift.config.models import AppConfig
 from vidsift.features.video_processing.errors import (
-    DBWritingError,
-    VideoIDNotFoundError,
-    VideoProcessingDataValidationError,
-)
+    DBWritingError, VideoIDNotFoundError, VideoProcessingDataValidationError)
 from vidsift.models.video import Video
-from vidsift.models.video_record import VideoProcessingRecord, VideoProcessingStatus
+from vidsift.models.video_record import (VideoProcessingRecord,
+                                         VideoProcessingStatus)
 from vidsift.shared.paths import PROCESSED_VIDEOS_DB
 
 
@@ -34,6 +32,7 @@ class VideoProcessingRepository:
             author TEXT,
             channel_id TEXT NOT NULL,
             published TEXT,
+            duration TEXT,
 
             status TEXT NOT NULL,
 
@@ -62,7 +61,8 @@ class VideoProcessingRepository:
                 vid.author,
                 vid.channel_id,
                 vid.published,
-                VideoProcessingStatus.FILTERING.value,
+                vid.duration,
+                VideoProcessingStatus.DATA_ENRICHING.value,
                 0,
                 None,
                 None,
@@ -74,7 +74,7 @@ class VideoProcessingRepository:
             self.cur.execute(
                 """
             INSERT INTO processed_videos VALUES
-            (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                 parameters,
             )
             self.conn.commit()

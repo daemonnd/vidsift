@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field
 
 class VideoProcessingStatus(Enum):
     FILTERING = "filtering"
+    DATA_ENRICHING = "data_enriching"
     VALIDATING = "validating"
     DOWNLOADING = "downloading"
     SUMMARIZING = "summarizing"
@@ -22,6 +23,7 @@ class VideoProcessingRecord(BaseModel):
     author: str
     channel_id: str
     published: str
+    duration: str | None
     status: VideoProcessingStatus
     retry_count: int
     decision: Literal["downloaded", "summarized", "discarded"] | None
