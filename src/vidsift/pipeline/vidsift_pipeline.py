@@ -169,6 +169,7 @@ class VidsiftOrchestrator:
                                 vid=vid,
                                 discovery_type=discovery_type,
                                 channel_lookup=channel_lookup,
+                                data=enrichment_data,
                             )
                         if not processing:
                             continue
@@ -326,22 +327,7 @@ class VidsiftOrchestrator:
             passes, reason = self.video_filter.run_filters(vid=vid, data=data, error_message=error_message)
         except (
             VideoFilteringError
-        ) as e:  # exceptions are also caught in this by the livestream checker
-            # for livestream checking filter
-            if "This live event will begin in" in str(e):
-                if (
-                    str(e).endswith("minutes.")
-                    or str(e).endswith("hours.")
-                    or str(e).endswith("days.")
-                ):
-                    # if it is a livestream
-                    self._filter_video_out(vid=vid, reason="livestream", channel_lookup=channel_lookup, exception=True)
-                    return False  # it is a livestream that will begin in the future
-            if "Join this channel to get access to members-only content like this video, and other exclusive perks." in str(e):
-                # it is members-only content
-                self._filter_video_out(vid=vid, reason="members-only", channel_lookup=channel_lookup, exception=True)
-                return False
-
+        ) as e:
             # on other error
             logger.exception(
                 f"VideoFilteringError: Failed to filter video '{vid.video_id}': {str(e)}",

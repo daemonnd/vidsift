@@ -118,7 +118,7 @@ class VideoDataCollection:
         Method to fetch additional video data using yt-dlp extract_flat for a given video.
         """
         logger.info(
-            f"Fetching additional video data using yt-dlp for video id: '{vid.video_id}'",
+            f"First, fetching additional video data using yt-dlp for video id: '{vid.video_id}'",
             extra={
                 "event": LogEvent.VIDEO_METADATA_ENRICHMENT_STARTED,
                 "video_id": vid.video_id,
