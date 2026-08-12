@@ -246,6 +246,22 @@ output_dir = "/home/user/Documents/vidsift/"
 #enabled = true
 output_dir = "/home/user/Videos/.vidsift/"
 
+# when true, vidsift will not download the video, 
+# but still append it to the specified output_dir to 'to_watch.md'
+# that filename can be configured with output_file field.
+# Config override with:
+# vidsift run --fake-download /optional/path/to/output/file
+# vidsift schedule --fake-download /optional/path/to/output/file
+# vidsift process --url "someurl" --download --fake-download /optional/path/to/output/file
+fake_download = false
+
+# filename of the file that will be created in the output_dir when fake_download is true
+# Config override with:
+# vidsift run --fake-download /optional/path/to/output/file
+# vidsift schedule --fake-download /optional/path/to/output/file
+# vidsift process --url "someurl" --download --fake-download /optional/path/to/output/file
+output_file = "to_watch.md"
+
 
 # ============================================================
 # Channels
