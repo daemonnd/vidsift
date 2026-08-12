@@ -1,8 +1,6 @@
-from pathlib import Path
-
 from rich.console import Console
 
-from vidsift.cli.autocomplete import complete_channel_ids
+from vidsift.cli.autocomplete import complete_channel_ids, complete_video_ids
 from vidsift.features.video_processing.repository import \
     VideoProcessingRepository
 from vidsift.models.video_record import VideoProcessingStatus
@@ -36,7 +34,7 @@ def register_videos(subparsers):
 
     video_list.add_argument(
         "--video-id", help="only show the db entry with the matching video id"
-    )
+    ).completer = complete_video_ids
 
     video_list.add_argument(
         "--channel-id", help="only show the db entries with the matching channel id"
@@ -47,7 +45,7 @@ def register_videos(subparsers):
     video_set_status = videos_subparsers.add_parser(
         "set-status", help="Set the status of <video id> to <status>"
     )
-    video_set_status.add_argument("--video-id", help="ID of the target video")
+    video_set_status.add_argument("--video-id", help="ID of the target video").completer = complete_video_ids
     video_set_status.add_argument(
         "--status",
         help="Target status of video",
@@ -66,7 +64,7 @@ def register_videos(subparsers):
     )
     videos_delete_one.add_argument(
         "--video-id", help="ID of the target video", required=True
-    )
+    ).completer = complete_video_ids
     videos_delete_one.set_defaults(func=handle_videos_delete)
 
     return videos_parser

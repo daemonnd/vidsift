@@ -1,23 +1,21 @@
 import json
-from rich import print as pprint
-from datetime import datetime
+import logging
 import re
 from collections import deque
-import logging
+from datetime import datetime
 from time import sleep
 
+from rich import print as pprint
+
 from vidsift.config.models import AppConfig
-from vidsift.features.logs.errors import (
-    InvalidVariableError,
-    LogFieldMissingError,
-    LogFileNotFoundError,
-    LogFilePermissionError,
-    NoLogFilesError,
-)
+from vidsift.features.logs.errors import (InvalidVariableError,
+                                          LogFieldMissingError,
+                                          LogFileNotFoundError,
+                                          LogFilePermissionError,
+                                          NoLogFilesError)
 from vidsift.models.log_display import LogDisplayOpts
 from vidsift.shared.logging.formatters import get_style
 from vidsift.shared.paths import VIDSIFT_LOG_DIR, VIDSIFT_LOG_FILE
-
 
 TIMESTAMP_LEN = 23
 RUN_ID_LEN = 33  # 36
@@ -47,9 +45,9 @@ class LogViewer:
                         new_line = file.readline()
                         if new_line:
                             self._print_line(new_line)
-                        sleep(0.1)
+                        sleep(0.001)
             except FileNotFoundError:
-                sleep(0.1)
+                sleep(0.01)
                 self.follow()
             except PermissionError as e:
                 raise LogFilePermissionError(str(e)) from e
@@ -103,11 +101,15 @@ class LogViewer:
         if getattr(logging, line_data["level"]) >= getattr(
             logging, self.log_opts.level
         ):
-            if (
-                self.log_opts.contains in line_data["event"]
-                or self.log_opts.contains in line_data["message"]
-            ):
-                return True
+            try:
+                if (
+                    self.log_opts.contains in line_data["event"]
+                    or self.log_opts.contains in line_data["message"]
+                ):
+                    return True
+            except KeyError as e:
+                if "event" in str(e):
+                    return True if self.log_opts.contains in line_data["message"] else False
         return False
 
     def _format(self, line_data: dict) -> str:
@@ -115,7 +117,10 @@ class LogViewer:
             timestamp = line_data["timestamp"][:TIMESTAMP_LEN]
             level = f"{line_data['level']:<7}"
             message = line_data["message"][:MESSAGE_LEN]
-            event = line_data["event"][:EVENT_LEN]
+            try:
+                event = line_data["event"][:EVENT_LEN]
+            except KeyError:
+                event = "NO_EVENT"
             event = f"{event:<{EVENT_LEN}}"
             run_id = line_data["run_id"][:RUN_ID_LEN]
             run_id = f"{run_id:<{RUN_ID_LEN}}"

@@ -84,7 +84,7 @@ def handle_process(args, config: AppConfig, run_id):
             )
             if args.summarize:
                 logger.info(
-                    f"Starting manual summarization with video id {vid.video_id}",
+                    f"Starting manual summarization with video id '{vid.video_id}'",
                     extra={
                         "event": LogEvent.MANUAL_SUMMARIZATION_RUN_STARTED,
                         "video_id": vid.video_id
