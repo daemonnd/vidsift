@@ -83,6 +83,11 @@ class LogEvent:
     YT_DLP_CHANNEL_FETCH_FAILED = "yt_dlp_fetch_failed"
     YT_DLP_CHANNEL_FETCH_COMPLETED = "yt_dlp_fetch_completed"
 
+    # video metadata enrichment events
+    VIDEO_METADATA_ENRICHMENT_STARTED = "video_metadata_enrichment_started"
+    VIDEO_METADATA_ENRICHMENT_COMPLETED = "video_metadata_enrichment_completed"
+    VIDEO_METADATA_ENRICHMENT_FAILED = "video_metadata_enrichment_failed"
+
     # video filtering events
     VIDEO_FILTERING_STARTED = "video_filtering_started"
     VIDEO_FILTERING_COMPLETED = "video_filtering_completed"
