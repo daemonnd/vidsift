@@ -147,7 +147,8 @@ class VidsiftOrchestrator:
                     # does not do the filtering for fallback (assumed that it is only videos)
                     self.video_db.create(
                         vid=vid
-                    )  # put the data about the video into the db, with status FILTERING
+                    )  # put the data about the video into the db, with status DATA_ENRICHING, 
+                    # because filtering requires data enrichment, so the status is set to DATA_ENRICHING
                     if discovery_type == DiscoverySource.RSS:
                         processing: bool = self._enrich_and_filter_video(vid=vid, discovery_type=discovery_type, channel_lookup=channel_lookup)
                         if not processing:
