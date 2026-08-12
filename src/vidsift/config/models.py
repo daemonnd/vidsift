@@ -1,6 +1,8 @@
+from pathlib import Path
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import (BaseModel, ConfigDict, Field, field_validator,
+                      model_validator)
 
 
 class ConsoleLoggingConfig(BaseModel):
@@ -116,6 +118,8 @@ class DownloadsConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
     # enabled: bool
     output_dir: str
+    fake_download: bool = False
+    output_path: str | Path | None = None 
 
 
 class ChannelConfig(BaseModel):

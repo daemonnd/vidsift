@@ -20,7 +20,11 @@ def register_process(subparsers):
     process_parser = subparsers.add_parser(
         "process",
         help="Process a certain URL ",
-        usage="--url is required. \nIf only --url is selected, the video will be validated + discarded / summarized / downloaded"
+        usage="""--url is required.
+        If only --url is selected, the video will be validated + discarded / summarized / downloaded
+        Only one of --summarize and --download can be used.
+        --fake-download is only compatible with --download
+        """
         )
     exclusive_process_parser_group = process_parser.add_mutually_exclusive_group()
     process_parser.add_argument(
@@ -43,6 +47,17 @@ def register_process(subparsers):
         help="Fetch the transcript of the selected video",
         action="store_true"
     )
+    process_parser.add_argument( # to make it not exclusive with download, but exclusive with summarize and fetch-transcript
+        "--fake-download",
+        nargs='?',
+        const=True,  # value when flag is used WITHOUT an argument
+        default=None,  # value when flag is NOT used at all
+        help="""Simulate the download of videos without actually downloading them.
+        Instead, the url of the video to the filepath specified in the config file, 
+        to override that config file value, use
+        --fake-download-path /path/to/fake/download/file.
+        The default value for that is the download targed dir / 'to_watch.md' """,
+    )
     process_parser.set_defaults(
         func=handle_process
     )
@@ -59,19 +74,37 @@ def handle_process(args, config: AppConfig, run_id):
         logger = logging.getLogger(__name__)
         if args.download:
             from vidsift.shared.video_id_extractor import VideoIDExtractor
-            logger.info(
-                f"Starting manual download with url {args.url}",
-                extra={
-                    "event": LogEvent.MANUAL_DOWNLOAD_RUN_STARTED,
-                    "video_id": VideoIDExtractor().extract_id(args.url)
-                }
-            )
+            video_id = VideoIDExtractor().extract_id(args.url)
             downloader: VideoDownloader = VideoDownloader(config=config)
-            downloader.download(
-                video_url=args.url,
-                output_path=Path(config.downloads.output_dir)
-            )
-            return
+            if not config.downloads.fake_download:
+                logger.info(
+                    f"Starting manual download with url {args.url}",
+                    extra={
+                        "event": LogEvent.MANUAL_DOWNLOAD_RUN_STARTED,
+                        "video_id": video_id
+                    }
+                )
+                downloader.download(
+                    video_url=args.url,
+                    output_path=Path(config.downloads.output_dir)
+                )
+                return
+            else:
+                logger.info(
+                    f"Starting manual fake download with url {args.url}",
+                    extra={
+                        "event": LogEvent.MANUAL_FAKE_DOWNLOAD_RUN_STARTED,
+                        "video_id": video_id,
+                        "output_path": config.downloads.output_path
+                    }
+                )
+                downloader.download(
+                    video_url=args.url,
+                    output_path=Path(config.downloads.output_dir)
+                )
+                return
+
+
 
         metadata_collector = MetadataCollector(config=config)
         try:
