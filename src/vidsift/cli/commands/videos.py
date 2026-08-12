@@ -70,7 +70,7 @@ def register_videos(subparsers):
     return videos_parser
 
 
-def handle_videos_list(args, config):
+def handle_videos_list(args, config, run_id):
     repo = VideoProcessingRepository(config=config)
     console = Console()
     try:
