@@ -131,6 +131,8 @@ def handle_videos_set_status(args, config, run_id):
                 repo.set_status(args.video_id, target_status, reset_attempts=True)
             else:
                 repo.set_status(args.video_id, target_status, reset_attempts=False)
+    except VideoProcessingError as e:
+        logger.exception(f"Error while trying to set the status of video id '{args.video_id}' to status '{args.status}': {str(e)}", extra={"event": LogEvent.VIDEO_PROCESSING_ERROR})
 
     finally:
         repo.close()
@@ -140,6 +142,8 @@ def handle_videos_delete(args, config, run_id):
     repo = VideoProcessingRepository(config=config)
     try:
         repo.del_row(video_id=args.video_id)
+    except VideoProcessingError as e:
+        logger.exception(f"Error while trying to delete video with video id '{args.video_id}': {e}", extra={"event": LogEvent.VIDEO_PROCESSING_ERROR})
     finally:
         repo.close()
 

@@ -1,4 +1,8 @@
+import logging
+
 from vidsift.services.bg_runner_service import BgRunnserService
+
+logger = logging.getLogger(__name__)
 
 
 def register_service(subparsers):
@@ -40,18 +44,21 @@ def register_service(subparsers):
 
 
 def handle_background_service(args, config, run_id):
-    bg_runner_service = BgRunnserService()
-    if args.enable:
-        bg_runner_service.install_service()
-    elif args.disable:
-        bg_runner_service.uninstall_service()
-    elif args.start:
-        bg_runner_service.start_service()
-    elif args.stop:
-        bg_runner_service.stop_service()
-    elif args.restart:
-        bg_runner_service.restart_service()
-    elif args.status:
-        bg_runner_service.get_status()
-    else:
-        bg_runner_service.get_status()
+    try:
+        bg_runner_service = BgRunnserService()
+        if args.enable:
+            bg_runner_service.install_service()
+        elif args.disable:
+            bg_runner_service.uninstall_service()
+        elif args.start:
+            bg_runner_service.start_service()
+        elif args.stop:
+            bg_runner_service.stop_service()
+        elif args.restart:
+            bg_runner_service.restart_service()
+        elif args.status:
+            bg_runner_service.get_status()
+        else:
+            bg_runner_service.get_status()
+    except Exception as e:
+        logger.exception(f"{type(e).__name__}: {str(e)}")
