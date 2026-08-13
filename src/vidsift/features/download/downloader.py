@@ -12,6 +12,7 @@ from vidsift.shared.config_helpers import get_js_runtimes_config
 
 class VideoDownloader:
     def __init__(self, config: AppConfig):
+        self.config = config
         if config.downloads.fake_download:
             self.download_config = config.downloads
         else:
@@ -27,7 +28,7 @@ class VideoDownloader:
             }
 
     def download(self, video_url: str, output_path: Path) -> None:
-        if self.download_config.fake_download:
+        if self.config.downloads.fake_download:
             self._fake_download(video_url)
         else:
             try:

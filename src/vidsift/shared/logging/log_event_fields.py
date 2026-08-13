@@ -133,6 +133,11 @@ class LogEvent:
     CHUNK_SUMMARIZATION_COMPLETED = "chunk_summarization_completed"
     CHUNK_SUMMARIZATION_FAILED = "chunk_summarization_failed"
 
+    # AI Execution events
+    AI_RESPONSE_GENERATION_STARTED = "ai_response_generation_started"
+    AI_RESPONSE_GENERATION_COMPLETED = "ai_response_generation_completed"
+    AI_RESPONSE_GENERATION_FAILED = "ai_response_generation_failed"
+
     # AI JSON output events
     AI_JSON_OUTPUT_STARTED = "ai_json_output_started"
     AI_JSON_OUTPUT_COMPLETED = "ai_json_output_completed"

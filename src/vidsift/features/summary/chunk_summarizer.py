@@ -37,10 +37,6 @@ class ChunkSummaryManager:
                 "Chunk summarization started.",
                 extra={
                     "event": LogEvent.CHUNK_SUMMARIZATION_STARTED,
-                    "model": chunk_summary_ai_config.reference,
-                    "context_length": chunk_summary_ai_config.context_length,
-                    "thinking": chunk_summary_ai_config.thinking,
-                    "max_tokens": chunk_summary_ai_config.max_tokens,
                     "chunk_length": len(chunk),
                 },
             )
@@ -64,10 +60,6 @@ class ChunkSummaryManager:
                 "Chunk summarization failed.",
                 extra={
                     "event": LogEvent.CHUNK_SUMMARIZATION_FAILED,
-                    "model": chunk_summary_ai_config.reference,
-                    "context_length": chunk_summary_ai_config.context_length,
-                    "thinking": chunk_summary_ai_config.thinking,
-                    "max_tokens": chunk_summary_ai_config.max_tokens,
                     "chunk_length": len(chunk),
                 },
                 exc_info=True,
@@ -79,10 +71,6 @@ class ChunkSummaryManager:
                 "Chunk summarization completed.",
                 extra={
                     "event": LogEvent.CHUNK_SUMMARIZATION_COMPLETED,
-                    "model": chunk_summary_ai_config.reference,
-                    "context_length": chunk_summary_ai_config.context_length,
-                    "thinking": chunk_summary_ai_config.thinking,
-                    "max_tokens": chunk_summary_ai_config.max_tokens,
                     "chunk_length": len(chunk),
                     "summary_length": len(normalized_summary),
                 },

@@ -36,11 +36,6 @@ class AIJsonOutputManager:
             "AI JSON output generation started.",
             extra={
                 "event": LogEvent.AI_JSON_OUTPUT_STARTED,
-                "model": requirements.ai_request.model,
-                "temperature": requirements.ai_request.temperature,
-                "context_length": requirements.ai_request.context_length,
-                "thinking": requirements.ai_request.thinking,
-                "max_tokens": requirements.ai_request.max_tokens,
                 "max_attempts": self.config.ai.max_allowed_json_output_runs,
             },
         )
@@ -50,11 +45,6 @@ class AIJsonOutputManager:
                 f"Starting attempt {i+1} of {self.config.ai.max_allowed_json_output_runs}",
                 extra={
                     "event": LogEvent.AI_JSON_OUTPUT_STARTED,
-                    "model": requirements.ai_request.model,
-                    "temperature": requirements.ai_request.temperature,
-                    "context_length": requirements.ai_request.context_length,
-                    "thinking": requirements.ai_request.thinking,
-                    "max_tokens": requirements.ai_request.max_tokens,
                     "attempt": i + 1,
                     "max_attempts": self.config.ai.max_allowed_json_output_runs,
                     "use_full_validation": use_full_validate,
@@ -102,11 +92,6 @@ class AIJsonOutputManager:
                     "AI returned an empty response.",
                     extra={
                         "event": LogEvent.AI_JSON_OUTPUT_FAILED,
-                        "model": requirements.ai_request.model,
-                        "temperature": requirements.ai_request.temperature,
-                        "context_length": requirements.ai_request.context_length,
-                        "thinking": requirements.ai_request.thinking,
-                        "max_tokens": requirements.ai_request.max_tokens,
                         "attempt": i + 1,
                         "max_attempts": self.config.ai.max_allowed_json_output_runs,
                         "failure_reason": "empty_response",
@@ -124,11 +109,6 @@ class AIJsonOutputManager:
                     "AI returned invalid JSON output.",
                     extra={
                         "event": LogEvent.AI_JSON_OUTPUT_FAILED,
-                        "model": requirements.ai_request.model,
-                        "temperature": requirements.ai_request.temperature,
-                        "context_length": requirements.ai_request.context_length,
-                        "thinking": requirements.ai_request.thinking,
-                        "max_tokens": requirements.ai_request.max_tokens,
                         "attempt": i + 1,
                         "max_attempts": self.config.ai.max_allowed_json_output_runs,
                         "failure_reason": "invalid_json_output",
@@ -141,11 +121,6 @@ class AIJsonOutputManager:
                     "AI JSON output generation completed.",
                     extra={
                         "event": LogEvent.AI_JSON_OUTPUT_COMPLETED,
-                        "model": requirements.ai_request.model,
-                        "temperature": requirements.ai_request.temperature,
-                        "context_length": requirements.ai_request.context_length,
-                        "thinking": requirements.ai_request.thinking,
-                        "max_tokens": requirements.ai_request.max_tokens,
                         "attempt": i + 1,
                     },
                 )
@@ -156,11 +131,6 @@ class AIJsonOutputManager:
             "AI JSON output generation failed after all attempts.",
             extra={
                 "event": LogEvent.AI_JSON_OUTPUT_FAILED,
-                "model": requirements.ai_request.model,
-                "temperature": requirements.ai_request.temperature,
-                "context_length": requirements.ai_request.context_length,
-                "thinking": requirements.ai_request.thinking,
-                "max_tokens": requirements.ai_request.max_tokens,
                 "max_attempts": self.config.ai.max_allowed_json_output_runs,
             },
         )
@@ -181,7 +151,7 @@ class AIJsonOutputManager:
             "AI response validation started.",
             extra={
                 "event": LogEvent.AI_RESPONSE_VALIDATION_STARTED,
-                "response": ai_response,
+                "raw_response": ai_response,
             },
         )
 
@@ -193,7 +163,7 @@ class AIJsonOutputManager:
                 "AI response validation completed.",
                 extra={
                     "event": LogEvent.AI_RESPONSE_VALIDATION_COMPLETED,
-                    "response": ai_response,
+                    "response": validate_response.model_dump(),
                 },
             )
 
