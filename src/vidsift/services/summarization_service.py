@@ -6,7 +6,7 @@ from pathvalidate import sanitize_filename
 
 from vidsift.config.models import AppConfig
 from vidsift.features.summary.chunk_summarizer import ChunkSummaryManager
-from vidsift.features.summary.errors import SummaryError
+from vidsift.features.summary.errors import NoImportantInfoError, SummaryError
 from vidsift.features.summary.final_summarizer import FinalSummarizer
 from vidsift.features.validation.errors import EmptyTranscriptError
 from vidsift.models.video import Video
@@ -30,6 +30,8 @@ class SummarizationService:
             return self.chunk_summarizer.summarize_all_chunks(transcript=transcript, video_id=video_id)
         except EmptyTranscriptError as e:
             raise SummaryError(f"An Error occured while summarizing chunks of the transcript: {e}") from e
+        except NoImportantInfoError as e:
+            raise
         # a SummaryError can propagate, cause if will be caught later, in the vidsift pipeline
 
 
@@ -76,16 +78,19 @@ class SummarizationService:
         Final String of the AI summary
         """
         transcript: str = self.text_normalizer.normalize(raw_transcript)
-        summaries: list[str] = self.summarize_all_chunks(transcript=transcript, video_id=vid.video_id)
-        if len(summaries) == 0:
-            logger.info(
-                f"Video with video id '{vid.video_id}' did not contain any important information for a summary, skipping",
+        try:
+            summaries: list[str] = self.summarize_all_chunks(transcript=transcript, video_id=vid.video_id)
+        except NoImportantInfoError as e:
+            logger.warning(
+                f"Video with video id '{vid.video_id}' did not contain any important information for a summary: {str(e)}. It will be marked as done even though no summary was created.",
+                exc_info=True,
                 extra={
                     "event": LogEvent.VIDEO_SUMMARIZATION_SKIPPED,
                     "video_id": vid.video_id,
                     "channel_id": vid.channel_id
                 }
             )
+            return
         final_summary: str = self.summarize_overall(summaries=summaries)
         dest_path: Path = self.store_summary(
             summary=final_summary,

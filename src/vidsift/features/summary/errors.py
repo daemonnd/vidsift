@@ -6,3 +6,7 @@ class SummaryError(Exception):
 class EmptyTranscriptSummaryError(SummaryError):
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
+
+class NoImportantInfoError(SummaryError):
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)
