@@ -22,17 +22,16 @@ def register_process(subparsers):
     process_parser = subparsers.add_parser(
         "process",
         help="Process a certain URL ",
-        usage="""--url is required.
-        If only --url is selected, the video will be validated + discarded / summarized / downloaded
+        usage="""The video url is required.
+        If only the url is selected, the video will be validated + discarded / summarized / downloaded
         Only one of --summarize and --download can be used.
         --fake-download is only compatible with --download
         """
         )
     exclusive_process_parser_group = process_parser.add_mutually_exclusive_group()
     process_parser.add_argument(
-        "--url",
+        "url",
         help="Process a specific video",
-        required=True
     )
     exclusive_process_parser_group.add_argument(
         "--download",

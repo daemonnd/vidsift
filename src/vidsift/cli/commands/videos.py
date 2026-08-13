@@ -20,7 +20,7 @@ def register_videos(subparsers):
     )
     videos_parser.add_argument(
         "--show-db-path",
-        help="Show the absolute path to the video processing database",
+        help="Show the absolute path to the video processing database. That is also possible by simply using vidsift videos",
         action="store_true",
     )
     videos_parser.set_defaults(func=handle_db_path_print)
@@ -76,7 +76,7 @@ def register_videos(subparsers):
         "rm", help="Delete a video from the database so it can be reprocessed"
     )
     videos_delete_one.add_argument(
-        "--video-id", help="ID of the target video", required=True
+        "video_id", help="ID of the target video"
     ).completer = complete_video_ids
     videos_delete_one.set_defaults(func=handle_videos_delete)
 
