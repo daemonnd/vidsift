@@ -7,7 +7,7 @@ from vidsift.features.transcript.providers.transcript_api_provider import \
     YoutubeTranscriptApiProvider
 from vidsift.features.transcript.providers.yt_dlp_provider import \
     YtDlpTranscriptProvider
-from vidsift.models.video import Video
+from vidsift.models.video import InvalidVideoError, Video
 from vidsift.shared.logging.log_event_fields import LogEvent
 
 logger = logging.getLogger(__name__)
@@ -43,6 +43,8 @@ class TranscriptService:
                     },
                 )
 
+            except InvalidVideoError:
+                raise
             except Exception as e:
                 logger.warning(
                     f"Unexpected exception while fetching transcript with provider {provider.get_provider_name()}: {str(e)}",
@@ -53,8 +55,6 @@ class TranscriptService:
                         "provider": provider.get_provider_name(),
                     },
                 )
-            except BaseException:
-                raise
             else:
                 logger.info(
                     f"Transcript fetching completed with provider {provider.get_provider_name()}",

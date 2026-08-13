@@ -4,7 +4,7 @@ from yt_dlp import YoutubeDL
 
 from vidsift.config.models import AppConfig, ChannelConfig, YtDlpBaseConfig
 from vidsift.ingestion.errors import VideoDataCollectionError
-from vidsift.models.video import Video
+from vidsift.models.video import InvalidVideoError, Video
 from vidsift.shared.config_helpers import get_js_runtimes_config
 
 
@@ -48,7 +48,7 @@ class YtDlpUrlCollector:
                     duration=video.get("duration")
                 )
                 yield vid
+        except InvalidVideoError:
+            raise
         except Exception as e:
             raise VideoDataCollectionError(str(e)) from e
-        except BaseException:
-            raise

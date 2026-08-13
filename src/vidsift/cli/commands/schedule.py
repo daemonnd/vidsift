@@ -1,5 +1,9 @@
+import logging
+
 from vidsift.pipeline.vidsift_pipeline import VidsiftOrchestrator
 from vidsift.runtime.scheduler import BackgroundServiceManager
+
+logger = logging.getLogger(__name__)
 
 
 def register_schedule(subparsers):
@@ -44,11 +48,15 @@ def register_schedule(subparsers):
 
 
 def handle_background_service(args, config, run_id):
-    background_service_manager = BackgroundServiceManager(
-        orchestrator=VidsiftOrchestrator(config=config),
-        config=config,
-        run_id=run_id,
-    )
-    if args.sleep_interval:
-        background_service_manager.run(sleep_interval=args.sleep_interval)
-    background_service_manager.run()
+    try:
+        background_service_manager = BackgroundServiceManager(
+            orchestrator=VidsiftOrchestrator(config=config),
+            config=config,
+            run_id=run_id,
+        )
+        if args.sleep_interval:
+            background_service_manager.run(sleep_interval=args.sleep_interval)
+        background_service_manager.run()
+    except Exception as e:
+        logger.exception(f"{type(e).__name__}: {str(e)}")
+        raise

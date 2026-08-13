@@ -109,37 +109,41 @@ def handle_process(args, config: AppConfig, run_id):
         metadata_collector = MetadataCollector(config=config)
         try:
             vid: Video = metadata_collector.fetch_metadata(args.url)
-        except InvalidVideoError:
-            raise
+        except InvalidVideoError as e:
+            logger.exception(f"InvalidVideoError: {str(e)}")
         else:
-            transcript = orchestrator.fetch_transcript(
-                vid=vid
-            )
-            if args.summarize:
-                logger.info(
-                    f"Starting manual summarization with video id '{vid.video_id}'",
-                    extra={
-                        "event": LogEvent.MANUAL_SUMMARIZATION_RUN_STARTED,
-                        "video_id": vid.video_id
-                    }
-                )
-                summarizer: SummarizationService = SummarizationService(config=config)
-                summarizer.summarize(
-                    raw_transcript=transcript,
+            try:
+                transcript = orchestrator.fetch_transcript(
                     vid=vid
                 )
-            elif args.fetch_transcript:
-                print(transcript)
-            else:
-                video_validator: VideoValidator = VideoValidator(config=config)
-                validation_result = video_validator.validate_video(
-                    vid=vid,
-                    raw_transcript=transcript
-                )
-                orchestrator.take_action_on_video(
-                    vid=vid,
-                    video_validation_result=validation_result,
-                    transcript=transcript
-                )
+                if args.summarize:
+                    logger.info(
+                        f"Starting manual summarization with video id '{vid.video_id}'",
+                        extra={
+                            "event": LogEvent.MANUAL_SUMMARIZATION_RUN_STARTED,
+                            "video_id": vid.video_id
+                        }
+                    )
+                    summarizer: SummarizationService = SummarizationService(config=config)
+                    summarizer.summarize(
+                        raw_transcript=transcript,
+                        vid=vid
+                    )
+                elif args.fetch_transcript:
+                    print(transcript)
+                else:
+                    video_validator: VideoValidator = VideoValidator(config=config)
+                    validation_result = video_validator.validate_video(
+                        vid=vid,
+                        raw_transcript=transcript
+                    )
+                    orchestrator.take_action_on_video(
+                        vid=vid,
+                        video_validation_result=validation_result,
+                        transcript=transcript
+                    )
+            except Exception as e:
+                logger.exception(f"{type(e).__name__}: {str(e)}")
+                raise
     finally:
         run_manager.end_run()

@@ -7,14 +7,12 @@ from yt_dlp import YoutubeDL
 from yt_dlp.utils import DownloadCancelled, DownloadError
 
 from vidsift.config.models import AppConfig
-from vidsift.features.transcript.errors import (
-    TranscriptDownloadError,
-    TranscriptError,
-    TranscriptNotFoundError,
-    VTTFileReadingError,
-)
+from vidsift.features.transcript.errors import (TranscriptDownloadError,
+                                                TranscriptError,
+                                                TranscriptNotFoundError,
+                                                VTTFileReadingError)
 from vidsift.features.transcript.providers.base import TranscriptProvider
-from vidsift.models.video import Video
+from vidsift.models.video import InvalidVideoError, Video
 from vidsift.shared.config_helpers import get_js_runtimes_config
 from vidsift.shared.logging.log_event_fields import LogEvent
 
@@ -180,6 +178,8 @@ class YtDlpTranscriptProvider(TranscriptProvider):
             transcript_str = self.convert_vtt_to_str(
                 vtt_file=self.find_vtt_file(video_id=video.video_id)
             )
+        except InvalidVideoError:
+            raise
         except TranscriptNotFoundError as e:
             logger.warning(
                 f"TranscriptNotFoundError: {str(e)}",

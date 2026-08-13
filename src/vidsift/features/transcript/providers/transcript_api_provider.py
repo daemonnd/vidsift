@@ -10,7 +10,7 @@ from vidsift.features.transcript.errors import (TranscriptError,
                                                 TranscriptFetchingError,
                                                 TranscriptNotAvailibleError)
 from vidsift.features.transcript.providers.base import TranscriptProvider
-from vidsift.models.video import Video
+from vidsift.models.video import InvalidVideoError, Video
 from vidsift.shared.logging.log_event_fields import LogEvent
 
 logger = logging.getLogger(__name__)
@@ -44,10 +44,10 @@ class YoutubeTranscriptApiProvider(TranscriptProvider):
             raise TranscriptFetchingBlockedError(str(e))
         except RequestBlocked as e:
             raise TranscriptFetchingBlockedError(str(e))
+        except InvalidVideoError:
+            raise
         except Exception as e:
             raise TranscriptError(str(e))
-        except BaseException:
-            raise
         else:
             full_transcript: list = []
             for snippet in fetched_transcript:

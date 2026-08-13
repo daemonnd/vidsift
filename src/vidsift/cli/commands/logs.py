@@ -1,5 +1,10 @@
+import logging
+
+from vidsift.features.logs.errors import LogDisplayError
 from vidsift.features.logs.log_viewer import LogViewer
 from vidsift.models.log_display import LogDisplayOpts
+
+logger = logging.getLogger(__name__)
 
 
 def register_logs(subparsers):
@@ -63,20 +68,23 @@ Default format: $timestamp $run_id $level: $event $message
 
 
 def handle_logs(args, config, run_id):
-    viewer = LogViewer(
-        config=config,
-        log_opts=LogDisplayOpts(
-            level=args.level,
-            contains=args.contains,
-            last=args.last,
-            format=args.format,
-            colors=not args.no_colors,
-            all_files=args.all_files,
-        ),
-    )
+    try:
+        viewer = LogViewer(
+            config=config,
+            log_opts=LogDisplayOpts(
+                level=args.level,
+                contains=args.contains,
+                last=args.last,
+                format=args.format,
+                colors=not args.no_colors,
+                all_files=args.all_files,
+            ),
+        )
 
-    if args.follow:
-        viewer.follow()
-        return
+        if args.follow:
+            viewer.follow()
+            return
 
-    viewer.show()
+        viewer.show()
+    except LogDisplayError as e:
+        logger.exception(f"Failed to display logs properly: {str(e)}")

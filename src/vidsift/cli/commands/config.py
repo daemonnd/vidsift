@@ -1,5 +1,10 @@
+import logging
+
 from rich.console import Console
 
+from vidsift.shared.paths import VIDSIFT_CONFIG_FILE_PATH
+
+logger = logging.getLogger(__name__)
 
 def register_config(subparsers):
     config_parser = subparsers.add_parser(
@@ -27,19 +32,24 @@ def register_config(subparsers):
 
 
 def handle_config(args, config, run_id):
-    if args.file:
+    try:
         if args.config:
             CONFIG_FILE_PATH = args.config
-        print(f"Config file: {CONFIG_FILE_PATH}\n")
-        with open(file=CONFIG_FILE_PATH, mode="r") as f:
-            print(f.read())
+        else:
+            CONFIG_FILE_PATH = VIDSIFT_CONFIG_FILE_PATH
 
-    elif args.filepath:
-        if args.config:
-            CONFIG_FILE_PATH = args.config
-        print(CONFIG_FILE_PATH)
+        if args.file:
+            print(f"Config file: {CONFIG_FILE_PATH}\n")
+            with open(file=CONFIG_FILE_PATH, mode="r") as f:
+                print(f.read())
 
-    else:
-        console = Console()
+        elif args.filepath:
+            print(CONFIG_FILE_PATH)
 
-        console.print(config)
+        else:
+            console = Console()
+
+            console.print(config)
+    except Exception as e:
+        logger.exception(f"{type(e).__name__}: {str(e)}")
+        raise
