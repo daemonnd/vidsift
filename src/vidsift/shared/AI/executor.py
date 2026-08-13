@@ -76,7 +76,7 @@ class AIExecutor:
             raise AIError(f"{type(e).__name__}: {str(e)}")
         else:
             logger.debug(
-                "AI response generation succeeded (no errors)",
+                "AI response generation succeeded (no errors), but it can still be empty",
                 extra={
                     "event": LogEvent.AI_RESPONSE_GENERATION_COMPLETED,
                     "model": request.model,
