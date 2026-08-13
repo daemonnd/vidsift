@@ -151,7 +151,7 @@ class AIJsonOutputManager:
             "AI response validation started.",
             extra={
                 "event": LogEvent.AI_RESPONSE_VALIDATION_STARTED,
-                "response": ai_response,
+                "raw_response": ai_response,
             },
         )
 
@@ -163,7 +163,7 @@ class AIJsonOutputManager:
                 "AI response validation completed.",
                 extra={
                     "event": LogEvent.AI_RESPONSE_VALIDATION_COMPLETED,
-                    "response": ai_response,
+                    "response": validate_response.model_dump(),
                 },
             )
 
