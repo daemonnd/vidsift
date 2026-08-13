@@ -52,3 +52,4 @@ def handle_config(args, config, run_id):
             console.print(config)
     except Exception as e:
         logger.exception(f"{type(e).__name__}: {str(e)}")
+        raise

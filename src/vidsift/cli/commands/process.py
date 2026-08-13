@@ -144,5 +144,6 @@ def handle_process(args, config: AppConfig, run_id):
                     )
             except Exception as e:
                 logger.exception(f"{type(e).__name__}: {str(e)}")
+                raise
     finally:
         run_manager.end_run()

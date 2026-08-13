@@ -7,6 +7,7 @@ from vidsift.features.download.errors import (OutputPathIsADirectoryError,
                                               OutputPathNotFoundError,
                                               OutputPathPermissionError,
                                               VideoDownloadError)
+from vidsift.models.video import InvalidVideoError
 from vidsift.shared.config_helpers import get_js_runtimes_config
 
 
@@ -38,10 +39,10 @@ class VideoDownloader:
                 )
                 with YoutubeDL(self.ydl_opts) as ydl:
                     ydl.download([video_url])
+            except InvalidVideoError:
+                raise
             except Exception as e:
                 raise VideoDownloadError(str(e)) from e
-            except BaseException:
-                raise
 
     def _fake_download(self, video_url) -> None:
         try:

@@ -2,7 +2,7 @@ from yt_dlp import YoutubeDL
 
 from vidsift.config.models import AppConfig
 from vidsift.ingestion.errors import IngestionEnrichmentError
-from vidsift.models.video import Video
+from vidsift.models.video import InvalidVideoError, Video
 from vidsift.shared.config_helpers import get_js_runtimes_config
 
 
@@ -21,6 +21,8 @@ class IngestionEnrichment:
     def entract_data(self, vid: Video):
         try:
             return self.ydl.extract_info(vid.url, download=False)
+        except InvalidVideoError:
+            raise
         except Exception as e:
             raise IngestionEnrichmentError(
                 f"Error while fetching additional data for video: {e}"

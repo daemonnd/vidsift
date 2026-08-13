@@ -59,3 +59,4 @@ def handle_background_service(args, config, run_id):
         background_service_manager.run()
     except Exception as e:
         logger.exception(f"{type(e).__name__}: {str(e)}")
+        raise
