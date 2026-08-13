@@ -1,7 +1,7 @@
 import logging
 
 from vidsift.config.models import AppConfig
-from vidsift.features.summary.errors import SummaryError
+from vidsift.features.summary.errors import NoImportantInfoError, SummaryError
 from vidsift.models.ai_models import AIRequest
 from vidsift.shared.AI.errors import AIError
 from vidsift.shared.AI.executor import AIExecutor
@@ -152,4 +152,7 @@ class ChunkSummaryManager:
             },
         )
 
-        return summaries
+        if summaries != []:
+            return summaries
+        else:
+            raise NoImportantInfoError(f"It seems that the video with video id '{video_id}' does not contain any important information")
