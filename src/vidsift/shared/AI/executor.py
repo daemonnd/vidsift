@@ -84,7 +84,8 @@ class AIExecutor:
                     "context_length": request.context_length,
                     "thinking": request.thinking,
                     "max_tokens": request.max_tokens,
-                    "prompt": request.prompt
+                    "prompt": request.prompt,
+                    "response": response
                 }
             )
             if not response.content or not response.content.replace(" ", ""):
