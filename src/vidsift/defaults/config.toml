@@ -237,6 +237,15 @@ transcript_clickbait_weight = 2.5
 char_chunk_size = 10000
 output_dir = "/home/user/Documents/vidsift/"
 
+# wether the video metadata should be shown on the top 
+# of the file containing the video summary
+# When enabled, the file has the following structure:
+# <Video metadata>
+# <Video summary>
+# When disabled, the file will rather look like this:
+# <Video summary>
+show_metadata_on_summary = true
+
 
 # ============================================================
 # Downloads
