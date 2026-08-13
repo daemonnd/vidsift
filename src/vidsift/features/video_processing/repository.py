@@ -420,6 +420,11 @@ class VideoProcessingRepository:
                 parameters,
             )
             self.conn.commit()
+            if self.cur.rowcount != 1:
+                raise DBWritingError(
+                    f"Expected to update 1 row for {video_id}, "
+                    f"updated {self.cur.rowcount}"
+                )
         except IntegrityError as e:
             raise DBWritingError(
                 f"Failed to write to DB while updating the status to {status} for {video_id} because a database operand violated a constraint: {str(e)}"
