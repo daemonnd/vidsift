@@ -112,6 +112,7 @@ class SummarizationConfig(BaseModel):
     # enabled: bool
     char_chunk_size: int = Field(ge=100)
     output_dir: str
+    show_metadata_on_summary: bool = True
 
 
 class DownloadsConfig(BaseModel):
