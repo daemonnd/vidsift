@@ -29,7 +29,7 @@ def parse_args():
     parser.add_argument(
         "--config",
         help="Use custom config for this run",
-    )
+    ).completer = argcomplete.completers.FilesCompleter
     parser.add_argument(
         "--loglevel",
         help="Set the loglevel console logging for one run",

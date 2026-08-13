@@ -1,3 +1,5 @@
+import argcomplete
+
 from vidsift.pipeline.vidsift_pipeline import VidsiftOrchestrator
 from vidsift.shared.run_manager import RunManager
 
@@ -29,7 +31,7 @@ def register_run(subparsers):
         --fake-download-path /path/to/fake/download/file.
         The default value for that is the download targed dir / 'to_watch.md'.
         Only applies to videos that get ether downloaded with the action 'download' or through the validation result 'download'""",
-    )
+    ).completer = argcomplete.completers.FilesCompleter
     run_parser.set_defaults(func=handle_pipeline_run)
 
     return run_parser

@@ -1,5 +1,7 @@
 import logging
 
+import argcomplete
+
 from vidsift.pipeline.vidsift_pipeline import VidsiftOrchestrator
 from vidsift.runtime.scheduler import BackgroundServiceManager
 
@@ -41,7 +43,7 @@ def register_schedule(subparsers):
         --fake-download-path /path/to/fake/download/file.
         The default value for that is the download targed dir / 'to_watch.md'.
         Only applies to videos that get ether downloaded with the action 'download' or through the validation result 'download'""",
-    )
+    ).completer = argcomplete.completers.FilesCompleter
     schedule_parser.set_defaults(func=handle_background_service)
 
     return schedule_parser

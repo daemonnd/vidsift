@@ -1,6 +1,8 @@
 import logging
 from pathlib import Path
 
+import argcomplete
+
 from vidsift.config.models import AppConfig
 from vidsift.features.download.downloader import VideoDownloader
 from vidsift.ingestion.metadata_collector import MetadataCollector
@@ -57,7 +59,7 @@ def register_process(subparsers):
         to override that config file value, use
         --fake-download-path /path/to/fake/download/file.
         The default value for that is the download targed dir / 'to_watch.md' """,
-    )
+    ).completer = argcomplete.completers.FilesCompleter
     process_parser.set_defaults(
         func=handle_process
     )
