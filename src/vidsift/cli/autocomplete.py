@@ -25,10 +25,6 @@ def complete_video_ids(prefix, parsed_args, **kwargs) -> list[str]:
         else:
             config = load_config()
         video_db = VideoProcessingRepository(config)
-        return [
-            processing_record.video_id
-            for processing_record in video_db.get_all()
-            if processing_record.video_id.startswith(prefix)
-        ]
+        return list(video_db.get_video_ids_by_prefix(prefix))
     except (ConfigError, OSError):
         return []

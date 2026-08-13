@@ -374,6 +374,19 @@ class VideoProcessingRepository:
                     f"Failed to get the data of a video because of a ValidationError, database seems corrupt: {str(e)}"
                 ) from e
 
+    def get_video_ids_by_prefix(self, prefix: str) -> Generator[str, None, None]:
+        """
+        Method to only return video ids that match the prefix. used for autocompletion.
+        """
+        rows = self.cur.execute("""
+            SELECT video_id
+            FROM processed_videos
+            WHERE video_id LIKE ?
+        """, (f"{prefix}%",))
+
+        for row in rows:
+            yield row["video_id"]
+
     def set_status(
         self, video_id: str, status: VideoProcessingStatus, reset_attempts: bool = False
     ) -> None:
@@ -407,6 +420,11 @@ class VideoProcessingRepository:
                 parameters,
             )
             self.conn.commit()
+            if self.cur.rowcount != 1:
+                raise DBWritingError(
+                    f"Expected to update 1 row for {video_id}, "
+                    f"updated {self.cur.rowcount}"
+                )
         except IntegrityError as e:
             raise DBWritingError(
                 f"Failed to write to DB while updating the status to {status} for {video_id} because a database operand violated a constraint: {str(e)}"

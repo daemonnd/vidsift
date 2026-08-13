@@ -1,6 +1,8 @@
 import logging
 from pathlib import Path
 
+import argcomplete
+
 from vidsift.config.models import AppConfig
 from vidsift.features.download.downloader import VideoDownloader
 from vidsift.ingestion.metadata_collector import MetadataCollector
@@ -20,17 +22,16 @@ def register_process(subparsers):
     process_parser = subparsers.add_parser(
         "process",
         help="Process a certain URL ",
-        usage="""--url is required.
-        If only --url is selected, the video will be validated + discarded / summarized / downloaded
+        usage="""The video url is required.
+        If only the url is selected, the video will be validated + discarded / summarized / downloaded
         Only one of --summarize and --download can be used.
         --fake-download is only compatible with --download
         """
         )
     exclusive_process_parser_group = process_parser.add_mutually_exclusive_group()
     process_parser.add_argument(
-        "--url",
+        "url",
         help="Process a specific video",
-        required=True
     )
     exclusive_process_parser_group.add_argument(
         "--download",
@@ -57,7 +58,7 @@ def register_process(subparsers):
         to override that config file value, use
         --fake-download-path /path/to/fake/download/file.
         The default value for that is the download targed dir / 'to_watch.md' """,
-    )
+    ).completer = argcomplete.completers.FilesCompleter
     process_parser.set_defaults(
         func=handle_process
     )
