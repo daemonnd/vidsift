@@ -99,7 +99,7 @@ flowchart TD
     E --> F[Complete current processing stage]
     F --> D
 
-    D -->|No| G[Fetch new videos]
+    D -->|No| G[Fetch new video]
     G --> H{New video found?}
 
     H -->|Yes| I[Data enrichment]
