@@ -7,14 +7,12 @@ from pydantic import (BaseModel, ConfigDict, Field, field_validator,
 
 class ConsoleLoggingConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
-    enabled: bool
     level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
     dependency_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
 
 
 class FileLoggingConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
-    enabled: bool
     level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
     dependency_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
     rotation: Literal["S", "M", "H", "D", "midnight"]
@@ -86,11 +84,11 @@ class PreValidationThresholdConfig(BaseModel):
 
 class PreValidationWeightsConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
-    title_punctuation_weight: float = Field(ge=0.0, le=10)
-    title_uppercase_weight: float = Field(ge=0.0, le=10)
-    title_emoji_weight: float = Field(ge=0.0, le=10)
-    title_clickbait_weight: float = Field(ge=0.0, le=10)
-    transcript_clickbait_weight: float = Field(ge=0.0, le=10)
+    title_uppercase_weight: float = Field(ge=0.0, le=10, default=1.0)
+    title_emoji_weight: float = Field(ge=0.0, le=10, default=1.0)
+    title_punctuation_weight: float = Field(ge=0.0, le=10, default=0.5)
+    title_clickbait_weight: float = Field(ge=0.0, le=10, default=1.5)
+    transcript_clickbait_weight: float = Field(ge=0.0, le=10, default=2.5)
 
 
 class PreValidationConfig(BaseModel):
@@ -102,14 +100,12 @@ class PreValidationConfig(BaseModel):
 
 class ValidationConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
-    # enabled: bool
     transcript_chunk_char_size: int = Field(ge=100)
     pre_validation: PreValidationConfig
 
 
 class SummarizationConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
-    # enabled: bool
     char_chunk_size: int = Field(ge=100)
     output_dir: str
     show_metadata_on_summary: bool = True
@@ -117,7 +113,6 @@ class SummarizationConfig(BaseModel):
 
 class DownloadsConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
-    # enabled: bool
     output_dir: str
     fake_download: bool = False
     output_path: str | Path | None = None 

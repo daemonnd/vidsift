@@ -5,20 +5,21 @@
 # Log levels
 # DEBUG, INFO, WARNING, ERROR, CRITICAL
 [logging.console]
-enabled = true
 # Can be overridden with:
 #   --loglevel LEVEL
 #   --debug all
-level = "DEBUG"
+level = "INFO"
 
+# how high the loglevel of dependencies should be in the console
 # Can be overridden with:
 #   --debug dependencies
 #   --debug all
 dependency_level = "WARNING"
 
 [logging.file]
-enabled = true               # currently not possible to disable
-level = "DEBUG"
+# how high the loglevel of vidsift should be when logging to vidsift.jsonl
+level = "INFO"
+# how high the loglevel of dependency logs should be when logging to vidsift.jsonl
 dependency_level = "WARNING"
 rotation = "midnight"        # D: Daily, H: Hourly, M: every minute, S: every second, midnight: at midnight
 retain_days = 14             # for how many days the logs should be kept
@@ -30,8 +31,8 @@ utc_time = false             # true: UTC time, false: local time
 [video_fetching]
 rss_bozo_level = "permissive" # permissive (log warning), strict (fail on bozo error), ignore (fully ignore bozo), debug (log bozo exception)
 
-# how many videos should be fetched when falling back to yt-dlp. 
-# With not enough, some videos might get skipped. 
+# how many videos should be fetched when falling back to yt-dlp.
+# With not enough, some videos might get skipped.
 # But with too much, it takes longer and amplifies the risk of being blocked
 yt_dlp_video_amount = 10
 
@@ -70,18 +71,17 @@ max_allowed_json_output_runs = 3
 # compatibility checks. This bypasses those checks and lets
 # vidsift attempt to run anyway.
 #
-# AI failures are not treated as hard failures, so if the model
+# AI failures are treated as hard failures, so if the model
 # is actually incompatible, background runs will continue to fail.
 #
-# CLI override:
-# --skip-ai-checks
+# However, if AI works but the checks still fail, then it should be set to true
 #
-# Can be overridden with:
-#   --skip-ai-checks
+# CLI override:
+# --skip-ai-checks sets the value to true
 skip_ai_checks = false
 
 
-base_url = "http://localhost:11434"
+base_url = "http://localhost:11434" # which base url the provider should use
 provider = "ollama"                 # ollama, lmstudio
 
 [ai.tasks.metadata_validation]
@@ -136,11 +136,11 @@ skip_interrupted_vids = false
 # same as skip_interrupted_vids, but applies to new videos.
 # When false, vidsift will check for new videos
 # When true, vidsift will not check for any new videos
-# It is recommended to keep the value false because else 
+# It is recommended to keep the value false because else
 # no new videos get processed.
 
 # CLI Override:
-# --skip-new
+# --skip-new to set this setting to true
 # When the value is false, it disables:
 # - video_processing.days_uploaded_before
 # - video_fetching block
@@ -153,11 +153,14 @@ skip_new_vids = false
 # This is especially useful when just having installed vidsift to set it low to not get videos that may
 # have already been watched
 # It does NOT affect interrupted or failed videos, only new ones
-days_uploaded_before = 7
+#
+# It is recommended to keep the value low for beginning, and set it to 7 for example later
+# because you may have already watched the videos of the configured channels that are more than one day old
+# and 1 is the minimum.
+days_uploaded_before = 1
 
 # how much seconds vidsift should sleep after having processed one video at minimum, (min_vid_delay)
 # then how much of random secods will be added (between 0 and random_vid_delay)
-
 # int (< 30)
 min_vid_delay = 300 # 5 minutes
 # int(< 10)
@@ -165,18 +168,23 @@ random_vid_delay = 240 # 4 minutes
 
 
 [video_processing.yt_dlp.base] # wether interrupted videos should be processed
-# all of these settings are passed to yt-dlp, so you can use any yt-dlp setting here
+# all of these settings are passed to yt-dlp, every time it is used
 # yt-dlp is used for data fetching for one video (including filtering), transcript fetching, video download
 max_retries = 10
 sleep_requests = 10              # seconds
 cookies_from_browser = "firefox" # brave, chrome, chromium, edge, firefox, opera,  safari,  vivaldi,  whale
 
+# wether yt-dlp should be quiet or not, if false, yt-dlp will print a lot of output to the console
+# for starting and testing it is recommended to set this option to false to see wether yt-dlp works in the first place
 # Can be overridden with:
 #   --debug yt-dlp
 #   --debug all
-quiet = true # wether yt-dlp should be quiet or not, if false, yt-dlp will print a lot of output to the console
+quiet = true
 
 [[video_processing.yt_dlp.base.js_runtimes]]
+# wich js runtimes should be used
+# at least one have to be configured
+# the options are: deno, node, bun, quickjs
 name = "deno"
 path = "/absulute/path/to/deno" # optional
 
@@ -186,19 +194,20 @@ name = "node"
 
 [video_processing.yt_dlp.download]
 # download-specific options for yt-dlp
+# these options will always be passed to yt-dlp whenever it downloads a video
 # used alongside base yt-dlp args for downloading
 merge_output_format = "mkv"         # output format for merged video and audio
-format = "bestvideo+bestaudio/best"
+format = "bestvideo+bestaudio/best" # yt-dlp format string
 
 # ============================================================
 # Validation
 # ============================================================
 
 [validation]
-#enabled = true
-
 # how many chars should roughly be in one transcript chunk
 # the amount of chars getting to the AI are a bit more than 5 x transcript_chunk_char_size
+# meaning that with 500 the ai gets 2500 chars of the transcript
+# the actual size can vary because it gets cut by words
 transcript_chunk_char_size = 500 # (<100), int
 
 
@@ -209,11 +218,11 @@ transcript_chunk_char_size = 500 # (<100), int
 [validation.pre_validation.max_allowed] # (0-1), float
 title_punctuation_ratio = 0.07   # how many punctuations (.?!) can be in the title to pass relative to the total char amount of the title
 title_uppercase_ratio = 0.4      # how many uppercase can chars there can be relative to the total char amount
-title_emoji_ratio = 0.15
-title_clickbait_ratio = 0.15
-transcript_clickbait_ratio = 0.1
+title_emoji_ratio = 0.15         # how many emojis there can be relative to the total char amount
+title_clickbait_ratio = 0.15     # how many common clickbait phrases there can be relative to the total char amount
+transcript_clickbait_ratio = 0.1 # how many common clickbait phrases there can be relative to the total char amount
 
-[validation.pre_validation.weak]
+[validation.pre_validation.weak] # 0-1, float
 title_uppercase_ratio = 0.2
 title_emoji_ratio = 0.03
 title_punctuation_ratio = 0.04
@@ -233,11 +242,14 @@ transcript_clickbait_weight = 2.5
 # ============================================================
 
 [summarization]
-#enabled = true
+# how many chars should roughly be in one chunk for summarization
+# the higher the value, the less chunks there are meaning that there there can be less ai calls for the total video
+# however, it should not be too high because of the context length
+# it is recommended to check the selected models context length for chunk summarization first
 char_chunk_size = 10000
-output_dir = "/home/user/Documents/vidsift/"
+output_dir = "/home/user/Documents/vidsift/" # under which directory summarized videos should be saved
 
-# wether the video metadata should be shown on the top 
+# wether the video metadata should be shown on the top
 # of the file containing the video summary
 # When enabled, the file has the following structure:
 # <Video metadata>
@@ -252,11 +264,13 @@ show_metadata_on_summary = true
 # ============================================================
 
 [downloads]
-#enabled = true
 # Where the downloaded video should be stored.
 # If fake_download is True,
 # if output_path is not provided, the path for writing 
 # would have downloaded video links is output_dir / "to_watch.md"
+# Can be overridden:
+#   if fake_download = true
+#   and output_path is set
 output_dir = "/home/user/Videos/.vidsift/"
 
 # when true, vidsift will not download the video, 
@@ -269,6 +283,7 @@ output_dir = "/home/user/Videos/.vidsift/"
 fake_download = false
 
 # full path of the file that will be created in the when fake_download is true
+# it is not required
 # Overrides output_dir
 # Config override with:
 # vidsift run --fake-download /optional/path/to/output/file
