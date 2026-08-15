@@ -343,6 +343,8 @@ Videos are collected from configured YouTube channels.
 
 RSS is used for channel discovery, with `yt-dlp` available as a fallback for video collection. The configured amount of fallback videos affects the tradeoff between finding missing videos and making more requests to YouTube.
 
+During validation of the rss entries, youtube shorts get filtered out. `vidsift` can only process YouTube shorts with `vidsift process`
+
 Before processing a newly discovered video, `vidsift` can filter out videos such as:
 
 * livestreams
@@ -661,14 +663,6 @@ A specific video can be processed without running the entire channel pipeline.
 Basic usage:
 
 ```bash
-vidsift process "https://www.youtube.com/watch?v=VIDEO_ID"
-```
-
-With no explicit action, the video goes through validation and then follows the resulting decision.
-
-You can also explicitly choose:
-
-```bash
 vidsift process "https://www.youtube.com/watch?v=VIDEO_ID" --download
 ```
 
@@ -684,7 +678,7 @@ To only fetch and print the transcript:
 vidsift process "https://www.youtube.com/watch?v=VIDEO_ID" --fetch-transcript
 ```
 
-Manual downloads can also use fake-download mode.
+Manual downloads can also use fake-download mode by appending `--fake-download`.
 
 The `process` command is mutually exclusive between download, summarize and transcript-fetching modes.
 
