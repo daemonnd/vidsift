@@ -51,10 +51,10 @@ def register_videos(subparsers):
     video_set_status = videos_subparsers.add_parser(
         "set-status", help="Set the status of <video id> to <status>"
     )
-    video_set_status.add_argument("--video-id", help="ID of the target video").completer = complete_video_ids
+    video_set_status.add_argument("video_id", help="ID of the target video").completer = complete_video_ids
     video_set_status.add_argument(
         "--status",
-        help="Target status of video",
+        help="Target status of video (default: done)",
         choices=[
             "downloading",
             "summarizing",
@@ -63,6 +63,7 @@ def register_videos(subparsers):
             "validating",
             "data_enriching",
         ],
+        default="done"
     )
     video_set_status.add_argument(
         "--reset-failed-attempts",
