@@ -26,6 +26,7 @@ class VideoDownloader:
                 "js_runtimes": get_js_runtimes_config(yt_dlp_config.base.js_runtimes),
                 "merge_output_format": yt_dlp_config.download.merge_output_format,
                 "max_retries": yt_dlp_config.base.max_retries,
+                "noplaylist": True,
             }
 
     def download(self, video_url: str, output_path: Path) -> None:

@@ -111,6 +111,7 @@ class LogEvent:
     VIDEO_VALIDATION_STARTED = "video_validation_started"
     VIDEO_VALIDATION_FAILED = "video_validation_failed"
     VIDEO_VALIDATION_COMPLETED = "video_validation_completed"
+    METADATA_VALIDATION_SKIPPED = "metadata_validation_skipped"
 
     # metadate fetching events
     METADATA_FETCH_STARTED = "metadata_fetch_strarted"

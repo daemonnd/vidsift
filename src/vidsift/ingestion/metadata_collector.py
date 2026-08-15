@@ -22,7 +22,7 @@ class MetadataCollector:
             "cookiesfrombrowser": tuple([yt_dlp_config.base.cookies_from_browser]),
             "skip_download": True,
             "sleep_interval_requests": yt_dlp_config.base.sleep_requests,
-            "no_playlist": True,
+            "noplaylist": True,
             "quiet": yt_dlp_config.base.quiet,
             "js_runtimes": get_js_runtimes_config(yt_dlp_config.base.js_runtimes),
         }

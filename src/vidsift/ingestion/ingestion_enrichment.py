@@ -13,6 +13,7 @@ class IngestionEnrichment:
             "cookiesfrombrowser": tuple([yt_dlp_config.base.cookies_from_browser]),
             "sleep_interval_requests": yt_dlp_config.base.sleep_requests,
             "quiet": yt_dlp_config.base.quiet,
+            "noplaylist": True,
             "js_runtimes": get_js_runtimes_config(yt_dlp_config.base.js_runtimes),
             "extract_flat": True,
         }

@@ -39,6 +39,7 @@ class YtDlpTranscriptProvider(TranscriptProvider):
             "subtitlesformat": "vtt",
             "cookiesfrombrowser": tuple([yt_dlp_config.base.cookies_from_browser]),
             "skip_download": True,
+            "noplaylist": True,
             "sleep_interval_subtitles": yt_dlp_config.base.sleep_requests,
             "sleep_interval_requests": yt_dlp_config.base.sleep_requests,
             "outtmpl": "/tmp/vidsift/%(id)s.%(lang)s.%(ext)s",
