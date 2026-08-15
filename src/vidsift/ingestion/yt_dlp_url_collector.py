@@ -4,6 +4,7 @@ from yt_dlp import YoutubeDL
 
 from vidsift.config.models import AppConfig, ChannelConfig, YtDlpBaseConfig
 from vidsift.ingestion.errors import VideoDataCollectionError
+from vidsift.ingestion.video_filter import VideoFilter
 from vidsift.models.video import InvalidVideoError, Video
 from vidsift.shared.config_helpers import get_js_runtimes_config
 
@@ -12,6 +13,7 @@ class YtDlpUrlCollector:
     def __init__(self, config: AppConfig) -> None:
         super().__init__()
         self.config: AppConfig = config
+        self.video_filters: VideoFilter = VideoFilter(config)
         yt_dlp_config: YtDlpBaseConfig = config.video_processing.yt_dlp.base
         ydl_opts = {
             "cookiesfrombrowser": tuple([yt_dlp_config.cookies_from_browser]),
@@ -47,6 +49,9 @@ class YtDlpUrlCollector:
                     channel_id=channel_id,
                     duration=video.get("duration")
                 )
+                result, _ =  self.video_filters.run_filters(vid, data=video)
+                if result is False:
+                    continue
                 yield vid
         except InvalidVideoError:
             raise
