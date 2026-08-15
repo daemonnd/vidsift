@@ -7,13 +7,8 @@ from vidsift.config.models import AppConfig
 from vidsift.features.download.downloader import VideoDownloader
 from vidsift.ingestion.metadata_collector import MetadataCollector
 from vidsift.models.video import InvalidVideoError, Video
-from vidsift.models.video_record import VideoProcessingStatus
 from vidsift.pipeline.vidsift_pipeline import VidsiftOrchestrator
-from vidsift.runtime.lock_manager import LockManager
 from vidsift.services.summarization_service import SummarizationService
-from vidsift.services.validation_service import VideoValidator
-from vidsift.shared.execution_context import (RunContext, reset_run_context,
-                                              set_run_context)
 from vidsift.shared.logging.log_event_fields import LogEvent
 from vidsift.shared.run_manager import RunManager
 
@@ -23,15 +18,17 @@ def register_process(subparsers):
         "process",
         help="Process a certain URL ",
         usage="""The video url is required.
-        If only the url is selected, the video will be validated + discarded / summarized / downloaded
-        Only one of --summarize and --download can be used.
+        Only one of --summarize and --download can be used and is required.
         --fake-download is only compatible with --download
         """
         )
-    exclusive_process_parser_group = process_parser.add_mutually_exclusive_group()
+    exclusive_process_parser_group = process_parser.add_mutually_exclusive_group(required=True)
     process_parser.add_argument(
         "url",
-        help="Process a specific video",
+        help="""Process a specific video
+        The process command is not recommended for automations because 
+        transcript fetching for example will not only output the transcript but also the console logs
+        """,
     )
     exclusive_process_parser_group.add_argument(
         "--download",
@@ -45,7 +42,13 @@ def register_process(subparsers):
     )
     exclusive_process_parser_group.add_argument(
         "--fetch-transcript",
-        help="Fetch the transcript of the selected video",
+        help="""Fetch the transcript of the selected video
+        It is recommended to run it rather like that to only get the transcript out:
+        vidsift --loglevel ERROR process <url> --fetch-transcript
+        Because else logs will also be printed to stdout.
+        Additionally, it is highly recommended to turn off yt-dlp logs in order to 
+        get only the transcript to stdout.
+        """,
         action="store_true"
     )
     process_parser.add_argument( # to make it not exclusive with download, but exclusive with summarize and fetch-transcript
@@ -130,21 +133,16 @@ def handle_process(args, config: AppConfig, run_id):
                         raw_transcript=transcript,
                         vid=vid
                     )
-                elif args.fetch_transcript:
-                    print(transcript)
                 else:
-                    video_validator: VideoValidator = VideoValidator(config=config)
-                    validation_result = video_validator.validate_video(
-                        vid=vid,
-                        raw_transcript=transcript
-                    )
-                    orchestrator.take_action_on_video(
-                        vid=vid,
-                        video_validation_result=validation_result,
-                        transcript=transcript
-                    )
+                    print(transcript)
             except Exception as e:
-                logger.exception(f"{type(e).__name__}: {str(e)}")
+                logger.exception(
+                    f"{type(e).__name__}: {str(e)}",
+                    extra={
+                        "video_id": vid.video_id,
+                        "channel_id": vid.channel_id
+                    }
+                )
                 raise
     finally:
         run_manager.end_run()
