@@ -125,7 +125,7 @@ class VideoValidator:
                     ),
                     first_attempt_pattern="$CUSTOM_CHANNEL_INSTRUCTIONS",
                     first_attempt_replacement=self.instruction_provider.get(str(self.channel_lookup[vid.channel_id].instruction)),
-                    first_attempt_append=f"title: {vid.title}\nauthor: {vid.author}\nurl: {vid.url}\nvideo ID: '{vid.video_id}'",
+                    first_attempt_append=f"title: {vid.title or "null"}\nauthor: {vid.author or "null"}\nduration (seconds): {vid.duration or "null"}\nurl: {vid.url or "null"}\nvideo ID: '{vid.video_id}'",
                 )
             )
         except AIError as e:
