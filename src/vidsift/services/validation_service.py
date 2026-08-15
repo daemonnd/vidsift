@@ -241,42 +241,56 @@ class VideoValidator:
                 },
             )
 
-        logger.info(
-            f"Starting metadata validation for video '{vid.video_id}'.",
-            extra={
-                "event": LogEvent.VIDEO_VALIDATION_STARTED,
-                "video_id": vid.video_id,
-                "channel_id": vid.channel_id,
-                "validation_stage": "metadata",
-            },
-        )
-        metadata_validation_result: MetadataValidationResult = self.validate_metadata(vid=vid)
-        if metadata_validation_result.flags:
+        if vid.title or vid.duration and vid.author:
             logger.info(
-                f"Metadata validation detected flags for video '{vid.video_id}'.",
+                f"Starting metadata validation for video '{vid.video_id}'.",
                 extra={
+                    "event": LogEvent.VIDEO_VALIDATION_STARTED,
                     "video_id": vid.video_id,
                     "channel_id": vid.channel_id,
                     "validation_stage": "metadata",
+                },
+            )
+            metadata_validation_result: MetadataValidationResult = self.validate_metadata(vid=vid)
+            if metadata_validation_result.flags:
+                logger.info(
+                    f"Metadata validation detected flags for video '{vid.video_id}'.",
+                    extra={
+                        "video_id": vid.video_id,
+                        "channel_id": vid.channel_id,
+                        "validation_stage": "metadata",
+                        "metadata_score": metadata_validation_result.metadata_score,
+                        "topic_match_score": metadata_validation_result.topic_match_score,
+                        "confidence": metadata_validation_result.confidence,
+                        "flags": sorted(metadata_validation_result.flags),
+                        "reason": metadata_validation_result.summary_reason
+                    },
+                )
+            logger.debug(
+                "Metadata validation completed.",
+                extra={
+                    "video_id": vid.video_id,
+                    "channel_id": vid.channel_id,
                     "metadata_score": metadata_validation_result.metadata_score,
                     "topic_match_score": metadata_validation_result.topic_match_score,
                     "confidence": metadata_validation_result.confidence,
                     "flags": sorted(metadata_validation_result.flags),
-                    "reason": metadata_validation_result.summary_reason
+                    "reason": metadata_validation_result.summary_reason,
                 },
             )
-        logger.debug(
-            "Metadata validation completed.",
-            extra={
-                "video_id": vid.video_id,
-                "channel_id": vid.channel_id,
-                "metadata_score": metadata_validation_result.metadata_score,
-                "topic_match_score": metadata_validation_result.topic_match_score,
-                "confidence": metadata_validation_result.confidence,
-                "flags": sorted(metadata_validation_result.flags),
-                "reason": metadata_validation_result.summary_reason,
-            },
-        )
+        else:
+            logger.info(
+                "Skipped metadata validation because not enough data is availible.",
+                extra={
+                    "event": LogEvent.METADATA_VALIDATION_SKIPPED,
+                    "video_id": vid.video_id,
+                    "channel_id": vid.channel_id,
+                    "title": vid.title,
+                    "duration": vid.duration,
+                    "author": vid.author
+                }
+            )
+            metadata_validation_result = None
 
         # transcript validation
         logger.info(
