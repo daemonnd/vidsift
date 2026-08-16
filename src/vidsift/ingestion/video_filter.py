@@ -116,6 +116,7 @@ class VideoFilter:
                         "members-only": False
                     },
                 )
+                return True, None
 
 
     def _check_member_only(self, vid: Video, data: dict) -> bool:
