@@ -16,7 +16,7 @@ The entire pipeline runs locally and linearly. AI processing uses local models t
 ## Table of Contents
 
 - [Why vidsift?](#why-vidsift)
-- [How it works](#How-it-works)
+- [How it works](#how-it-works)
 - [Processing modes](#processing-modes)
   - [Download](#download)
   - [Summarize](#summarize)
@@ -65,11 +65,11 @@ Instead of opening YouTube and browsing a feed, videos can be collected and proc
 
 Depending on your configuration, `vidsift` can:
 
-* download videos that are relevant enough to watch
-* summarize videos that are somewhat relevant
-* discard videos that are irrelevant or obviously clickbait
-* process videos from specific channels according to custom instructions
-* keep the results accessible outside YouTube
+- download videos that are relevant enough to watch
+- summarize videos that are somewhat relevant
+- discard videos that are irrelevant or obviously clickbait
+- process videos from specific channels according to custom instructions
+- keep the results accessible outside YouTube
 
 This can reduce common YouTube distractions such as recommendations and rabbit holes. Downloaded videos can also be watched without relying on YouTube's streaming experience.
 
@@ -80,6 +80,7 @@ This can reduce common YouTube distractions such as recommendations and rabbit h
 At a high level:
 
 ### Single Pipeline Run
+
 ```mermaid
 flowchart LR
     A[Start pipeline run] --> B[Acquire lock]
@@ -92,7 +93,7 @@ flowchart LR
 
 ```mermaid
 flowchart TD
-	A[Start pipeline run] --> C[Process interrupted videos]
+ A[Start pipeline run] --> C[Process interrupted videos]
     C --> D{Interrupted video available?}
 
     D -->|Yes| E[Resume video from persisted state]
@@ -132,10 +133,10 @@ flowchart TD
 
     H -->|No| Y[Exit new video processing]
 ```
+
 >*Processing state is persisted after each major processing stage, allowing interrupted videos to resume from their last completed stage.*
 
 ---
-
 
 # Processing modes
 
@@ -169,9 +170,9 @@ Validation decides what happens to each video.
 
 The final decision can be:
 
-* **download**
-* **summarize**
-* **discard**
+- **download**
+- **summarize**
+- **discard**
 
 Validation uses both cheap local heuristics and local AI.
 
@@ -187,11 +188,11 @@ Pre-validation does **not use AI**.
 
 It looks for signals such as:
 
-* excessive uppercase characters
-* excessive punctuation
-* excessive emoji usage
-* clickbait phrases in the title
-* clickbait phrases in the transcript
+- excessive uppercase characters
+- excessive punctuation
+- excessive emoji usage
+- clickbait phrases in the title
+- clickbait phrases in the transcript
 
 There are configurable thresholds for strong signals and weaker signals.
 
@@ -205,12 +206,13 @@ Videos that pass pre-validation are sent to the configured local AI model for me
 
 The model receives information such as:
 
-* title
-* author
-* URL
-* video ID
+- title
+- author
+- URL
+- video ID
+
 - length
-* custom instructions for the channel
+- custom instructions for the channel
 
 It evaluates both relevance to the configured channel instructions and content quality/clickbait-related signals.
 
@@ -220,9 +222,9 @@ The transcript is not sent to the model in its entirety.
 
 `vidsift` extracts representative portions:
 
-* first two transcript chunks
-* one middle chunk
-* last two transcript chunks
+- first two transcript chunks
+- one middle chunk
+- last two transcript chunks
 
 For very short transcripts where those regions overlap, duplicate chunks are removed.
 
@@ -343,10 +345,12 @@ Videos are collected from configured YouTube channels.
 
 RSS is used for channel discovery, with `yt-dlp` available as a fallback for video collection. The configured amount of fallback videos affects the tradeoff between finding missing videos and making more requests to YouTube.
 
+During validation of the rss entries, youtube shorts get filtered out. `vidsift` cannot be processed with `vidsift process`
+
 Before processing a newly discovered video, `vidsift` can filter out videos such as:
 
-* livestreams
-* members-only content
+- livestreams
+- members-only content
 
 Additional video data needs to be fetched before these filters can run.
 
@@ -424,17 +428,18 @@ This keeps the execution model predictable and avoids aggressively increasing `y
 
 Current `vidsift` requires:
 
-* Python **3.14 or newer**
-* Linux or Windows
-- [yt-dlp](https://www.github.com/yt-dlp/yt-dlp) with a js runtime
-* a supported local AI runtime:
+- Python **3.14 or newer**
+- Linux or Windows
 
-  * [Ollama](https://ollama.com/)
-  * [LM Studio](https://www.lmstudio.ai/)
-* a browser profile that `yt-dlp` can read cookies from (for more info, check [this](https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp) out)
-* enough storage for downloaded videos and local AI models
-* `pip` or `pipx`
-* `git` when installing directly from the repository
+- [yt-dlp](https://www.github.com/yt-dlp/yt-dlp) with a js runtime
+- a supported local AI runtime:
+
+  - [Ollama](https://ollama.com/)
+  - [LM Studio](https://www.lmstudio.ai/)
+- a browser profile that `yt-dlp` can read cookies from (for more info, check [this](https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp) out)
+- enough storage for downloaded videos and local AI models
+- `pip` or `pipx`
+- `git` when installing directly from the repository
 
 The package declares Python `>=3.14` and the runtime dependencies include `yt-dlp`, `ollama`, `lmstudio`, `youtube-transcript-api`, `portalocker`, `rich`, `argcomplete`, and related libraries.
 
@@ -631,6 +636,7 @@ output_dir = "/path/to/videos/"
 `yt-dlp` handles the actual video download.
 
 There is also a **fake download** mode for systems with lower disk space. Then, the videos that would have been downloaded get their urls written to the file specified in the config:
+
 ```toml
 [download]
 output_file = "/path/to/output/file"
@@ -661,14 +667,6 @@ A specific video can be processed without running the entire channel pipeline.
 Basic usage:
 
 ```bash
-vidsift process "https://www.youtube.com/watch?v=VIDEO_ID"
-```
-
-With no explicit action, the video goes through validation and then follows the resulting decision.
-
-You can also explicitly choose:
-
-```bash
 vidsift process "https://www.youtube.com/watch?v=VIDEO_ID" --download
 ```
 
@@ -684,7 +682,7 @@ To only fetch and print the transcript:
 vidsift process "https://www.youtube.com/watch?v=VIDEO_ID" --fetch-transcript
 ```
 
-Manual downloads can also use fake-download mode.
+Manual downloads can also use fake-download mode by appending `--fake-download`.
 
 The `process` command is mutually exclusive between download, summarize and transcript-fetching modes.
 
@@ -771,6 +769,7 @@ vidsift run --skip-new
 These options are mutually exclusive.
 
 However, it is also possible to configure these options under
+
 ```toml
 [video_processing]
 skip_interrupted_vids = false
@@ -934,8 +933,8 @@ vidsift --debug yt-dlp run
 
 AI is required for:
 
-* validation
-* summarization
+- validation
+- summarization
 
 Direct downloading does not require an AI model.
 
@@ -1016,6 +1015,7 @@ For Ollama, verify that the configured model exists and that the server is reach
 For LM Studio, verify that the configured server is running and that the configured endpoint is correct.
 
 It is still possible, especially when not using localhost that AI checks fail even though the AI is availble. In that case, it is recommended to always skip ai checks in the config like this:
+
 ```toml
 [ai]
 skip_ai_checks = true
@@ -1144,14 +1144,14 @@ This lets `vidsift` act as a personal preprocessing layer between YouTube and th
 
 Current limitations include:
 
-* processing is linear
-* videos are not processed concurrently
-* local AI inference requires suitable hardware
-* validation and summarization require a supported local AI provider
-* real video downloading requires significant disk space
-* `yt-dlp` access depends on a working browser-cookie configuration
-* the CLI is the primary interface
-* the current supported desktop operating systems are Linux and Windows
+- processing is linear
+- videos are not processed concurrently
+- local AI inference requires suitable hardware
+- validation and summarization require a supported local AI provider
+- real video downloading requires significant disk space
+- `yt-dlp` access depends on a working browser-cookie configuration
+- the CLI is the primary interface
+- the current supported desktop operating systems are Linux and Windows
 
 The project does not attempt to hide the fact that processing YouTube content can be slow. Transcript fetching, metadata enrichment, AI inference and downloads are all real processing steps, and `vidsift` intentionally inserts delays between video-processing operations to control request frequency.
 
