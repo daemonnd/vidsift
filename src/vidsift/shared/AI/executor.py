@@ -25,11 +25,17 @@ logger = logging.getLogger(__name__)
 class AIExecutor:
     def __init__(self, config: AIConfig) -> None:
         self.config: AIConfig = config
-        match self.config.provider:
-            case "ollama":
-                self.ai: AIProvider = OllamaProvider(config=config)
-            case "lmstudio":
-                self.ai: AIProvider = LMStudioProvider(config=config)
+        try:
+            match self.config.provider:
+                case "ollama":
+                    self.ai: AIProvider = OllamaProvider(config=config)
+                case "lmstudio":
+                    self.ai: AIProvider = LMStudioProvider(config=config)
+        except AIError as e:
+            logger.exception(
+                f"Failed to connect {self.config.provider}: {str(e)}"
+            )
+            raise
 
     def generate(self, request: AIRequest) -> AIResponse:
         logger.debug(
