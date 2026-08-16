@@ -1,12 +1,18 @@
 import logging
 
 logger = logging.getLogger(__name__)
+class VideoIDExtractionError(Exception):
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)
+
 class VideoIDExtractor:
     def __init__(self) -> None:
         pass
 
     def extract_id(self, url: str) -> str:
         try:
+            if "/shorts/" in url:
+                raise VideoIDExtractionError("Cannot extract the video id of shorts.")
             url_parts: list[str] = url.split("v=")
             return url_parts[1].split("&")[0]
         except Exception as e:
