@@ -31,7 +31,7 @@ vidsift = "vidsift.main:main"
 [tool.setuptools.packages.find]
 where = ["src"]
 [tool.setuptools.package-data]
-vidsift = ["defaults/*"]
+vidsift = ["defaults/*", "defaults/system_prompts/*.md"]
 
 [dependency-groups]
 dev = ["debugpy>=1.8.20", "pytest>=9.0.3"]
