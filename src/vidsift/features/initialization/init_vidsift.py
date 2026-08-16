@@ -1,13 +1,10 @@
 import importlib.resources as resources
 import shutil
 from pathlib import Path
-from vidsift.shared.paths import (
-    VIDSIFT_CONFIG_PROMPTS_DIR,
-    VIDSIFT_CONFIG_FILE_PATH,
-    VIDSIFT_CONFIG_DIR,
-    VIDSIFT_LOG_DIR,
-    VIDSIFT_DATA_DIR,
-)
+
+from vidsift.shared.paths import (VIDSIFT_CONFIG_DIR, VIDSIFT_CONFIG_FILE_PATH,
+                                  VIDSIFT_CONFIG_PROMPTS_DIR, VIDSIFT_DATA_DIR,
+                                  VIDSIFT_LOG_DIR)
 
 
 class InitVidsift:
@@ -68,4 +65,4 @@ class InitVidsift:
                         f"defaults/system_prompts/{prompt}"
                     )
                 ) as src:
-                    shutil.copy(src=src, dst=prompts_dir)
+                    shutil.copy(src=src, dst=VIDSIFT_CONFIG_PROMPTS_DIR)
