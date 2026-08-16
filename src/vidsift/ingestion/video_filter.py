@@ -79,12 +79,44 @@ class VideoFilter:
                     or str(error_message).endswith("hours.")
                     or str(error_message).endswith("days.")
                 ):
+                    logger.debug(
+                        f"Finished running filters on video '{vid.video_id}'. It won't be processed because it seems to be a livestream",
+                        extra={
+                            "video_id": vid.video_id,
+                            "channel_id": vid.channel_id,
+                            "passed_filters": False,
+                            "livestream": True,
+                            "members_only": False
+                        },
+                    )
                     # if it is a livestream
                     return False, "livestream"
 
-            if "Join this channel to get access to members-only content like this video, and other exclusive perks." in str(error_message):
+            elif "Join this channel to get access to members-only content like this video, and other exclusive perks." in str(error_message):
+                logger.debug(
+                    f"Finished running filters on video '{vid.video_id}'. It won't be processed because it seems to be members-only content",
+                    extra={
+                        "video_id": vid.video_id,
+                        "channel_id": vid.channel_id,
+                        "passed_filters": False,
+                        "livestream": False,
+                        "members_only": True
+                    },
+                )
                 # it is members-only content
                 return False, "members-only"
+            else:
+                logger.debug(
+                    f"Finished running filters on video '{vid.video_id}'. It will be processed.",
+                    extra={
+                        "video_id": vid.video_id,
+                        "channel_id": vid.channel_id,
+                        "passed_filters": True,
+                        "livestream": False,
+                        "members-only": False
+                    },
+                )
+
 
     def _check_member_only(self, vid: Video, data: dict) -> bool:
         """
