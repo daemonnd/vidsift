@@ -696,7 +696,7 @@ Use:
 vidsift videos
 ```
 
-to pring the video database path to stdout.
+to print the video database path to stdout.
 
 List videos (all):
 
