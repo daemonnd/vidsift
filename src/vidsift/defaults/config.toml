@@ -196,8 +196,14 @@ name = "node"
 # download-specific options for yt-dlp
 # these options will always be passed to yt-dlp whenever it downloads a video
 # used alongside base yt-dlp args for downloading
-merge_output_format = "mkv"         # output format for merged video and audio
-format = "bestvideo+bestaudio/best" # yt-dlp format string
+merge_output_format = "mkv" # output format for merged video and audio
+
+# yt-dlp format string
+# the format gets restricted to max. 1080p for more reliability
+# by using settings like bestvideo+bestaudio/best for example,
+# it can work for a bit but fail on 4k videos over and over again.
+# That is why it gets limited to 1080p
+format = "bestvideo[height<=1080]+bestaudio/best"
 
 # ============================================================
 # Validation
