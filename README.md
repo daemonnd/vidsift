@@ -77,6 +77,9 @@ This can reduce common YouTube distractions such as recommendations and rabbit h
 
 `vidsift` is a **single-process, linear, pipeline-oriented application**. It does not use multiprocessing to process videos concurrently.
 
+> Vidsift is primarily designed as a local application.
+> It does not provide a security boundary around the local machine, local configuration, downloaded content, or locally executed AI models.
+
 At a high level:
 
 ### Single Pipeline Run
