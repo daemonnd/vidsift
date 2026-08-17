@@ -103,7 +103,7 @@ class VidsiftOrchestrator:
             )
             return
         try:
-            self.video_db.open()
+            self.video_db.open() # open it because it gets closed on scheduled runs and vidsift is supposed to mostly run scheduled runs
             logger.info(
                 "The vidsift orchestrator started.",
                 extra={"event": LogEvent.ORCHESTRATOR_STARTED},
@@ -198,8 +198,6 @@ class VidsiftOrchestrator:
                 },
             )
             processing: bool = self.should_process(vid, discovery_type, channel_lookup, error_message=str(e))
-        except BaseException:
-            raise
         else:
             self.video_db.del_row(video_id=vid.video_id)  # delete the row, because it will be re-created with the enriched data
             self.video_db.create(vid=Video.apply_duration_enrichment(video=vid, duration=enrichment_data.get("duration")))  # re-create the row with the enriched data
@@ -377,10 +375,14 @@ class VidsiftOrchestrator:
                     "channel_id": vid.channel_id,
                 },
             )
+            # set the status first to data enriching so that it can be done again properly
+            self.video_db.set_status(
+                video_id=vid.video_id,
+                status=VideoProcessingStatus.DATA_ENRICHING # filtering requires data enrichment, so the status is set to data enriching, so that it can be re-processed
+            )
             self.video_db.mark_failed(
                 error_msg=repr(e),
-                video_id=vid.video_id,
-                target_status=VideoProcessingStatus.DATA_ENRICHING # filtering requires data enrichment, so the status is set to data enriching, so that it can be re-processed
+                video_id=vid.video_id, # target_status is not for updating it now, but once it failed fully
             )
             return False
         except BaseException:

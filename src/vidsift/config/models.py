@@ -4,6 +4,8 @@ from typing import Literal
 from pydantic import (BaseModel, ConfigDict, Field, field_validator,
                       model_validator)
 
+from vidsift.shared.paths import VIDSIFT_CONFIG_CHANNEL_INSTR_DIR
+
 
 class ConsoleLoggingConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
@@ -144,6 +146,20 @@ class ChannelConfig(BaseModel):
         if self.instruction is None:
             raise ValueError("instruction is required when action is 'validate'")
         return self
+
+    @field_validator("instruction")
+    @classmethod
+    def validate_instruction_field(cls, v: str | None) -> str | None:
+        if v is None:
+            return v
+        base = VIDSIFT_CONFIG_CHANNEL_INSTR_DIR.resolve()
+        candidate = (base / v).resolve()
+
+        if not candidate.is_relative_to(base):
+            raise ValueError(
+                f"instruction path must stay inside {base}: {v!r}"
+            )
+        return v
 
 
 class JSRuntimesConfig(BaseModel):

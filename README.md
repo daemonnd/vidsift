@@ -3,10 +3,10 @@
 **AI-powered YouTube feed filtering and transcript-based video processing.**
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
+![Platform](https://img.shields.io/badge/platform-windows-lightgrey)
 ![Platform](https://img.shields.io/badge/platform-linux-lightgrey)
-![CI](https://img.shields.io/github/actions/workflow/status/daemonnd/vidsift-python/ci.yml?label=CI\&logo=github)
-![Last Commit](https://img.shields.io/github/last-commit/daemonnd/vidsift-python)
-![Repo Size](https://img.shields.io/github/repo-size/daemonnd/vidsift-python)
+![Last Commit](https://img.shields.io/github/last-commit/daemonnd/vidsift)
+![Repo Size](https://img.shields.io/github/repo-size/daemonnd/vidsift)
 ![Maintained](https://img.shields.io/badge/maintained-yes-success)
 
 `vidsift` is a command-line tool for reducing the amount of time you spend on YouTube. It monitors configured YouTube channels, decides what is worth consuming, and either downloads, summarizes, or discards videos according to rules you define.
@@ -76,6 +76,9 @@ This can reduce common YouTube distractions such as recommendations and rabbit h
 ## How it works
 
 `vidsift` is a **single-process, linear, pipeline-oriented application**. It does not use multiprocessing to process videos concurrently.
+
+> Vidsift is primarily designed as a local application.
+> It does not provide a security boundary around the local machine, local configuration, downloaded content, or locally executed AI models.
 
 At a high level:
 
