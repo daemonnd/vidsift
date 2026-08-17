@@ -213,9 +213,12 @@ class VideoProcessingRepository:
         target_status: VideoProcessingStatus = VideoProcessingStatus.FAILED,
     ):
         """
-        Method to mart a download / summary / validation as failed, updates last_error and sets the status to FAILED
-        Method to add 1 to the retry attempts.
-        If it is higher than the max allowed amount, the status get set to FAILED and the video gets abandoned
+        - Method to mark a download / summary / validation as failed, updates last_error and sets the status to FAILED
+        - Method to add 1 to the `retry_count`.
+        If it retry_count higher than the max allowed amount
+        from the config,
+        the status get set to FAILED and the video gets abandoned.
+        The target status after attempts is higher then `retry_count` can be customized with `target_status`
         """
         try:
             result = self.cur.execute(
