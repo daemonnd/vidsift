@@ -24,7 +24,7 @@ def parse_args():
         "--version",
         help="Print version",
         action="version",
-        version="vidsift v0.0.1",
+        version="vidsift v1.0",
     )
     parser.add_argument(
         "--config",
