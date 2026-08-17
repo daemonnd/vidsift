@@ -103,7 +103,7 @@ class VidsiftOrchestrator:
             )
             return
         try:
-            self.video_db.open()
+            self.video_db.open() # open it because it gets closed on scheduled runs and vidsift is supposed to mostly run scheduled runs
             logger.info(
                 "The vidsift orchestrator started.",
                 extra={"event": LogEvent.ORCHESTRATOR_STARTED},
