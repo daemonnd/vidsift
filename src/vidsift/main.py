@@ -266,7 +266,7 @@ class VidsiftCLI:
 
         # log the loaded config to the file
         logger = logging.getLogger(__name__)
-        logger.info(
+        logger.debug(
             "Starting new vidsift instance",
             extra={
                 "event": LogEvent.CONFIG_LOADED,
