@@ -1009,6 +1009,8 @@ For additional `yt-dlp` output:
 vidsift --debug yt-dlp run
 ```
 
+If you already did all that and still get a `403: forbidden` error, it can help to connect another google account to youtube because it got used too much.
+
 ## AI checks fail
 
 Check the configured provider and model independently.
