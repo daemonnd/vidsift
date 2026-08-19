@@ -82,6 +82,7 @@ def default_orchestrator(fake_config, video_validator, transcript_service, summa
 
 
 def test_no_important_info_summary(
+    monkeypatch,
     fake_config: AppConfig,
     vid: Video,
     failing_transcript_service: FailingTranscriptService,
@@ -89,16 +90,19 @@ def test_no_important_info_summary(
     video_validator: FakeValidator,
     video_db: VideoProcessingRepository,
     video_filter: FakeVideoFilter,
-    monkeypatch
 ):
     """
     Tests if each chunk does not contain important information,
     if then the final summarizer does not run cause there is no important information
     """
+    def fake_store_summary(summary: str, vid: Video) -> Path:
+        return Path.home()
     summarizer = SummarizationService(config=fake_config)
+    fake_store_summary_func = lambda summary, vid: fake_store_summary
     summarizer.chunk_summarizer = FakeChunkSummarizer()
     # if it fails, it does not use real ai
     summarizer.final_summarizer = FakeFinalSummarizer()
+    monkeypatch.setattr(summarizer, "store_summary", fake_store_summary_func)
     summarizer.summarize(
         raw_transcript="raw_transcript",
         vid=vid
