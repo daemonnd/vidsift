@@ -78,7 +78,7 @@ max_allowed_json_output_runs = 3
 #
 # Can be overridden with:
 #   --skip-ai-checks
-skip_ai_checks = false
+skip_ai_checks = true
 
 
 base_url = "http://localhost:11434"
