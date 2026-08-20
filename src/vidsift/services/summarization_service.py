@@ -51,7 +51,7 @@ class SummarizationService:
                 if self.config.summarization.show_metadata_on_summary:
                     with open(str(dest_file), "w") as f:
                         f.write(
-                            f"{self._get_video_metadata_sting(vid)}{summary}"
+                            f"{self._get_video_metadata_sting(vid)}\n\n---\n{summary}"
                         )
                 else:
                     with open(str(dest_file), "w") as f:
@@ -119,9 +119,7 @@ Author: {vid.author}
 Published Date: {vid.published}
 Duration (seconds): {vid.duration}
 Channel ID: {vid.channel_id}
-Video ID: {vid.channel_id}
-
-        """
+Video ID: {vid.channel_id}"""
 
 if __name__ == "__main__":
     summarization_service = SummarizationService(ai_model="qwen3.5:9b")
