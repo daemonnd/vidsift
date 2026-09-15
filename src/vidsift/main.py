@@ -7,6 +7,7 @@ Tasks:
 - call one orchestrator (vidsift_pipeline.py)
 
 """
+
 import logging
 from pathlib import Path
 from uuid import uuid7
@@ -14,17 +15,24 @@ from uuid import uuid7
 from pydantic import ValidationError
 
 from vidsift.cli.main import parse_args
-from vidsift.config.errors import (ConfigError, ConfigFileNotFoundError,
-                                   ConfigFilePermissionError,
-                                   ConfigValidationError, InvalidConfigError)
+from vidsift.config.errors import (
+    ConfigError,
+    ConfigFileNotFoundError,
+    ConfigFilePermissionError,
+    ConfigValidationError,
+    InvalidConfigError,
+)
 from vidsift.config.loader import load_config
 from vidsift.config.models import AppConfig
 from vidsift.features.initialization.init_vidsift import InitVidsift
 from vidsift.models.video import InvalidVideoError
 from vidsift.runtime.check_basic_requirements import BasicInit
 from vidsift.runtime.errors import BasicInitError
-from vidsift.shared.execution_context import (RunContext, reset_run_context,
-                                              set_run_context)
+from vidsift.shared.execution_context import (
+    RunContext,
+    reset_run_context,
+    set_run_context,
+)
 from vidsift.shared.logging.bootstrap_logger import setup_bootstrap_logging
 from vidsift.shared.logging.config import configure_logging
 from vidsift.shared.logging.log_event_fields import LogEvent
@@ -215,34 +223,31 @@ class VidsiftCLI:
                 )
 
         if self.args.command in PIPELINE_RUNNING_COMMANDS:
-            if self.args.fake_download is not None and self.args.fake_download is not True:
+            if (
+                self.args.fake_download is not None
+                and self.args.fake_download is not True
+            ):
                 video_download_config = config.downloads.model_copy(
                     update={
                         "fake_download": True,
-                        "output_path": self.args.fake_download
+                        "output_path": self.args.fake_download,
                     }
                 )
-                config = config.model_copy(
-                    update={"downloads": video_download_config}
-                )
+                config = config.model_copy(update={"downloads": video_download_config})
             elif self.args.fake_download is True:
                 video_download_config = config.downloads.model_copy(
                     update={
                         "fake_download": True,
                     }
                 )
-                config = config.model_copy(
-                    update={"downloads": video_download_config}
-                )
+                config = config.model_copy(update={"downloads": video_download_config})
         if config.downloads.output_path is None:
             video_download_config = config.downloads.model_copy(
                 update={
                     "output_path": Path(config.downloads.output_dir) / "to_watch.md"
                 }
             )
-            config = config.model_copy(
-                update={"downloads": video_download_config}
-            )
+            config = config.model_copy(update={"downloads": video_download_config})
         return config
 
     def _validate_config(self, config: AppConfig):

@@ -3,10 +3,12 @@ from pathlib import Path
 from yt_dlp import YoutubeDL
 
 from vidsift.config.models import AppConfig
-from vidsift.features.download.errors import (OutputPathIsADirectoryError,
-                                              OutputPathNotFoundError,
-                                              OutputPathPermissionError,
-                                              VideoDownloadError)
+from vidsift.features.download.errors import (
+    OutputPathIsADirectoryError,
+    OutputPathNotFoundError,
+    OutputPathPermissionError,
+    VideoDownloadError,
+)
 from vidsift.models.video import InvalidVideoError
 from vidsift.shared.config_helpers import get_js_runtimes_config
 
@@ -27,6 +29,7 @@ class VideoDownloader:
                 "merge_output_format": yt_dlp_config.download.merge_output_format,
                 "max_retries": yt_dlp_config.base.max_retries,
                 "noplaylist": True,
+                "remote_components": ["ejs:github", "ejs:npm"],
             }
 
     def download(self, video_url: str, output_path: Path) -> None:
@@ -56,4 +59,3 @@ class VideoDownloader:
             raise OutputPathNotFoundError(str(e)) from e
         except IsADirectoryError as e:
             raise OutputPathIsADirectoryError(str(e)) from e
-
